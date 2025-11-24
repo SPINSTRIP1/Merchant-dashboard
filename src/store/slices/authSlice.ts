@@ -1,4 +1,4 @@
-import { loginApi } from "@/app/(auth)/_api";
+import { loginApi, resendToken } from "@/app/(auth)/_api";
 import { decrypt, encrypt } from "@/utils";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
@@ -141,7 +141,15 @@ export const loginUser = createAsyncThunk(
         tokens,
       };
     } catch (error) {
-      console.log(error);
+      const err = error as Error;
+      if (
+        err?.message.includes(
+          "Email not verified. Please verify your email before logging in"
+        )
+      ) {
+        await resendToken({ email: credentials.emailOrUsername });
+        console.log("Sent verification link");
+      }
       return rejectWithValue((error as Error).message);
     }
   }

@@ -49,7 +49,7 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
               <span className="text-primary font-semibold text-sm">
                 {user?.fullName
                   ?.split(" ")
-                  .map((name) => name.charAt(0))
+                  .map((name: string) => name.charAt(0))
                   .join("")
                   .toUpperCase()
                   .slice(0, 2) || "U"}

@@ -35,6 +35,13 @@ export default function LoginPage() {
       router.push("/settings/compliance");
     } else {
       toast.error(res?.error || "Invalid credentials. Please try again.");
+      if (
+        res.error?.includes(
+          "Email not verified. Please verify your email before logging in"
+        )
+      ) {
+        router.push("/otp-verification");
+      }
     }
   };
   return (
