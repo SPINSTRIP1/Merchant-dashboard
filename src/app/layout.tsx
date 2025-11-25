@@ -5,11 +5,11 @@ import { ReduxProvider } from "@/providers/redux-provider";
 
 export const metadata: Metadata = {
   title: {
-    default: "SpinStrip Merchant Dashboard",
+    default: "SpinStrip Merchant Dashboard - Business Suite",
     template: "%s | SpinStrip Merchant",
   },
   description:
-    "SpinStrip Merchant Dashboard - Manage your content creator business, track payments, handle compliance, and grow your social media presence. The complete merchant suite for content creators.",
+    "SpinStrip Merchant Dashboard - Business Suite - Powerful merchant dashboard for business owners. Manage payments, compliance, and grow your business with SpinStrip",
   keywords: [
     "SpinStrip",
     "merchant dashboard",
