@@ -20,3 +20,20 @@ export const decrypt = (encrypted: string): string => {
     return encrypted;
   }
 };
+
+// Format amount to Nigerian Naira
+export const formatAmount = (amount: number): string => {
+  return `₦${amount.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+// Format ISO date string to DD/MM/YYYY
+export const formatISODate = (isoString: string): string => {
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};

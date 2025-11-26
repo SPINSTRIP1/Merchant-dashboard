@@ -7,6 +7,9 @@ import { InventoryProduct, inventoryProductSchema } from "../_schemas";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DEFAULT_INVENTORY_VALUES, addInventorySteps } from "../_constants";
+import api from "@/lib/api/axios-client";
+import { INVENTORY_SERVER_URL } from "@/constants";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface InventoryContextType {
   form: ReturnType<typeof useForm<InventoryProduct>>;
@@ -39,6 +42,7 @@ export function InventoryFormProvider({
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { getValues, setValue, reset } = form;
+  const queryClient = useQueryClient();
 
   // Function to trigger validation on field change
   const handleFieldChange = useCallback(
@@ -60,17 +64,20 @@ export function InventoryFormProvider({
   const submitProduct = useCallback(async () => {
     setLoading(true);
     try {
-      const formData = getValues();
+      const { files, ...formData } = getValues();
+      console.log(files);
       // TODO: Replace with actual API call
       console.log("Submitting product data:", formData);
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      const res = await api.post(INVENTORY_SERVER_URL + "/products", formData);
+      console.log(res.data);
       toast.success("Product created successfully!");
       resetForm();
+      queryClient.invalidateQueries({ queryKey: ["inventory-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
     } catch (error) {
-      console.error("Error submitting product:", error);
+      console.log("Error submitting product:", error);
       if (error instanceof z.ZodError) {
         toast.error("Please check all form fields and try again.");
       } else {

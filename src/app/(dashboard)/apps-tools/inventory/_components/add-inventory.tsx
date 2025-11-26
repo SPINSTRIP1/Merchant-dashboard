@@ -1,13 +1,14 @@
-import React from "react";
 import GeneralInfo from "./steps/general-info";
 import StepIndicator from "@/app/(dashboard)/settings/_components/step-indicator";
 import { Button } from "@/components/ui/button";
 import Pricing from "./steps/pricing";
 import StockManagement from "./steps/stock-management";
 import Visibility from "./steps/visibility";
+import { useInventoryForm } from "../_context";
 
 export default function AddInventory() {
-  const [currentStep, setCurrentStep] = React.useState(1);
+  const { currentStep, handleNext, handlePrevious, loading } =
+    useInventoryForm();
   const renderContent = () => {
     switch (currentStep) {
       case 1:
@@ -31,7 +32,7 @@ export default function AddInventory() {
       {renderContent()}
       <div className="flex gap-x-2 w-full items-center justify-center">
         <Button
-          onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
+          onClick={handlePrevious}
           className="w-full"
           size={"lg"}
           variant={"secondary"}
@@ -40,11 +41,12 @@ export default function AddInventory() {
           Previous
         </Button>
         <Button
-          onClick={() => setCurrentStep((prev) => Math.min(prev + 1, 4))}
+          onClick={handleNext}
+          disabled={loading}
           className="w-full"
           size={"lg"}
         >
-          {currentStep === 4 ? "Submit" : "Next"}
+          {loading ? "Submitting..." : currentStep === 4 ? "Submit" : "Next"}
         </Button>
       </div>
     </div>

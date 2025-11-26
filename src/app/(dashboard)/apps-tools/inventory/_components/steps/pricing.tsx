@@ -5,8 +5,7 @@ import { useInventoryForm } from "../../_context";
 
 export default function Pricing() {
   const {
-    form: { watch, register },
-    handleFieldChange,
+    form: { register },
   } = useInventoryForm();
 
   return (
@@ -14,7 +13,6 @@ export default function Pricing() {
       <div className="space-y-1.5">
         <Label>Price (Base)</Label>
         <Input
-          {...register("costPrice")}
           className="!rounded-2xl border border-neutral-accent"
           placeholder="N7,000"
         />

@@ -92,8 +92,22 @@ export const inventoryProductSchema = z
     path: ["quantity"],
   });
 
+export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
 // Type inference
-export type InventoryProduct = z.infer<typeof inventoryProductSchema>;
+export type InventoryProduct = z.infer<typeof inventoryProductSchema> & {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  category: CatalogCategory;
+  catalog: Catalog;
+  inventory: {
+    maxStockLevel: number;
+    minStockLevel: number;
+    stockLevel: string;
+    stockStatus: StockStatus;
+    quantity: number;
+  };
+};
 
 // Stats response schema
 export const inventoryStatsResponseSchema = z.object({

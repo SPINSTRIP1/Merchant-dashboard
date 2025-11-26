@@ -1,8 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React from "react";
+import { useInventoryForm } from "../../_context";
 
 export default function StockManagement() {
+  const {
+    form: { register },
+  } = useInventoryForm();
+
   return (
     <div className="space-y-7">
       <div className="space-y-1.5">
@@ -18,6 +23,7 @@ export default function StockManagement() {
           <Input
             className="!rounded-2xl border border-neutral-accent"
             placeholder="85"
+            {...register("quantity")}
           />
         </div>
         <div className="space-y-1.5">

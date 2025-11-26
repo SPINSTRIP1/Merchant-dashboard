@@ -1,4 +1,3 @@
-import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,8 @@ import { useInventoryForm } from "../../_context";
 import SelectDropdown from "@/components/select-dropdown";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 
 export default function GeneralInfo() {
   const { catalogs } = useCatalogs();
@@ -144,17 +145,93 @@ export default function GeneralInfo() {
           </div>
         )}
       </div>
+      <div className="grid grid-cols-2 gap-5">
+        <div className="space-y-1.5">
+          <Label>Selling Price</Label>
+          <Input
+            {...register("sellingPrice")}
+            className="!rounded-2xl border border-neutral-accent"
+            placeholder="N7,500.00"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Cost Price</Label>
+          <Input
+            {...register("costPrice")}
+            className="!rounded-2xl border border-neutral-accent"
+            placeholder="N5,000.00"
+          />
+        </div>
+      </div>
       <div className="space-y-1.5">
-        <Label>Category</Label>
-        <MultiSelect
-          value={categoryId || ""}
-          options={categories}
+        <Label>Product Type</Label>
+
+        <SelectDropdown
+          className="!rounded-2xl border border-neutral-accent"
+          placeholder="Select Product Type"
+          value={watch("productType")}
+          options={[
+            { label: "Definite", value: "DEFINITE" },
+            { label: "Indefinite", value: "INDEFINITE" },
+          ]}
           onValueChange={(value) => {
-            handleFieldChange("categoryId", value);
+            handleFieldChange("productType", value);
           }}
+          category="Product Type"
         />
       </div>
+      <div className="space-y-1.5">
+        <Label>Brand</Label>
+        <Input
+          {...register("brand")}
+          className="!rounded-2xl border border-neutral-accent"
+          placeholder="Enter Brand Name"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Variants</Label>
 
+        <div className="flex items-center pt-2 gap-x-2">
+          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+          <Input
+            className="rounded-none border-b bg-transparent border-neutral-accent"
+            placeholder="Color"
+            {...register("variant.color")}
+          />
+        </div>
+        <div className="flex items-center pt-2 gap-x-2">
+          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+          <Input
+            className="rounded-none border-b bg-transparent border-neutral-accent"
+            placeholder="Size"
+            {...register("variant.size")}
+          />
+        </div>
+        <div className="flex items-center pt-2 gap-x-2">
+          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+          <Input
+            className="rounded-none border-b bg-transparent border-neutral-accent"
+            placeholder="Dimensions"
+            {...register("variant.dimensions")}
+          />
+        </div>
+        <div className="flex items-center pt-2 gap-x-2">
+          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+          <Input
+            className="rounded-none border-b bg-transparent border-neutral-accent"
+            placeholder="Shape"
+            {...register("variant.shape")}
+          />
+        </div>
+        <div className="flex items-center pt-2 gap-x-2">
+          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+          <Input
+            className="rounded-none border-b bg-transparent border-neutral-accent"
+            placeholder="Form"
+            {...register("variant.form")}
+          />
+        </div>
+      </div>
       <div className="space-y-1.5 w-full">
         <Label>Upload Item Images</Label>
         <div className="flex w-full gap-4 flex-wrap">
