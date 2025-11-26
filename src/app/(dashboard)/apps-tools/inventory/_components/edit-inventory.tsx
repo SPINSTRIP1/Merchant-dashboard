@@ -5,14 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
-import React from "react";
 
+import { useInventoryForm } from "../_context";
+/**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Please use the new inventory management system instead.
+ */
 export default function EditInventory({ onClose }: { onClose: () => void }) {
+  const {
+    form: { register },
+  } = useInventoryForm();
   return (
     <div className="space-y-7 pt-16 pb-5">
       <div className="space-y-1.5">
-        <Label>Item Name</Label>
+        <Label>Product Name</Label>
         <Input
+          {...register("name")}
           className="!rounded-2xl border border-neutral-accent"
           placeholder="Enter Company Name"
         />

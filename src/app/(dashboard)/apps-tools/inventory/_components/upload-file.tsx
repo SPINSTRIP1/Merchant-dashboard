@@ -24,6 +24,7 @@ interface FileUploadProps {
   maxSizeInMB?: number;
   label?: string;
   fileName: string;
+  value?: File | null;
 }
 
 // File type mappings for better performance
@@ -49,12 +50,34 @@ export default function UploadFile({
     : DEFAULT_FILE_FORMATS,
   maxSizeInMB = 10,
   label,
+  value,
 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(value || null);
   const [error, setError] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with external value prop
+  React.useEffect(() => {
+    if (value && value !== selectedFile) {
+      setSelectedFile(value);
+      setError("");
+
+      // Create image preview for the value
+      if (type === "image" && value.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(value);
+      }
+    } else if (!value && selectedFile) {
+      // Clear if value is null/undefined
+      setSelectedFile(null);
+      setImagePreview(null);
+    }
+  }, [value, type, selectedFile]);
 
   // Memoized computations
   const acceptString = useMemo(() => {
@@ -180,7 +203,7 @@ export default function UploadFile({
   }, [selectedFile]);
 
   return (
-    <div className="space-y-2.5 w-full max-w-[158px]">
+    <div className="space-y-2.5 w-full ">
       <div
         className={cn(
           "rounded-2xl h-[169px] w-full  bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
@@ -203,28 +226,15 @@ export default function UploadFile({
         />
 
         {selectedFile ? (
-          <div className="flex flex-col items-center gap-2 w-full h-full p-2">
+          <div className="flex flex-col items-center gap-2 w-full h-full">
             {type === "image" && imagePreview ? (
               <div className="relative w-full h-full flex flex-col items-center justify-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
                   alt={selectedFile.name}
-                  className="w-full max-h-[120px] object-cover rounded-lg"
+                  className="w-full h-full object-cover rounded-lg"
                 />
-                <p className="text-xs text-green-600 truncate max-w-full px-2">
-                  {selectedFile.name}
-                </p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile();
-                  }}
-                  className="text-xs text-red-500 hover:text-red-700 underline"
-                  type="button"
-                >
-                  Remove
-                </button>
               </div>
             ) : (
               <>

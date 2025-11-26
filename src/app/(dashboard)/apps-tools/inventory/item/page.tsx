@@ -20,7 +20,7 @@ import Image from "next/image";
 import { useState } from "react";
 import InventoryChart from "./_components/inventory-chart";
 import InventoryItemTable from "./_components/table";
-import InventoryModal from "../_components/inventory-modal";
+import InventoryModal from "../_components/modals/inventory-modal";
 
 export default function InventoryItem() {
   const stats = [

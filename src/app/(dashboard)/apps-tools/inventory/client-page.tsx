@@ -18,9 +18,9 @@ import { useCatalogs } from "./_hooks/use-catalogs";
 import Loader from "@/components/loader";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import OffersModal from "./_components/offers-modal";
+import OffersModal from "./_components/modals/offers-modal";
 import { useState } from "react";
-import CatalogModal from "./_components/catalog-modal";
+import CatalogModal from "./_components/modals/catalog-modal";
 
 export default function Inventory() {
   const isLowstock = false;
@@ -86,28 +86,6 @@ export default function Inventory() {
     },
   ];
   if (isLoadingCatalogs) return <Loader />;
-  // if (!catalogs || catalogs.length === 0) {
-  //   return (
-  //     <div>
-  //       <div className="flex items-center justify-center flex-col gap-y-1.5 flex-1 mt-52">
-  //         <Image
-  //           src={"/icons/work-in-progress.svg"}
-  //           width={600}
-  //           height={400}
-  //           className="w-[174px] h-[106px]"
-  //           alt="Empty state"
-  //         />
-  //         <h1 className="font-bold text-primary-text">Welcome to Inventory</h1>
-  //         <p className="text-sm">Quickly set up your inventory to begin</p>
-  //         <Button size={"lg"} className="w-[368px] mt-2 h-[51px]">
-  //           Get Started
-  //         </Button>
-  //       </div>
-  //       <OffersModal isOpen={true} onClose={() => {}} />
-  //     </div>
-  //   );
-  // }
-  console.log(catalogs);
   return (
     <div>
       {!catalogs || catalogs.length === 0 ? (

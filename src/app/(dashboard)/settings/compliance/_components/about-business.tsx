@@ -49,6 +49,13 @@ export default function AboutBusiness() {
           placeholder="Describe your business"
           rows={6}
         />
+        <div className="h-5 mt-1">
+          {errors.businessDescription && (
+            <p className="text-red-500 text-sm">
+              {errors.businessDescription.message}
+            </p>
+          )}
+        </div>
       </ContainerWrapper>
       <div className="lg:grid-cols-2 grid gap-3">
         <ContainerWrapper className="space-y-2.5">
@@ -85,7 +92,7 @@ export default function AboutBusiness() {
           </div>
         </ContainerWrapper>
         <ContainerWrapper className="space-y-2.5">
-          <Label>Company Website</Label>
+          <Label>Company Website (Optional)</Label>
           <Input
             className="!rounded-2xl border border-neutral-accent"
             placeholder="Enter Company Website"

@@ -9,7 +9,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ["flagcdn.com", "upload.wikimedia.org"],
+    domains: [
+      "flagcdn.com",
+      "upload.wikimedia.org",
+      "spin-strip.sfo3.digitaloceanspaces.com",
+    ],
   },
 };
 

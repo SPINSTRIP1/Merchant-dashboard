@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+// Catalog Category Schema
+export const catalogCategorySchema = z.object({
+  name: z.string().min(2, "Category name must be at least 2 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  tags: z.array(z.string()).min(1, "At least one tag is required"),
+});
+
+// Catalog Schema
+export const catalogSchema = z.object({
+  name: z.string().min(2, "Catalog name must be at least 2 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  industry: z.string().optional(),
+  tags: z.array(z.string()).min(1, "At least one tag is required"),
+  categories: z
+    .array(catalogCategorySchema)
+    .min(1, "At least one category is required"),
+});
+
+export type CatalogCategory = z.infer<typeof catalogCategorySchema>;
+export type Catalog = z.infer<typeof catalogSchema>;
+
 // Enum schemas
 export const productTypeSchema = z.enum(["DEFINITE", "INDEFINITE"]);
 export const productStatusSchema = z.enum([
@@ -82,6 +103,19 @@ export const inventoryProductSchema = z
     slotConfig: slotConfigSchema.optional(),
     dealIds: z.array(z.string()).optional(),
     files: z.array(z.instanceof(File)).optional(),
+    id: z.string(), // For updates
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+    category: catalogCategorySchema,
+    catalog: catalogSchema,
+    inventory: z.object({
+      stockLevel: z.string(),
+      stockStatus: z.enum(["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"]),
+      quantity: z.number().int(),
+      maxStockLevel: z.number().int(),
+      minStockLevel: z.number().int(),
+    }),
+    media: z.array(z.string()).optional(),
   })
   .refine((data) => data.sellingPrice >= data.costPrice, {
     message: "Selling price should be greater than or equal to cost price",
@@ -94,20 +128,7 @@ export const inventoryProductSchema = z
 
 export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
 // Type inference
-export type InventoryProduct = z.infer<typeof inventoryProductSchema> & {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  category: CatalogCategory;
-  catalog: Catalog;
-  inventory: {
-    maxStockLevel: number;
-    minStockLevel: number;
-    stockLevel: string;
-    stockStatus: StockStatus;
-    quantity: number;
-  };
-};
+export type InventoryProduct = z.infer<typeof inventoryProductSchema>;
 
 // Stats response schema
 export const inventoryStatsResponseSchema = z.object({
@@ -121,24 +142,3 @@ export const inventoryStatsResponseSchema = z.object({
 export type InventoryStatsResponse = z.infer<
   typeof inventoryStatsResponseSchema
 >;
-
-// Catalog Category Schema
-export const catalogCategorySchema = z.object({
-  name: z.string().min(2, "Category name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  tags: z.array(z.string()).min(1, "At least one tag is required"),
-});
-
-// Catalog Schema
-export const catalogSchema = z.object({
-  name: z.string().min(2, "Catalog name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  industry: z.string().optional(),
-  tags: z.array(z.string()).min(1, "At least one tag is required"),
-  categories: z
-    .array(catalogCategorySchema)
-    .min(1, "At least one category is required"),
-});
-
-export type CatalogCategory = z.infer<typeof catalogCategorySchema>;
-export type Catalog = z.infer<typeof catalogSchema>;

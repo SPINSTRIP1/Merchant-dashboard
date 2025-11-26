@@ -6,6 +6,10 @@ import StockManagement from "./steps/stock-management";
 import Visibility from "./steps/visibility";
 import { useInventoryForm } from "../_context";
 
+/**
+ * @deprecated This component is deprecated and will be removed in a future version.
+ * Please use the new inventory management system instead.
+ */
 export default function AddInventory() {
   const { currentStep, handleNext, handlePrevious, loading } =
     useInventoryForm();

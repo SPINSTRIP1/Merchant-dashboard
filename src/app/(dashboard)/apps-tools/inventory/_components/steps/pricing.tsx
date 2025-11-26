@@ -10,13 +10,13 @@ export default function Pricing() {
 
   return (
     <div className="space-y-7">
-      <div className="space-y-1.5">
+      {/* <div className="space-y-1.5">
         <Label>Price (Base)</Label>
         <Input
           className="!rounded-2xl border border-neutral-accent"
           placeholder="N7,000"
         />
-      </div>
+      </div> */}
       <div className="grid grid-cols-2 gap-5">
         <div className="space-y-1.5">
           <Label>Discount (Optional)</Label>

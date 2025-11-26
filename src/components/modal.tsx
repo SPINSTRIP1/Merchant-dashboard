@@ -21,12 +21,14 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
         )}
       >
         {children}
-        <Button
-          className="w-full mt-3 max-w-52 mx-auto py-3 h-auto"
-          onClick={onClose}
-        >
-          Close
-        </Button>
+        <div className="w-full flex items-center justify-center">
+          <Button
+            className="w-full mt-3 max-w-52 py-3 h-auto"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        </div>
       </div>
     </div>
   );

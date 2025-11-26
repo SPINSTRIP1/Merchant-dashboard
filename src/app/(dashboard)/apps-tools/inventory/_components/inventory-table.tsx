@@ -24,26 +24,21 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { EllipsisVertical } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import InventoryModal from "./inventory-modal";
+import InventoryModal from "./modals/inventory-modal";
 import PaginationButton from "@/components/pagination-button";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api/axios-client";
 import { INVENTORY_SERVER_URL } from "@/constants";
 import { InventoryProduct, StockStatus } from "../_schemas";
 import { formatAmount, formatISODate } from "@/utils";
-
-interface PaginatedResponse {
-  data: {
-    count: number;
-    currentpage: number;
-    data: InventoryProduct[];
-    lastpage: number;
-    nextpage: number | null;
-    prevpage: number | null;
-  };
-}
+import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
+import DeleteModal from "../../deals/_components/modals/delete-modal";
+import DuplicateModal from "../../deals/_components/modals/delete-modal";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { useInventoryForm } from "../_context";
+import { useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api/axios-client";
+import toast from "react-hot-toast";
 
 export const statusColors: Record<StockStatus, string> = {
   IN_STOCK: "text-[#34C759] bg-[#34C75926]",
@@ -52,40 +47,54 @@ export const statusColors: Record<StockStatus, string> = {
 };
 
 export default function InventoryTable() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [action, setAction] = useState<"add" | "edit" | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryProduct | null>(
+    null
+  );
+  const {
+    form,
+    debouncedSearch,
+    statusFilter,
+    sortBy,
+    setSearchQuery,
+    setStatusFilter,
+    setSortBy,
+    searchQuery,
+    setAction,
+    action,
+  } = useInventoryForm();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
-  // Get current page from URL or default to 1
-  const currentPage = Number(searchParams.get("page")) || 1;
+  // Use server pagination hook with search and filters
+  const { items, currentPage, totalPages, isLoading, handlePageChange } =
+    useServerPagination<InventoryProduct>({
+      queryKey: "inventory-products",
+      endpoint: `${INVENTORY_SERVER_URL}/products`,
+      searchQuery: debouncedSearch,
+      filters: {
+        stockStatus: statusFilter,
+        sortBy: sortBy,
+      },
+    });
 
-  // Fetch paginated data from server
-  const { data, isLoading } = useQuery({
+  // Optimistic delete hook
+  const { deleteItem } = useOptimisticDelete<InventoryProduct>({
     queryKey: ["inventory-products", currentPage],
-    queryFn: async () => {
-      try {
-        const response = await api.get<PaginatedResponse>(
-          `${INVENTORY_SERVER_URL}/products?page=${currentPage}`
-        );
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching inventory products:", error);
-        return null;
-      }
-    },
+    deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
+    successMessage: "Item deleted successfully",
+    errorMessage: "Failed to delete item",
   });
 
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", newPage.toString());
-    router.push(`?${params.toString()}`);
+  const handleDuplicate = async (id: string) => {
+    try {
+      await api.post(`${INVENTORY_SERVER_URL}/products/${id}/duplicate`);
+      toast.success("Item duplicated successfully");
+      queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to duplicate item");
+    }
   };
-
-  const items = data?.data || [];
-  const totalPages = data?.lastpage || 1;
-  console.log(items);
   return (
     <section>
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
@@ -97,11 +106,52 @@ export default function InventoryTable() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <div className="flex items-center gap-x-2">
-          <Dropdown header="" options={["All", "Some"]} placeholder="All" />
-          <Dropdown header="" options={["All", "Some"]} placeholder="Sort by" />
+          <Dropdown
+            header=""
+            options={["All Status", "In Stock", "Low Stock", "Out of Stock"]}
+            placeholder="All Status"
+            onSelect={(value) => {
+              if (value === "All Status") {
+                setStatusFilter("");
+              } else if (value === "In Stock") {
+                setStatusFilter("inStock");
+              } else if (value === "Low Stock") {
+                setStatusFilter("lowStock");
+              } else if (value === "Out of Stock") {
+                setStatusFilter("outOfStock");
+              }
+            }}
+          />
+          <Dropdown
+            header=""
+            options={["Name", "Price", "Stock", "Date Updated", "Date Created"]}
+            placeholder="Sort by"
+            onSelect={(value) => {
+              switch (value) {
+                case "Name":
+                  setSortBy("name");
+                  break;
+                case "Price":
+                  setSortBy("price");
+                  break;
+                case "Stock":
+                  setSortBy("stock");
+                  break;
+                case "Date Updated":
+                  setSortBy("updated");
+                  break;
+                case "Date Created":
+                  setSortBy("created");
+                  break;
+              }
+            }}
+          />
         </div>
         <button
-          onClick={() => setAction("add")}
+          onClick={() => {
+            form.reset();
+            setAction("add");
+          }}
           className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-7"
         >
           <HugeiconsIcon icon={PlusSignSquareIcon} size={24} color="#FFFFFF" />
@@ -175,7 +225,7 @@ export default function InventoryTable() {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell>{formatISODate(item.updatedAt)}</TableCell>
+                  <TableCell>{formatISODate(item.updatedAt!)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="pl-4 outline-none">
@@ -186,35 +236,73 @@ export default function InventoryTable() {
                           {
                             icon: Edit02Icon,
                             label: "Edit Item",
-                            onClick: () => setAction("edit"),
+                            onClick: (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              form.reset({
+                                id: item.id,
+                                name: item.name,
+                                description: item.description || "",
+                                categoryId: item.categoryId,
+                                catalogId: item.catalogId,
+                                tags: item.tags || [],
+                                brand: item.brand || "",
+                                productType: item.productType || "",
+                                sellingPrice: Number(item.sellingPrice) || 0,
+                                costPrice: Number(item.costPrice) || 0,
+                                taxPercentage: Number(item.taxPercentage) || 0,
+                                quantity: item.inventory.quantity || 0,
+                                maxStockLevel:
+                                  item.inventory.maxStockLevel || 0,
+                                minStockLevelPercentage:
+                                  item.inventory.minStockLevel || 0,
+                                showInMenu: item.showInMenu,
+                                isFeatured: item.isFeatured,
+                                variant: item.variant || undefined,
+                                slotConfig: item.slotConfig || undefined,
+                                dealIds: item.dealIds || [],
+                                media: item.media || [],
+                              });
+                              setAction("edit");
+                            },
                           },
                           {
                             icon: Copy01Icon,
                             label: "Duplicate Item",
-                            onClick: () => {},
+                            onClick: (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              setSelectedItem(item);
+                              setAction("duplicate");
+                            },
                           },
                           {
                             icon: Exchange01Icon,
                             label: "Restock Item",
-                            onClick: () => {},
+                            onClick: (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            },
                           },
                           {
                             icon: EyeIcon,
                             label: "Hide Item",
-                            onClick: () => {},
+                            onClick: (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                            },
                           },
                           {
                             icon: Delete02Icon,
                             label: "Delete Item",
                             color: "#FF5F57",
-                            onClick: () => {},
+                            onClick: (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              setSelectedItem(item);
+                              setAction("delete");
+                            },
                           },
                         ].map(({ icon, label, color, onClick }) => (
                           <DropdownMenuItem
                             key={label}
                             onClick={(e) => {
-                              e.stopPropagation();
-                              onClick();
+                              onClick(e);
                             }}
                             className="flex items-center cursor-pointer gap-2"
                           >
@@ -246,14 +334,35 @@ export default function InventoryTable() {
       {!isLoading && totalPages > 0 && (
         <PaginationButton
           currentPage={currentPage}
-          onPageChange={handlePageChange}
           totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       )}
       <InventoryModal
-        isOpen={action !== null}
+        isOpen={action === "add" || action === "edit"}
         action={action}
         onClose={() => setAction(null)}
+      />
+      <DeleteModal
+        isOpen={action === "delete"}
+        title={selectedItem?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
+        secondaryText="Cancel"
+        description="This product will be deleted permanently and cannot be recovered!"
+      />
+      <DuplicateModal
+        isOpen={action === "duplicate"}
+        title={selectedItem?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => handleDuplicate(selectedItem?.id || "")}
+        secondaryText="Cancel"
+        primaryText="Duplicate"
+        description="This product will be duplicated!"
+        successMessage="This product has been duplicated successfully."
+        headTitle={`Are you sure you want to duplicate ${
+          selectedItem?.name || "this item"
+        }?`}
       />
     </section>
   );

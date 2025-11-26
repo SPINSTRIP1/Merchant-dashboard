@@ -8,7 +8,7 @@ import { Plus, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { catalogSchema, type Catalog } from "../_schemas";
+import { catalogSchema, type Catalog } from "../../_schemas";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios-client";
 import { INVENTORY_SERVER_URL } from "@/constants";
@@ -181,7 +181,7 @@ export default function CatalogModal({
                 className="!rounded-2xl border border-neutral-accent"
                 placeholder="Select Industry"
                 options={["Music", "Food & Beverage", "Retail", "Healthcare"]}
-                value={watch("industry")}
+                value={watch("industry") || ""}
                 onValueChange={(value) =>
                   setValue("industry", value, { shouldValidate: true })
                 }

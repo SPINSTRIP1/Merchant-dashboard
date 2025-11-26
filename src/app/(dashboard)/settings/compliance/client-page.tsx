@@ -113,7 +113,7 @@ export default function ClientPage() {
       )}
       <Modal
         isOpen={isOpen}
-        className="max-w-[350px]"
+        className="max-w-[590px]"
         onClose={() => {
           reset();
           setIsOpen(false);

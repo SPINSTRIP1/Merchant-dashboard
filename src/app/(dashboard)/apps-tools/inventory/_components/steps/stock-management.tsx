@@ -10,13 +10,13 @@ export default function StockManagement() {
 
   return (
     <div className="space-y-7">
-      <div className="space-y-1.5">
+      {/* <div className="space-y-1.5">
         <Label>SKU/ID</Label>
         <Input
           className="!rounded-2xl border border-neutral-accent"
           placeholder="0001"
         />
-      </div>
+      </div> */}
       <div className="grid grid-cols-2 gap-5">
         <div className="space-y-1.5">
           <Label>Quantity in Stock</Label>
