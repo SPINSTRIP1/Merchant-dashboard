@@ -10,4 +10,5 @@ export const DEFAULT_DEALS_VALUES: Partial<Deal> = {
   endDate: "",
   productIds: [],
   isFeatured: false,
+  status: "ACTIVE",
 };

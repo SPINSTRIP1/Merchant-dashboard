@@ -1,9 +1,7 @@
 import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +12,7 @@ import { InventoryProduct } from "../../../inventory/_schemas";
 import { useQuery } from "@tanstack/react-query";
 import { Campaign } from "../../_schemas";
 import SelectDropdown from "@/components/select-dropdown";
-import { formatDateForInput } from "@/utils";
+import { FormInput } from "@/components/ui/form-input";
 
 export default function DealsModal({
   isOpen,
@@ -30,13 +28,7 @@ export default function DealsModal({
   const {
     submitDeal,
     loading,
-    form: {
-      register,
-      watch,
-      setValue,
-
-      // formState: { isValid },
-    },
+    form: { watch, setValue, control },
     handleFieldChange,
   } = useDealsForm();
   useEffect(() => {
@@ -61,8 +53,6 @@ export default function DealsModal({
   const productIds = watch("productIds") || [];
   const isFeatured = watch("isFeatured");
   const campaignId = watch("campaignId");
-  const startDate = watch("startDate");
-  const endDate = watch("endDate");
 
   const { data: menuItems, isLoading } = useQuery<InventoryProduct[]>({
     queryKey: ["inventory-products"],
@@ -133,14 +123,13 @@ export default function DealsModal({
           <X size={20} />
         </button>
         <div className="space-y-7 pt-16 pb-5">
-          <div className="space-y-1.5">
-            <Label>Deal Name</Label>
-            <Input
-              {...register("name")}
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="Enter Deal Name"
-            />
-          </div>
+          <FormInput
+            control={control}
+            label="Deal Name"
+            name="name"
+            placeholder="Enter Deal Name"
+          />
+
           <div className="space-y-1.5">
             <Label>Select Campaign</Label>
 
@@ -210,33 +199,43 @@ export default function DealsModal({
               </div>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label>Deal Description</Label>
-            <Textarea
-              {...register("description")}
-              className="rounded-2xl"
-              placeholder="Enter description"
-              rows={6}
-            />
-          </div>
+          <FormInput
+            control={control}
+            label="Deal Description"
+            name="description"
+            placeholder="Enter description"
+            type="textarea"
+          />
 
           <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <Label>Discount</Label>
-              <Input
-                {...register("discountPercentage")}
-                className="!rounded-2xl border border-neutral-accent"
-                placeholder="10%"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Maximum Threshold</Label>
-              <Input
-                {...register("maximumThreshold")}
-                className="!rounded-2xl border border-neutral-accent"
-                placeholder="500 Orders"
-              />
-            </div>
+            <FormInput
+              control={control}
+              label="Discount"
+              name="discountPercentage"
+              placeholder="10%"
+              type="number"
+            />
+            <FormInput
+              control={control}
+              label="Maximum Threshold"
+              name="maximumThreshold"
+              placeholder="500 Orders"
+              type="number"
+            />
+            <FormInput
+              control={control}
+              label="Start Date"
+              name="startDate"
+              placeholder="MM/DD/YYYY"
+              type="date"
+            />
+            <FormInput
+              control={control}
+              label="End Date"
+              name="endDate"
+              placeholder="MM/DD/YYYY"
+              type="date"
+            />
           </div>
           {/* <div className="space-y-1.5">
             <Label>Quantity</Label>
@@ -245,28 +244,7 @@ export default function DealsModal({
               placeholder="50 Portions"
             />
           </div> */}
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <Label>Start Date</Label>
-              <Input
-                {...register("startDate")}
-                type="date"
-                className="!rounded-2xl inline-block border border-neutral-accent"
-                placeholder="95"
-                value={startDate ? formatDateForInput(startDate) : ""}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>End Date</Label>
-              <Input
-                {...register("endDate")}
-                type="date"
-                className="!rounded-2xl inline-block border border-neutral-accent"
-                placeholder="95"
-                value={endDate ? formatDateForInput(endDate) : ""}
-              />
-            </div>
-          </div>
+
           {/* <div className="space-y-1.5">
             <Label>Show in Menu</Label>
             <MultiSelect

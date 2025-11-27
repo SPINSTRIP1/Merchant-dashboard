@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Deal, dealSchema } from "../_schemas";
 import toast from "react-hot-toast";
@@ -23,6 +23,7 @@ export type ActionType =
   | "delete"
   | "deactivate"
   | "insights"
+  | "reactivate"
   | null;
 interface DealsContextType {
   form: ReturnType<typeof useForm<Deal>>;
@@ -75,6 +76,17 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
   );
 
   const submitDeal = useCallback(async () => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      // const errors = form.formState.errors;
+      // console.log("Form validation errors:", errors);
+      // Object.keys(errors).forEach((key) => {
+      //   const error = errors[key as keyof Deal];
+      //   console.log(`Field "${key}":`, error?.message);
+      // });
+      toast.error("Please check all form fields and try again.");
+      return;
+    }
     setLoading(true);
     const formData = getValues();
     const isUpdating = Boolean(formData.id);
@@ -131,7 +143,7 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
         setAction,
       }}
     >
-      {children}
+      <FormProvider {...form}>{children}</FormProvider>
     </DealsContext.Provider>
   );
 }

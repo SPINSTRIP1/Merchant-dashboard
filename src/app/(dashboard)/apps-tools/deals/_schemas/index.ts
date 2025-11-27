@@ -11,7 +11,7 @@ export const campaignSchema = z.object({
 export type Campaign = z.infer<typeof campaignSchema>;
 
 export const dealSchema = z.object({
-  campaignId: z.string().uuid("Invalid campaign ID").optional(),
+  campaignId: z.string().optional(),
   name: z.string().min(2, "Deal name must be at least 2 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   discountPercentage: z
@@ -28,7 +28,7 @@ export const dealSchema = z.object({
   // .min(1, "At least one product must be selected"),
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"]),
   isFeatured: z.boolean(),
-  id: z.string(),
+  id: z.string().optional(),
 });
 
 export type Deal = z.infer<typeof dealSchema>;

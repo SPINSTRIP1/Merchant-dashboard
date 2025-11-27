@@ -27,7 +27,7 @@ import { Deal } from "../_schemas";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import { toast } from "react-hot-toast";
 import api from "@/lib/api/axios-client";
-import { formatDateDisplay } from "@/utils";
+import { formatDateDisplay, formatDateForInput } from "@/utils";
 
 export default function DealsTable() {
   const [selectedItem, setSelectedItem] = useState<Deal | null>(null);
@@ -53,13 +53,13 @@ export default function DealsTable() {
       endpoint: `${DEALS_SERVER_URL}/deals`,
       searchQuery: debouncedSearch,
       filters: {
-        status: statusFilter,
+        status: statusFilter || "ACTIVE",
         sortBy: sortBy,
       },
     });
 
   // Optimistic delete hook
-  const { deleteItem } = useOptimisticDelete<Deal>({
+  const { deleteItem } = useOptimisticDelete<Deal & { id: string }>({
     queryKey: ["deals", currentPage],
     deleteEndpoint: `${DEALS_SERVER_URL}/deals`,
     successMessage: "Item deleted successfully",
@@ -68,8 +68,8 @@ export default function DealsTable() {
 
   const handleDeactivate = async (id: string) => {
     try {
-      await api.post(`${DEALS_SERVER_URL}/deals/${id}/status`, {
-        status: "ARCHIVED",
+      await api.patch(`${DEALS_SERVER_URL}/deals/${id}/status`, {
+        status: "PAUSED",
       });
       toast.success("Item archived successfully");
       queryClient.invalidateQueries({ queryKey: ["deals"] });
@@ -93,14 +93,7 @@ export default function DealsTable() {
           <div className="flex items-center gap-x-2">
             <Dropdown
               header=""
-              options={[
-                "All Status",
-                "Draft",
-                "Active",
-                "Paused",
-                "Ended",
-                "Archived",
-              ]}
+              options={["All Status", "Draft", "Active", "Paused", "Ended"]}
               placeholder="All Status"
               onSelect={(value) => {
                 if (value === "All Status") {
@@ -113,8 +106,6 @@ export default function DealsTable() {
                   setStatusFilter("PAUSED");
                 } else if (value === "Ended") {
                   setStatusFilter("ENDED");
-                } else if (value === "Archived") {
-                  setStatusFilter("ARCHIVED");
                 }
               }}
             />
@@ -178,12 +169,75 @@ export default function DealsTable() {
           </div>
         </div>
         {isLoading ? (
-          <div className="flex w-full items-center py-10">
-            <p className="text-gray-500">Loading inventory...</p>
+          <div className="space-y-3 mt-5">
+            {[1, 2, 3, 4].map((i) => (
+              <ContainerWrapper key={i}>
+                <div className="animate-pulse">
+                  <div className="flex gap-x-4 justify-between mb-3 w-full">
+                    <div className="flex-shrink-0 space-y-2">
+                      <div className="h-5 bg-gray-200 rounded w-32"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    </div>
+                    <div className="max-w-[435px] w-full">
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                    <div className="min-w-6 min-h-6 max-h-6 max-w-6 bg-gray-200 rounded-full"></div>
+                  </div>
+                  <div className="flex justify-between w-full">
+                    <div className="flex items-center gap-x-2">
+                      <div className="h-[35px] w-20 bg-gray-200 rounded-xl"></div>
+                      <div className="h-[35px] w-28 bg-gray-200 rounded-xl"></div>
+                      <div className="h-[35px] w-24 bg-gray-200 rounded-xl"></div>
+                    </div>
+                    <div className="h-[35px] w-24 bg-gray-200 rounded-xl"></div>
+                  </div>
+                </div>
+              </ContainerWrapper>
+            ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex w-full items-center py-10">
-            <p className="text-gray-500">No items found</p>
+          <div className="flex flex-col w-full items-center justify-center py-20 mt-5">
+            <div className="bg-neutral-accent rounded-full p-6 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-primary-text mb-2">
+              No Deals Found
+            </h3>
+            <p className="text-secondary-text text-sm text-center max-w-md mb-6">
+              {searchQuery
+                ? "No deals match your search criteria. Try adjusting your filters."
+                : "You haven't created any deals yet. Create your first deal to get started!"}
+            </p>
+            {!searchQuery && (
+              <button
+                onClick={() => {
+                  form.reset();
+                  setAction("add");
+                }}
+                className="rounded-2xl bg-primary h-10 text-white flex justify-center items-center gap-2 px-4"
+              >
+                <HugeiconsIcon
+                  icon={PlusSignSquareIcon}
+                  size={20}
+                  color="#FFFFFF"
+                />
+                <p className="font-normal">Create Your First Deal</p>
+              </button>
+            )}
           </div>
         ) : (
           items.map((deal, index) => (
@@ -191,13 +245,13 @@ export default function DealsTable() {
               <div className="flex gap-x-4 justify-between mb-3 w-full">
                 <div className="flex-shrink-0">
                   <h2 className="font-bold text-primary-text">{deal.name}</h2>
-                  <p className="text-[#34C759] text-xs">
+                  {/* <p className="text-[#34C759] text-xs">
                     {deal.status === "ACTIVE"
                       ? "Active"
                       : deal.status === "PAUSED"
                       ? "Paused"
                       : "Draft"}
-                  </p>
+                  </p> */}
                 </div>
                 <p className="max-w-[435px] w-full">{deal.description}</p>
                 <button
@@ -219,8 +273,8 @@ export default function DealsTable() {
                         description: deal.description,
                         discountPercentage: deal.discountPercentage,
                         maximumThreshold: deal.maximumThreshold,
-                        startDate: deal.startDate,
-                        endDate: deal.endDate,
+                        startDate: formatDateForInput(deal.startDate),
+                        endDate: formatDateForInput(deal.endDate),
                         isFeatured: deal.isFeatured,
                         productIds: deal.productIds,
                         id: deal.id,
@@ -237,7 +291,10 @@ export default function DealsTable() {
                     <p className="font-normal text-sm">Edit</p>
                   </button>
                   <button
-                    onClick={() => setAction("deactivate")}
+                    onClick={() => {
+                      setSelectedItem(deal);
+                      setAction("deactivate");
+                    }}
                     className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
                   >
                     <X color="#6932E2" size={16} />
@@ -260,7 +317,7 @@ export default function DealsTable() {
                 </div>
 
                 <button
-                  onClick={() => setAction("delete")}
+                  onClick={() => [setSelectedItem(deal), setAction("delete")]}
                   className="rounded-xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
                 >
                   <HugeiconsIcon
@@ -271,7 +328,7 @@ export default function DealsTable() {
                   <p className="font-normal text-sm">Delete</p>
                 </button>
               </div>
-              {selectedItem === deal && (
+              {selectedItem === deal && !action && (
                 <div className="border-t mt-4">
                   <div className="flex items-center justify-between my-2 w-full">
                     <h2 className="font-bold mb-1">Discount</h2>

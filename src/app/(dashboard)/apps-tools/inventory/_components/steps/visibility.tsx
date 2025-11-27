@@ -53,7 +53,7 @@ export default function Visibility() {
     return data?.find((deal: Deal) => deal.id === dealId);
   };
   const options =
-    data?.map((deal) => ({ label: deal.name, value: deal.id })) || [];
+    data?.map((deal) => ({ label: deal.name, value: deal.id! })) || [];
   return (
     <div className="space-y-7">
       <div className="space-y-1.5">

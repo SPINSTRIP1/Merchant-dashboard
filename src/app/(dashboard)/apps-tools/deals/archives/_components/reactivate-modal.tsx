@@ -2,16 +2,16 @@ import { Button } from "@/components/ui/button";
 import Success from "@/components/ui/success";
 import React, { useCallback, useEffect, useState } from "react";
 
-export default function DeactivateModal({
+export default function ReactivateModal({
   isOpen,
   title,
   onClose,
-  onDeactivate,
+  onReactivate,
 }: {
   isOpen: boolean;
   title: string;
   onClose: () => void;
-  onDeactivate: () => void;
+  onReactivate: () => void;
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const handleClose = useCallback(() => {
@@ -21,7 +21,7 @@ export default function DeactivateModal({
 
   useEffect(() => {
     if (currentStep === 2) {
-      setTimeout(handleClose, 3);
+      setTimeout(handleClose, 3000);
     }
   }, [currentStep, handleClose]);
 
@@ -31,9 +31,9 @@ export default function DeactivateModal({
         return (
           <div className="flex flex-col gap-y-2 items-center justify-center">
             <Success type="info" />
-            <h2 className="text-lg font-bold text-primary-text">{`Are you sure you want to Deactivate ${title}?`}</h2>
+            <h2 className="text-lg font-bold text-primary-text">{`Are you sure you want to reactivate ${title}?`}</h2>
             <p className="text-sm text-center">
-              This deal will be deactivated and can be found in Archives
+              This deal will be reactivated and restored to your active deals
             </p>
             <div className="flex mt-4 gap-x-3 w-full items-center">
               <Button
@@ -46,7 +46,7 @@ export default function DeactivateModal({
               <Button
                 className="w-full h-[51px] py-3"
                 onClick={() => {
-                  onDeactivate();
+                  onReactivate();
                   setCurrentStep(2);
                 }}
               >
@@ -61,7 +61,7 @@ export default function DeactivateModal({
           <div className="flex flex-col gap-y-2 items-center justify-center">
             <Success />
             <h2 className="text-lg font-bold text-primary-text">Successful</h2>
-            <p className="text-sm text-center">{title} has been deactivated</p>
+            <p className="text-sm text-center">{title} has been reactivated</p>
           </div>
         );
     }

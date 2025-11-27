@@ -20,7 +20,7 @@ export const DEFAULT_INVENTORY_VALUES: Partial<InventoryProduct> = {
   quantity: 0,
   maxStockLevel: 200,
   // minStockLevelPercentage: 10,
-  // status: "DRAFT",
+  status: "ACTIVE",
   showInMenu: true,
   isFeatured: false,
   variant: {

@@ -32,7 +32,7 @@ export default function DeleteModal({
       setTimeout(() => {
         setCurrentStep(1);
         onClose();
-      }, 2000);
+      }, 3000);
     }
   }, [currentStep, onClose]);
 

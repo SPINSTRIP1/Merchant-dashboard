@@ -88,7 +88,7 @@ export default function GeneralInfo() {
         <Input
           {...register("name")}
           className="!rounded-2xl border border-neutral-accent"
-          placeholder="Enter Company Name"
+          placeholder="Enter Product name"
         />
       </div>
       <div className="space-y-1.5">
@@ -214,7 +214,7 @@ export default function GeneralInfo() {
         <Input
           {...register("brand")}
           className="!rounded-2xl border border-neutral-accent"
-          placeholder="Enter Brand Name"
+          placeholder="Enter Brand"
         />
       </div>
       <div className="space-y-1.5">
