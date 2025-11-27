@@ -116,6 +116,11 @@ export const inventoryProductSchema = z
       minStockLevel: z.number().int(),
     }),
     media: z.array(z.string()).optional(),
+    averageRating: z.number().min(0).max(5).optional(),
+    totalSales: z.number().int().min(0).optional(),
+    totalViews: z.number().int().min(0).optional(),
+    discountPercentage: z.number().min(0).max(100).optional(),
+    reorderThreshold: z.number().int().min(0).optional(),
   })
   .refine((data) => data.sellingPrice >= data.costPrice, {
     message: "Selling price should be greater than or equal to cost price",

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DEALS_SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { X } from "lucide-react";
+import { Deal } from "../../../deals/_schemas";
 
 export default function Visibility() {
   const {
@@ -16,12 +17,12 @@ export default function Visibility() {
   const isFeatured = watch("isFeatured");
   const dealIds = watch("dealIds") || [];
 
-  const { data } = useQuery({
+  const { data } = useQuery<Deal[]>({
     queryKey: ["deals"],
     queryFn: async () => {
       try {
         const response = await api.get(DEALS_SERVER_URL + "/deals");
-        return response.data;
+        return response.data.data;
       } catch (error) {
         console.log("Error fetching deals:", error);
         return [];
@@ -50,9 +51,10 @@ export default function Visibility() {
   };
 
   const getDealById = (dealId: string) => {
-    return data?.find((deal: { id: string }) => deal.id === dealId);
+    return data?.find((deal: Deal) => deal.id === dealId);
   };
-
+  const options =
+    data?.map((deal) => ({ label: deal.name, value: deal.id })) || [];
   return (
     <div className="space-y-7">
       <div className="space-y-1.5">
@@ -97,7 +99,7 @@ export default function Visibility() {
         <SelectDropdown
           className="!rounded-2xl border border-neutral-accent"
           placeholder="Add to Deals"
-          options={data || []}
+          options={options}
           value={""}
           onValueChange={(value) => {
             addDeal(value);

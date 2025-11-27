@@ -19,49 +19,66 @@ import SuccessModal from "./modals/success-modal";
 import DeleteModal from "./modals/delete-modal";
 import DeactivateModal from "./modals/deactivate-modal";
 import InsightsModal from "./modals/insights-modal";
-
-export interface DealItem {
-  title: string;
-  description: string;
-  percentageIncrease: string;
-}
-export const deals: DealItem[] = [
-  {
-    title: "Sunday Buffet Special",
-    description:
-      "A special deal for sunday lovers to unwind, unleash and enjoy good food, affordable price and serene atmosphere in the companny of friends, family and loved onens.",
-    percentageIncrease: "+25% Today",
-  },
-  {
-    title: "Sunday Buffet Special",
-    description:
-      "A special deal for sunday lovers to unwind, unleash and enjoy good food, affordable price and serene atmosphere in the companny of friends, family and loved onens.",
-    percentageIncrease: "+25% Today",
-  },
-  {
-    title: "Sunday Buffet Special",
-    description:
-      "A special deal for sunday lovers to unwind, unleash and enjoy good food, affordable price and serene atmosphere in the companny of friends, family and loved onens.",
-    percentageIncrease: "+25% Today",
-  },
-];
+import { useDealsForm } from "../_context";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { DEALS_SERVER_URL } from "@/constants";
+import { useQueryClient } from "@tanstack/react-query";
+import { Deal } from "../_schemas";
+import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
+import { toast } from "react-hot-toast";
+import api from "@/lib/api/axios-client";
+import { formatDateDisplay } from "@/utils";
 
 export default function DealsTable() {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [action, setAction] = useState<
-    "add" | "edit" | "delete" | "deactivate" | "insights" | null
-  >(null);
+  const [selectedItem, setSelectedItem] = useState<Deal | null>(null);
+  const {
+    action,
+    setAction,
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    statusFilter,
+    setStatusFilter,
+    sortBy,
+    setSortBy,
+    form,
+  } = useDealsForm();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const queryClient = useQueryClient();
 
-  // Calculate pagination values
-  const totalItems = deals.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-  const currentItems = deals.slice(startIndex, endIndex);
+  // Use server pagination hook with search and filters
+  const { items, currentPage, totalPages, isLoading, handlePageChange } =
+    useServerPagination<Deal>({
+      queryKey: "deals",
+      endpoint: `${DEALS_SERVER_URL}/deals`,
+      searchQuery: debouncedSearch,
+      filters: {
+        status: statusFilter,
+        sortBy: sortBy,
+      },
+    });
+
+  // Optimistic delete hook
+  const { deleteItem } = useOptimisticDelete<Deal>({
+    queryKey: ["deals", currentPage],
+    deleteEndpoint: `${DEALS_SERVER_URL}/deals`,
+    successMessage: "Item deleted successfully",
+    errorMessage: "Failed to delete item",
+  });
+
+  const handleDeactivate = async (id: string) => {
+    try {
+      await api.post(`${DEALS_SERVER_URL}/deals/${id}/status`, {
+        status: "ARCHIVED",
+      });
+      toast.success("Item archived successfully");
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to archive item");
+    }
+  };
+  // console.log(items);
   return (
     <section className="grid gap-5 grid-cols-[1fr_293px]">
       <div>
@@ -74,16 +91,70 @@ export default function DealsTable() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="flex items-center gap-x-2">
-            <Dropdown header="" options={["All", "Some"]} placeholder="All" />
             <Dropdown
               header=""
-              options={["All", "Some"]}
+              options={[
+                "All Status",
+                "Draft",
+                "Active",
+                "Paused",
+                "Ended",
+                "Archived",
+              ]}
+              placeholder="All Status"
+              onSelect={(value) => {
+                if (value === "All Status") {
+                  setStatusFilter("");
+                } else if (value === "Draft") {
+                  setStatusFilter("DRAFT");
+                } else if (value === "Active") {
+                  setStatusFilter("ACTIVE");
+                } else if (value === "Paused") {
+                  setStatusFilter("PAUSED");
+                } else if (value === "Ended") {
+                  setStatusFilter("ENDED");
+                } else if (value === "Archived") {
+                  setStatusFilter("ARCHIVED");
+                }
+              }}
+            />
+            <Dropdown
+              header=""
+              options={[
+                "Name",
+                "Start Date",
+                "End Date",
+                "Date Updated",
+                "Date Created",
+              ]}
               placeholder="Sort by"
+              onSelect={(value) => {
+                switch (value) {
+                  case "Name":
+                    setSortBy("name");
+                    break;
+                  case "Start Date":
+                    setSortBy("startDate");
+                    break;
+                  case "End Date":
+                    setSortBy("endDate");
+                    break;
+                  case "Date Updated":
+                    setSortBy("updated");
+                    break;
+                  case "Date Created":
+                    setSortBy("created");
+                    break;
+                }
+              }}
             />
           </div>
           <div className="flex justify-end w-full lg:w-fit items-center gap-x-2">
             <button
-              onClick={() => setAction("add")}
+              onClick={() => {
+                form.reset();
+                setAction("add");
+              }}
               className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4"
             >
               <HugeiconsIcon
@@ -106,99 +177,147 @@ export default function DealsTable() {
             </Link>
           </div>
         </div>
-        {currentItems.map((deal, index) => (
-          <ContainerWrapper key={index} className="mt-5">
-            <div className="flex gap-x-4 justify-between mb-3 w-full">
-              <div className="flex-shrink-0">
-                <h2 className="font-bold text-primary-text">{deal.title}</h2>
-                <p className="text-[#34C759] text-xs">
-                  {deal.percentageIncrease}
-                </p>
-              </div>
-              <p className="max-w-[435px] w-full">{deal.description}</p>
-              <button
-                onClick={() =>
-                  setSelectedIndex((prev) => (prev === index ? null : index))
-                }
-                className="min-w-6 min-h-6 max-h-6 max-w-6 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
-              >
-                <ChevronRight size={20} className="text-secondary-text" />
-              </button>
-            </div>
-            <div className="flex justify-between w-full">
-              <div className="flex items-center gap-x-2">
-                <button
-                  onClick={() => setAction("edit")}
-                  className="rounded-xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2"
-                >
-                  <HugeiconsIcon icon={Edit02Icon} size={16} color="#FFFFFF" />
-                  <p className="font-normal text-sm">Edit</p>
-                </button>
-                <button
-                  onClick={() => setAction("deactivate")}
-                  className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
-                >
-                  <X color="#6932E2" size={16} />
-                  <p className="font-normal text-sm">Deactivate</p>
-                </button>
-                <button
-                  onClick={() => setAction("insights")}
-                  className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
-                >
-                  <HugeiconsIcon icon={Chart03Icon} color="#6932E2" size={16} />
-                  <p className="font-normal text-sm">Insights</p>
-                </button>
-              </div>
-
-              <button
-                onClick={() => setAction("delete")}
-                className="rounded-xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
-              >
-                <HugeiconsIcon icon={Delete02Icon} color="#FF383C" size={16} />
-                <p className="font-normal text-sm">Delete</p>
-              </button>
-            </div>
-            {selectedIndex === index && (
-              <div className="border-t mt-4">
-                <div className="flex items-center justify-between my-2 w-full">
-                  <h2 className="font-bold mb-1">Discount</h2>
-                  <p>10% </p>
+        {isLoading ? (
+          <div className="flex w-full items-center py-10">
+            <p className="text-gray-500">Loading inventory...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex w-full items-center py-10">
+            <p className="text-gray-500">No items found</p>
+          </div>
+        ) : (
+          items.map((deal, index) => (
+            <ContainerWrapper key={index} className="mt-5">
+              <div className="flex gap-x-4 justify-between mb-3 w-full">
+                <div className="flex-shrink-0">
+                  <h2 className="font-bold text-primary-text">{deal.name}</h2>
+                  <p className="text-[#34C759] text-xs">
+                    {deal.status === "ACTIVE"
+                      ? "Active"
+                      : deal.status === "PAUSED"
+                      ? "Paused"
+                      : "Draft"}
+                  </p>
                 </div>
-                <div className="flex items-center justify-between my-2 w-full">
-                  <h2 className="font-bold mb-1">Menu Items</h2>
-                  <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
-                    {[
-                      "Jollof Rice and Chicken",
-                      "Fried Rice and Chicken",
-                      "Asun Rice",
-                      "Goat Meat Pepper Soup",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1"
-                      >
-                        <p className="text-sm">{item}</p>
-                      </div>
-                    ))}
+                <p className="max-w-[435px] w-full">{deal.description}</p>
+                <button
+                  onClick={() =>
+                    setSelectedItem((prev) => (prev === deal ? null : deal))
+                  }
+                  className="min-w-6 min-h-6 max-h-6 max-w-6 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
+                >
+                  <ChevronRight size={20} className="text-secondary-text" />
+                </button>
+              </div>
+              <div className="flex justify-between w-full">
+                <div className="flex items-center gap-x-2">
+                  <button
+                    onClick={() => {
+                      form.reset({
+                        campaignId: deal.campaignId,
+                        name: deal.name,
+                        description: deal.description,
+                        discountPercentage: deal.discountPercentage,
+                        maximumThreshold: deal.maximumThreshold,
+                        startDate: deal.startDate,
+                        endDate: deal.endDate,
+                        isFeatured: deal.isFeatured,
+                        productIds: deal.productIds,
+                        id: deal.id,
+                      });
+                      setAction("edit");
+                    }}
+                    className="rounded-xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2"
+                  >
+                    <HugeiconsIcon
+                      icon={Edit02Icon}
+                      size={16}
+                      color="#FFFFFF"
+                    />
+                    <p className="font-normal text-sm">Edit</p>
+                  </button>
+                  <button
+                    onClick={() => setAction("deactivate")}
+                    className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
+                  >
+                    <X color="#6932E2" size={16} />
+                    <p className="font-normal text-sm">Deactivate</p>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedItem(deal);
+                      setAction("insights");
+                    }}
+                    className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
+                  >
+                    <HugeiconsIcon
+                      icon={Chart03Icon}
+                      color="#6932E2"
+                      size={16}
+                    />
+                    <p className="font-normal text-sm">Insights</p>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setAction("delete")}
+                  className="rounded-xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
+                >
+                  <HugeiconsIcon
+                    icon={Delete02Icon}
+                    color="#FF383C"
+                    size={16}
+                  />
+                  <p className="font-normal text-sm">Delete</p>
+                </button>
+              </div>
+              {selectedItem === deal && (
+                <div className="border-t mt-4">
+                  <div className="flex items-center justify-between my-2 w-full">
+                    <h2 className="font-bold mb-1">Discount</h2>
+                    <p>{selectedItem.discountPercentage}% </p>
+                  </div>
+                  <div className="flex items-center justify-between my-2 w-full">
+                    <h2 className="font-bold mb-1">Menu Items</h2>
+                    <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
+                      {[
+                        "Jollof Rice and Chicken",
+                        "Fried Rice and Chicken",
+                        "Asun Rice",
+                        "Goat Meat Pepper Soup",
+                      ].map((item) => (
+                        <div
+                          key={item}
+                          className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1"
+                        >
+                          <p className="text-sm">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between my-2 w-full">
+                    <h2 className="font-bold mb-1">Validity period</h2>
+                    <p>
+                      {formatDateDisplay(selectedItem.startDate)} -{" "}
+                      {formatDateDisplay(selectedItem.endDate)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between my-2 w-full">
+                    <h2 className="font-bold mb-1">Maximum Threshold</h2>
+                    <p>{selectedItem.maximumThreshold} Orders</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between my-2 w-full">
-                  <h2 className="font-bold mb-1">Validity period</h2>
-                  <p>15 Jan 2025 - 31 Dec 2025</p>
-                </div>
-                <div className="flex items-center justify-between my-2 w-full">
-                  <h2 className="font-bold mb-1">Maximum Threshold</h2>
-                  <p>500 Orders</p>
-                </div>
-              </div>
-            )}
-          </ContainerWrapper>
-        ))}
-        <PaginationButton
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          totalPages={totalPages}
-        />
+              )}
+            </ContainerWrapper>
+          ))
+        )}
+        {!isLoading && totalPages > 0 && (
+          <PaginationButton
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
       <PerformingDeals />
       <DealsModal
@@ -214,22 +333,25 @@ export default function DealsTable() {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        description="Sunday Buffet Special Deal has been updated"
+        description={`${selectedItem?.name || ""} Deal has been updated`}
       />
       <DeleteModal
         isOpen={action === "delete"}
         onClose={() => setAction(null)}
-        title="Sunday Buffet Special"
+        title={selectedItem?.name || ""}
+        onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
       />
       <DeactivateModal
         isOpen={action === "deactivate"}
         onClose={() => setAction(null)}
-        title="Sunday Buffet Special"
+        onDeactivate={() => handleDeactivate(selectedItem?.id || "")}
+        title={selectedItem?.name || ""}
       />
 
       <InsightsModal
         isOpen={action === "insights"}
         onClose={() => setAction(null)}
+        deal={selectedItem}
       />
     </section>
   );

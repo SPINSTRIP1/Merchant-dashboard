@@ -23,6 +23,7 @@ export default function Pricing() {
           <Input
             className="!rounded-2xl border border-neutral-accent"
             placeholder="30%"
+            {...register("discountPercentage")}
           />
         </div>
         <div className="space-y-1.5">

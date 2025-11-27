@@ -21,6 +21,7 @@ import {
   Exchange01Icon,
   EyeIcon,
   PlusSignSquareIcon,
+  ViewOffSlashIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { EllipsisVertical } from "lucide-react";
@@ -163,11 +164,13 @@ export default function InventoryTable() {
             <TableRow className="border-b-0">
               {[
                 "Item",
+                "Catalog",
                 "Category",
                 "Stock Level",
                 "Price",
                 "Status",
                 "Updated",
+                "Visibility",
                 "Actions",
               ].map((header) => (
                 <TableHead
@@ -202,6 +205,8 @@ export default function InventoryTable() {
                   key={item.id}
                 >
                   <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.catalog.name}</TableCell>
+
                   <TableCell>{item.category.name}</TableCell>
                   <TableCell>{item.inventory.stockLevel}</TableCell>
                   <TableCell>
@@ -225,6 +230,15 @@ export default function InventoryTable() {
                     </div>
                   </TableCell>
                   <TableCell>{formatISODate(item.updatedAt!)}</TableCell>
+                  <TableCell className="pl-6">
+                    <HugeiconsIcon
+                      icon={
+                        item.status === "ACTIVE" ? EyeIcon : ViewOffSlashIcon
+                      }
+                      size={24}
+                      color={"#6F6D6D"}
+                    />
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="pl-4 outline-none">
@@ -281,8 +295,14 @@ export default function InventoryTable() {
                             },
                           },
                           {
-                            icon: EyeIcon,
-                            label: "Hide Item",
+                            icon:
+                              item.status === "ACTIVE"
+                                ? EyeIcon
+                                : ViewOffSlashIcon,
+                            label:
+                              item.status === "ACTIVE"
+                                ? "Hide Item"
+                                : "Show Item",
                             onClick: (e: React.MouseEvent) => {
                               e.stopPropagation();
                             },

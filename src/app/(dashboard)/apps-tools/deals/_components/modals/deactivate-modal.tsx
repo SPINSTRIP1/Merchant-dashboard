@@ -6,10 +6,12 @@ export default function DeactivateModal({
   isOpen,
   title,
   onClose,
+  onDeactivate,
 }: {
   isOpen: boolean;
   title: string;
   onClose: () => void;
+  onDeactivate: () => void;
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const handleClose = useCallback(() => {
@@ -19,7 +21,7 @@ export default function DeactivateModal({
 
   useEffect(() => {
     if (currentStep === 2) {
-      setTimeout(handleClose, 1500);
+      setTimeout(handleClose, 2000);
     }
   }, [currentStep, handleClose]);
 
@@ -43,7 +45,10 @@ export default function DeactivateModal({
               </Button>
               <Button
                 className="w-full h-[51px] py-3"
-                onClick={() => setCurrentStep(2)}
+                onClick={() => {
+                  onDeactivate();
+                  setCurrentStep(2);
+                }}
               >
                 Confirm
               </Button>

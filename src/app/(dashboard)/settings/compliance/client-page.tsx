@@ -15,11 +15,13 @@ import AboutBusiness from "./_components/about-business";
 import UploadDocuments from "./_components/upload-documents";
 import UBO from "./_components/ubo";
 import Loader from "@/components/loader";
+import { useReduxAuth } from "@/hooks/use-redux-auth";
 
 export default function ClientPage() {
   //   const router = useRouter();
   const { data, isLoading } = useComplianceStatus();
-
+  const user = useReduxAuth().user;
+  console.log(user);
   const {
     steps,
     currentStep,

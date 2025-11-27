@@ -6,6 +6,7 @@ export const campaignSchema = z.object({
   status: z.string().optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
+  id: z.string(),
 });
 export type Campaign = z.infer<typeof campaignSchema>;
 
@@ -23,12 +24,11 @@ export const dealSchema = z.object({
     .optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  productIds: z
-    .array(z.string())
-    .min(1, "At least one product must be selected"),
+  productIds: z.array(z.string()),
+  // .min(1, "At least one product must be selected"),
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"]),
   isFeatured: z.boolean(),
-  id: z.string().optional(),
+  id: z.string(),
 });
 
 export type Deal = z.infer<typeof dealSchema>;

@@ -38,6 +38,27 @@ export const formatISODate = (isoString: string): string => {
   return `${day}/${month}/${year}`;
 };
 
+// Format ISO date string to YYYY-MM-DD for date inputs
+export const formatDateForInput = (isoString: string): string => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Format ISO date string to "31 Dec 2025" format
+export const formatDateDisplay = (isoString: string): string => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const day = date.getDate();
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+};
+
 export const capitalizeFirstLetter = (str: string | undefined): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);

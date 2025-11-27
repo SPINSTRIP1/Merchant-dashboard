@@ -78,7 +78,7 @@ export default function InventoryItem() {
   const stats = [
     {
       title: "Total Sales",
-      value: 0,
+      value: data?.totalSales || 0,
       icon: DiscountTag02Icon,
     },
     {
@@ -93,13 +93,13 @@ export default function InventoryItem() {
     },
     {
       title: "Avg. Rating",
-      value: 0,
+      value: data?.averageRating || 0,
       icon: StarIcon,
       ratings: 4.2,
     },
     {
       title: "Total Views",
-      value: 0,
+      value: data?.totalViews || 0,
       icon: EyeIcon,
     },
   ];

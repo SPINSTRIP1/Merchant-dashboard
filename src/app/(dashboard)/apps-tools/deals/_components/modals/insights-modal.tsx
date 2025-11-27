@@ -1,18 +1,22 @@
 import { X } from "lucide-react";
 import PerformanceChart from "../performance-chart";
 import RevenueChart from "../revenue-chart";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AiSheetsIcon, Download04Icon } from "@hugeicons/core-free-icons";
+import { Deal } from "../../_schemas";
+import { formatDateDisplay } from "@/utils";
 
 export default function InsightsModal({
   isOpen,
   onClose,
+  deal,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  deal: Deal | null;
 }) {
-  if (!isOpen) return null;
+  if (!isOpen || !deal) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -23,16 +27,10 @@ export default function InsightsModal({
       >
         <div className="flex gap-x-4 justify-between mb-3 w-full">
           <div className="flex-shrink-0">
-            <h2 className="font-bold text-primary-text">
-              Sunday Buffet Special
-            </h2>
-            <p className="text-[#34C759] text-xs">+25% Today</p>
+            <h2 className="font-bold text-primary-text">{deal?.name}</h2>
+            {/* <p className="text-[#34C759] text-xs">+25% Today</p> */}
           </div>
-          <p className="max-w-[435px] w-full">
-            A special deal for sunday lovers to unwind, unleash and enjoy good
-            food, affordable price and serene atmosphere in the companny of
-            friends, family and loved onens.
-          </p>
+          <p className="max-w-[435px] w-full">{deal.description}</p>
           <button
             onClick={onClose}
             className="min-w-6 min-h-6 max-h-6 max-w-6 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
@@ -55,7 +53,7 @@ export default function InsightsModal({
         <div className="border-t text-sm mt-8 pt-4">
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1">Discount</h2>
-            <p>10% </p>
+            <p>{deal.discountPercentage}% </p>
           </div>
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1">Menu Items</h2>
@@ -77,11 +75,14 @@ export default function InsightsModal({
           </div>
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1">Validity period</h2>
-            <p>15 Jan 2025 - 31 Dec 2025</p>
+            <p>
+              {formatDateDisplay(deal.startDate)} -{" "}
+              {formatDateDisplay(deal.endDate)}
+            </p>
           </div>
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1">Maximum Threshold</h2>
-            <p>500 Orders</p>
+            <p>{deal.maximumThreshold} Orders</p>
           </div>
         </div>
         <div className="flex justify-end mt-6 mb-2 gap-x-3 w-full items-center">

@@ -31,6 +31,7 @@ export default function StockManagement() {
           <Input
             className="!rounded-2xl border border-neutral-accent"
             placeholder="12%"
+            {...register("reorderThreshold")}
           />
         </div>
       </div>

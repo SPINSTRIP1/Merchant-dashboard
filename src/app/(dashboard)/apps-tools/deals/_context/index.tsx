@@ -17,7 +17,13 @@ import api from "@/lib/api/axios-client";
 import { DEALS_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 
-export type ActionType = "add" | "edit" | "delete" | "duplicate" | null;
+export type ActionType =
+  | "add"
+  | "edit"
+  | "delete"
+  | "deactivate"
+  | "insights"
+  | null;
 interface DealsContextType {
   form: ReturnType<typeof useForm<Deal>>;
   loading: boolean;
@@ -70,9 +76,9 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
 
   const submitDeal = useCallback(async () => {
     setLoading(true);
+    const formData = getValues();
+    const isUpdating = Boolean(formData.id);
     try {
-      const formData = getValues();
-      const isUpdating = Boolean(formData.id);
       let res;
       if (isUpdating) {
         const { id, ...updateData } = formData;
@@ -96,7 +102,11 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
       if (error instanceof z.ZodError) {
         toast.error("Please check all form fields and try again.");
       } else {
-        toast.error("Failed to create deal. Please try again.");
+        toast.error(
+          `Failed to ${
+            isUpdating ? "update" : "create"
+          } deal. Please try again.`
+        );
       }
     } finally {
       setLoading(false);
