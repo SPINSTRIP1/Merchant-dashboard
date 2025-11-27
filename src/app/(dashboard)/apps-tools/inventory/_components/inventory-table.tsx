@@ -88,7 +88,6 @@ export default function InventoryTable() {
   const handleDuplicate = async (id: string) => {
     try {
       await api.post(`${INVENTORY_SERVER_URL}/products/${id}/duplicate`);
-      toast.success("Item duplicated successfully");
       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
     } catch (error) {
       console.log(error);

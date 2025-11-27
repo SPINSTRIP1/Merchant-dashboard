@@ -14,7 +14,7 @@ interface UseOptimisticDeleteOptions {
 export function useOptimisticDelete<T extends { id: string }>({
   queryKey,
   deleteEndpoint,
-  successMessage = "Item deleted successfully",
+  //   successMessage = "Item deleted successfully",
   errorMessage = "Failed to delete item",
   onSuccess,
   onError,
@@ -74,7 +74,7 @@ export function useOptimisticDelete<T extends { id: string }>({
       onError?.(error);
     },
     onSuccess: () => {
-      toast.success(successMessage);
+      //   toast.success(successMessage);
       onSuccess?.();
     },
     onSettled: () => {

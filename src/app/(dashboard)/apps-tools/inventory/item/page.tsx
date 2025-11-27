@@ -21,42 +21,89 @@ import { useState } from "react";
 import InventoryChart from "./_components/inventory-chart";
 import InventoryItemTable from "./_components/table";
 import InventoryModal from "../_components/modals/inventory-modal";
+import DeleteModal from "../../deals/_components/modals/delete-modal";
+import DuplicateModal from "../../deals/_components/modals/delete-modal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { INVENTORY_SERVER_URL } from "@/constants";
+import api from "@/lib/api/axios-client";
+import { InventoryProduct } from "../_schemas";
+import Loader from "@/components/loader";
+import { useInventoryForm } from "../_context";
+import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
+import toast from "react-hot-toast";
+import { capitalizeFirstLetter, formatAmount } from "@/utils";
 
 export default function InventoryItem() {
-  const stats = [
-    {
-      title: "Total Sales",
-      value: 53,
-      icon: DiscountTag02Icon,
-    },
-    {
-      title: "Stock Quantity",
-      value: 63,
-      icon: ArrangeByNumbers19Icon,
-    },
-    {
-      title: "Current Price",
-      value: 2463,
-      icon: CoinsDollarIcon,
-    },
-    {
-      title: "Avg. Rating",
-      value: 3201,
-      icon: StarIcon,
-      ratings: 4.2,
-    },
-    {
-      title: "Total Views",
-      value: 2463,
-      icon: EyeIcon,
-    },
-  ];
+  const { form, setAction, action } = useInventoryForm();
+  // Optimistic delete hook
+
+  const queryClient = useQueryClient();
+  const { deleteItem } = useOptimisticDelete<InventoryProduct>({
+    queryKey: ["inventory-products"],
+    deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
+    successMessage: "Item deleted successfully",
+    errorMessage: "Failed to delete item",
+    onSuccess: () => router.back(),
+  });
+
+  const handleDuplicate = async (id: string) => {
+    try {
+      await api.post(`${INVENTORY_SERVER_URL}/products/${id}/duplicate`);
+      queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to duplicate item");
+    }
+  };
   const router = useRouter();
   const params = useSearchParams();
   const itemId = params.get("id");
   const [showlogs, setShowlogs] = useState(false);
   const [showPrices, setShowPrices] = useState(false);
-  const [action, setAction] = useState<"add" | "edit" | null>(null);
+  const { data, isLoading } = useQuery({
+    queryKey: ["inventory-item", itemId],
+    queryFn: async () => {
+      try {
+        const response = await api.get(
+          INVENTORY_SERVER_URL + "/products/" + itemId
+        );
+        return response.data.data as InventoryProduct;
+      } catch (error) {
+        console.log("Error fetching compliance status:", error);
+
+        return null;
+      }
+    },
+  });
+  const stats = [
+    {
+      title: "Total Sales",
+      value: 0,
+      icon: DiscountTag02Icon,
+    },
+    {
+      title: "Stock Quantity",
+      value: data?.inventory.quantity || 0,
+      icon: ArrangeByNumbers19Icon,
+    },
+    {
+      title: "Current Price",
+      value: formatAmount(Number(data?.sellingPrice || 0)),
+      icon: CoinsDollarIcon,
+    },
+    {
+      title: "Avg. Rating",
+      value: 0,
+      icon: StarIcon,
+      ratings: 4.2,
+    },
+    {
+      title: "Total Views",
+      value: 0,
+      icon: EyeIcon,
+    },
+  ];
+  if (isLoading) return <Loader />;
   return (
     <div>
       <div className="flex items-center mb-6 gap-x-2">
@@ -71,16 +118,31 @@ export default function InventoryItem() {
           className="flex items-center gap-x-2"
         >
           <ChevronLeft />{" "}
-          <p className="font-bold text-primary-text">{itemId}</p>
+          <p className="font-bold text-primary-text">{data?.name}</p>
         </button>
       </div>
       <div className="flex flex-col md:flex-row gap-x-5 md:items-center gap-y-4 justify-between">
         <div className="flex gap-x-2.5">
-          <Item item={{ name: itemId!, id: "SKU: 00145", img: "/item.jpg" }} />
+          <Item
+            item={{
+              name: data?.name || "",
+              id: `ID: ${itemId?.slice(0, 8).toUpperCase()}`,
+              img: data?.media?.[0] || "/item.jpg",
+            }}
+          />
           <div
-            className={`${statusColors["In Stock"]} h-fit w-[80px] flex items-center justify-center py-1 rounded-lg`}
+            className={`${
+              statusColors[data?.inventory.stockStatus || "IN_STOCK"]
+            } h-fit w-[80px] flex items-center justify-center py-1 rounded-lg`}
           >
-            <p className="font-semibold uppercase text-xxs">{"In Stock"}</p>
+            <p className="font-semibold uppercase text-xxs">
+              {" "}
+              {data?.inventory.stockStatus === "IN_STOCK"
+                ? "In Stock"
+                : data?.inventory.stockStatus === "LOW_STOCK"
+                ? "Low Stock"
+                : "Out of Stock"}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap item-center gap-3">
@@ -88,28 +150,65 @@ export default function InventoryItem() {
             {
               icon: Edit02Icon,
               label: "Edit Item",
-              onClick: () => setAction("edit"),
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+                form.reset({
+                  id: data?.id,
+                  name: data?.name,
+                  description: data?.description || "",
+                  categoryId: data?.categoryId,
+                  catalogId: data?.catalogId,
+                  tags: data?.tags || [],
+                  brand: data?.brand || "",
+                  productType: data?.productType,
+                  sellingPrice: Number(data?.sellingPrice) || 0,
+                  costPrice: Number(data?.costPrice) || 0,
+                  taxPercentage: Number(data?.taxPercentage) || 0,
+                  quantity: data?.inventory.quantity || 0,
+                  maxStockLevel: data?.inventory.maxStockLevel || 0,
+                  minStockLevelPercentage: data?.inventory.minStockLevel || 0,
+                  showInMenu: data?.showInMenu,
+                  isFeatured: data?.isFeatured,
+                  variant: data?.variant || undefined,
+                  slotConfig: data?.slotConfig || undefined,
+                  dealIds: data?.dealIds || [],
+                  media: data?.media || [],
+                });
+                setAction("edit");
+              },
             },
             {
               icon: Copy01Icon,
               label: "Duplicate Item",
-              onClick: () => {},
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+
+                setAction("duplicate");
+              },
             },
             {
               icon: Exchange01Icon,
               label: "Restock Item",
-              onClick: () => {},
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+              },
             },
             {
               icon: EyeIcon,
-              label: "Hide/Archive Item",
-              onClick: () => {},
+              label: "Hide Item",
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+              },
             },
             {
               icon: Delete02Icon,
               label: "Delete Item",
               color: "#FF5F57",
-              onClick: () => {},
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+
+                setAction("delete");
+              },
             },
           ].map(({ icon, label, color, onClick }) => (
             <button
@@ -167,67 +266,72 @@ export default function InventoryItem() {
           {" "}
           <h2 className="font-bold text-primary-text mb-1">Description</h2>
           <p>
-            Fluffy long-grain rice simmered in rich tomato, pepper & spice
-            blend, served with a touch of smoky flavor. Smoky, flavorful Jollof
-            rice cooked in rich tomato sauce, served with tender grilled chicken
-            and fried plantains. A classic West African dish that brings bold
-            taste and comfort in every bite.
+            {data?.description || "No description available for this item."}
           </p>
         </div>
         <div>
           <h2 className="font-bold text-primary-text mb-1">Tags</h2>
-          <div className="flex items-center gap-x-2">
-            {["🔥 Bestseller", "Jollof", "Spicy", "Chicken"].map((item) => (
+          {data?.tags && data.tags.length > 0 ? (
+            <div className="flex items-center gap-x-2">
+              {data?.tags.map((item) => (
+                <div
+                  key={item}
+                  className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1.5"
+                >
+                  <p className="text-sm capitalize">{item}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm">No tags available for this item.</p>
+          )}
+        </div>
+        <div>
+          <h2 className="font-bold text-primary-text mb-1">Category</h2>
+          <p>
+            {data?.category?.name || "No category available for this item."}
+          </p>
+        </div>
+        <div>
+          <h2 className="font-bold text-primary-text mb-1">Brand</h2>
+          <p>{data?.brand || "No brand available for this item."}</p>
+          <div className="md:flex grid grid-cols-2 gap-5 mt-4 items-center flex-wrap">
+            {data?.media?.map((img, index) => (
               <div
-                key={item}
-                className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1"
+                key={index}
+                className="w-full h-[150px] md:w-[253px] md:h-[206px] rounded-lg overflow-hidden"
               >
-                <p className="text-sm">{item}</p>
+                <Image
+                  src={img}
+                  width={253}
+                  height={206}
+                  alt="Images"
+                  className="w-full h-full object-cover"
+                />
               </div>
             ))}
           </div>
         </div>
         <div>
-          <h2 className="font-bold text-primary-text mb-1">Category</h2>
-          <p>Meals, Lunch</p>
-        </div>
-        <div>
-          <h2 className="font-bold text-primary-text mb-1">Brand</h2>
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center mr-1.5">
-              <Image
-                src={"/item-2.jpg"}
-                className="w-full object-cover h-full"
-                width={40}
-                height={40}
-                alt="avatar"
-              />
-            </div>
-
-            <p className="text-sm">Canton Cuisine</p>
-          </div>
-          <div className="md:flex grid grid-cols-2 gap-5 mt-4 items-center flex-wrap">
-            {["/item-2.jpg", "/item.jpg", "/item-2.jpg", "/item.jpg"].map(
-              (img, index) => (
-                <div
-                  key={index}
-                  className="w-full h-[150px] md:w-[253px] md:h-[206px] rounded-lg overflow-hidden"
-                >
-                  <Image
-                    src={img}
-                    width={253}
-                    height={206}
-                    alt="Images"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <div>
           <h2 className="font-bold text-primary-text mb-1">Variants</h2>
-          <p>Regular (N16,000), Large Portion (N24,000)</p>
+          {data?.variant ? (
+            <p>
+              {Object.keys(data.variant)
+                .map(
+                  (key) =>
+                    `${capitalizeFirstLetter(key)} (${
+                      data.variant
+                        ? capitalizeFirstLetter(
+                            data.variant[key as keyof typeof data.variant]
+                          )
+                        : ""
+                    })`
+                )
+                .join(", ")}
+            </p>
+          ) : (
+            <p>No variants available</p>
+          )}
         </div>
       </ContainerWrapper>
       <div className="mt-5 lg:mt-9 grid lg:grid-cols-[454px_1fr] gap-4">
@@ -357,9 +461,30 @@ export default function InventoryItem() {
       </div>
       <InventoryItemTable />
       <InventoryModal
-        isOpen={action !== null}
-        action="edit"
+        isOpen={action === "add" || action === "edit"}
+        action={action}
         onClose={() => setAction(null)}
+      />
+      <DeleteModal
+        isOpen={action === "delete"}
+        title={data?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => deleteItem(data?.id || "")}
+        secondaryText="Cancel"
+        description="This product will be deleted permanently and cannot be recovered!"
+      />
+      <DuplicateModal
+        isOpen={action === "duplicate"}
+        title={data?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => handleDuplicate(data?.id || "")}
+        secondaryText="Cancel"
+        primaryText="Duplicate"
+        description="This product will be duplicated!"
+        successMessage="This product has been duplicated successfully."
+        headTitle={`Are you sure you want to duplicate ${
+          data?.name || "this item"
+        }?`}
       />
     </div>
   );
