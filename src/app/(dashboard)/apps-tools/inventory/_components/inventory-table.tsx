@@ -266,8 +266,8 @@ export default function InventoryTable() {
                                 quantity: item.inventory.quantity || 0,
                                 maxStockLevel:
                                   item.inventory.maxStockLevel || 0,
-                                minStockLevelPercentage:
-                                  item.inventory.minStockLevel || 0,
+                                // minStockLevelPercentage:
+                                //   item.inventory.minStockLevel || 0,
                                 showInMenu: item.showInMenu,
                                 isFeatured: item.isFeatured,
                                 variant: item.variant || undefined,
