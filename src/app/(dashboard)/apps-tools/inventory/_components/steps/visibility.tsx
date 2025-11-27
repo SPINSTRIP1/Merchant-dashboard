@@ -22,14 +22,13 @@ export default function Visibility() {
     queryFn: async () => {
       try {
         const response = await api.get(DEALS_SERVER_URL + "/deals");
-        return response.data.data;
+        return response.data.data.data;
       } catch (error) {
         console.log("Error fetching deals:", error);
         return [];
       }
     },
   });
-
   const addDeal = (dealId: string) => {
     if (dealId && !dealIds.includes(dealId)) {
       setValue("dealIds", [...dealIds, dealId], {
