@@ -95,12 +95,28 @@ export default function InventoryTable() {
       toast.error("Failed to duplicate item");
     }
   };
+
+  const handleStatusChange = async (
+    id: string,
+    newStatus: "ACTIVE" | "INACTIVE"
+  ) => {
+    try {
+      await api.patch(`${INVENTORY_SERVER_URL}/products/${id}`, {
+        status: newStatus,
+      });
+      queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
+      toast.success("Item status updated successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to change item status");
+    }
+  };
   return (
     <section>
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
         <h1 className="text-sm lg:text-base font-bold">Inventory</h1>
         <SearchBar
-          placeholder="Search by item name, SKU or category..."
+          placeholder="Search by item name, category..."
           className="bg-[#F3F3F3] w-full max-w-full"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -305,6 +321,10 @@ export default function InventoryTable() {
                                 : "Show Item",
                             onClick: (e: React.MouseEvent) => {
                               e.stopPropagation();
+                              handleStatusChange(
+                                item.id,
+                                item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+                              );
                             },
                           },
                           {

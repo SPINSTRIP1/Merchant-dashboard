@@ -20,7 +20,7 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
   const user = useReduxAuth().user;
 
   return (
-    <nav className="w-full mb-10 bg-foreground rounded-[32px] p-4 lg:p-6">
+    <nav className="w-full max-w-[1440px] mx-auto mb-10 bg-foreground rounded-[32px] p-4 lg:p-6">
       <div className="flex items-center lg:items-end justify-between lg:justify-end w-full">
         {/* <div className="bg-[#E0E0E0] h-[35px] border border-[#C8C8C8] flex-shrink-0 w-full flex items-end gap-x-1.5 px-1 py-1.5 rounded-3xl max-w-[370px]">
           <Search className="text-[#6F6D6D]" strokeWidth={1.2} />
