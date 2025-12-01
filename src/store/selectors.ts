@@ -20,7 +20,7 @@ export const selectSearchQuery = (state: RootState) => state.apps.searchQuery;
 export const selectActiveApps = createSelector(
   [selectAppsState],
   (appsState) => {
-    return constantsApps.filter((app) => appsState[app.name] === true);
+    return constantsApps.filter((app) => appsState[app.name].isActive);
   }
 );
 
@@ -30,7 +30,7 @@ export const selectAppsWithStatus = createSelector(
   (appsState) => {
     return constantsApps.map((app) => ({
       ...app,
-      isActive: appsState[app.name] || false,
+      isActive: appsState[app.name].isActive || false,
     }));
   }
 );

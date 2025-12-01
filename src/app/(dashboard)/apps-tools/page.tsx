@@ -15,6 +15,8 @@ type AppWithStatus = {
   description: string;
   amount?: number;
   isActive: boolean;
+  default?: boolean;
+  tagLine?: string;
 };
 
 export default function Apps() {
@@ -26,7 +28,6 @@ export default function Apps() {
   // Redux state and actions
   const { toggleAppState, searchQuery, updateSearchQuery } = useReduxApps();
   const filteredApps = useAppSelector(selectFilteredApps);
-
   return (
     <section>
       <ContainerWrapper className="h-[121px] bg-primary-background mb-6">
@@ -65,10 +66,14 @@ export default function Apps() {
                   </h2>
                   <Switch
                     checked={app.isActive}
+                    disabled={app.default}
                     onCheckedChange={() => toggleAppState(app.name)}
                   />
                 </div>
-                <p className="text-sm text-secondary-text">{app.description}</p>
+                <p className="text-primary-text font-medium">{app.tagLine}</p>
+                <p className="text-sm text-secondary-text line-clamp-3">
+                  {app.description}
+                </p>
                 <p className="text-base text-primary-text font-bold">
                   {app.amount ? `N${app.amount}/month` : "Free"}
                 </p>

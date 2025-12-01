@@ -178,7 +178,7 @@ NavigationItem.displayName = "NavigationItem";
 
 const UserProfile = memo(
   ({ user, onLogout }: { user: UserData | null; onLogout: () => void }) => (
-    <div className="p-2">
+    <div>
       {/* User Info */}
       <div className="flex items-center mb-4">
         <UserAvatar fullName={user?.fullName} />
@@ -224,9 +224,9 @@ export default function Sidebar() {
   }, [logout]);
 
   return (
-    <div className="bg-[#F8F8F8] min-w-[252px] max-w-[252px] border-r hidden border-gray-300 shadow-md lg:flex flex-col min-h-[924px] max-h-[1024px] 2xl:max-h-screen w-64">
+    <div className="bg-[#F8F8F8] min-w-[252px] px-4 max-w-[252px] border-r hidden border-gray-300 shadow-md lg:flex flex-col min-h-[924px] max-h-[1024px] 2xl:max-h-screen w-64">
       {/* Logo/Brand Section */}
-      <Link href="/" className="p-6 w-full ml-8">
+      <Link href="/" className="p-6 w-full flex items-center justify-center">
         <Image
           src="/logo.svg"
           alt="Spinstrip Logo"
@@ -238,7 +238,7 @@ export default function Sidebar() {
       </Link>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-2 mt-10 py-6">
+      <nav className="flex-1 mt-10 py-6">
         <ul className="space-y-2">
           {navigationLinks.map((link) => (
             <NavigationItem

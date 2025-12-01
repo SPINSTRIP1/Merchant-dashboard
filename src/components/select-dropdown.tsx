@@ -18,6 +18,7 @@ interface SelectDropdownProps {
   category?: string;
   value: string;
   onValueChange?: (value: string) => void;
+  isLoading?: boolean;
 }
 
 export default function SelectDropdown({
@@ -26,6 +27,7 @@ export default function SelectDropdown({
   options,
   category,
   value,
+  isLoading,
   onValueChange,
 }: SelectDropdownProps) {
   const normalizeOption = (option: OptionType) => {
@@ -38,6 +40,7 @@ export default function SelectDropdown({
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
+        disabled={isLoading}
         className={cn("w-full bg-[#F3F3F3] !h-[49px] outline-none", className)}
       >
         <SelectValue placeholder={placeholder} />

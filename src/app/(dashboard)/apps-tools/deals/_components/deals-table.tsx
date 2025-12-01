@@ -10,7 +10,7 @@ import {
   PlusSignSquareIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, X, Gift } from "lucide-react";
 import React, { useState } from "react";
 import PerformingDeals from "./perfoming-deals";
 import Link from "next/link";
@@ -28,6 +28,8 @@ import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import { toast } from "react-hot-toast";
 import api from "@/lib/api/axios-client";
 import { formatDateDisplay, formatDateForInput } from "@/utils";
+import AddButton from "@/app/(dashboard)/_components/add-button";
+import EmptyState from "@/components/empty-state";
 
 export default function DealsTable() {
   const [selectedItem, setSelectedItem] = useState<Deal | null>(null);
@@ -141,20 +143,14 @@ export default function DealsTable() {
             />
           </div>
           <div className="flex justify-end w-full lg:w-fit items-center gap-x-2">
-            <button
+            <AddButton
               onClick={() => {
                 form.reset();
                 setAction("add");
               }}
-              className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4"
-            >
-              <HugeiconsIcon
-                icon={PlusSignSquareIcon}
-                size={24}
-                color="#FFFFFF"
-              />
-              <p className="font-normal">Create Deal</p>
-            </button>
+              title="Create Deal"
+            />
+
             <Link
               href={"/apps-tools/deals/archives"}
               className="rounded-2xl bg-primary-accent h-12 md:h-10 text-primary flex justify-center items-center gap-2 px-4"
@@ -197,48 +193,33 @@ export default function DealsTable() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col w-full items-center justify-center py-20 mt-5">
-            <div className="bg-neutral-accent rounded-full p-6 mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-primary-text mb-2">
-              No Deals Found
-            </h3>
-            <p className="text-secondary-text text-sm text-center max-w-md mb-6">
-              {searchQuery
+          <EmptyState
+            icon={<Gift className="h-16 w-16 text-primary" />}
+            title="No Deals Found"
+            description={
+              searchQuery
                 ? "No deals match your search criteria. Try adjusting your filters."
-                : "You haven't created any deals yet. Create your first deal to get started!"}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => {
-                  form.reset();
-                  setAction("add");
-                }}
-                className="rounded-2xl bg-primary h-10 text-white flex justify-center items-center gap-2 px-4"
-              >
-                <HugeiconsIcon
-                  icon={PlusSignSquareIcon}
-                  size={20}
-                  color="#FFFFFF"
-                />
-                <p className="font-normal">Create Your First Deal</p>
-              </button>
-            )}
-          </div>
+                : "You haven't created any deals yet. Create your first deal to get started!"
+            }
+            action={
+              !searchQuery ? (
+                <button
+                  onClick={() => {
+                    form.reset();
+                    setAction("add");
+                  }}
+                  className="rounded-2xl bg-primary h-10 text-white flex justify-center items-center gap-2 px-4"
+                >
+                  <HugeiconsIcon
+                    icon={PlusSignSquareIcon}
+                    size={20}
+                    color="#FFFFFF"
+                  />
+                  <p className="font-normal">Create Your First Deal</p>
+                </button>
+              ) : undefined
+            }
+          />
         ) : (
           items.map((deal, index) => (
             <ContainerWrapper key={index} className="mt-5">
@@ -337,17 +318,12 @@ export default function DealsTable() {
                   <div className="flex items-center justify-between my-2 w-full">
                     <h2 className="font-bold mb-1">Menu Items</h2>
                     <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
-                      {[
-                        "Jollof Rice and Chicken",
-                        "Fried Rice and Chicken",
-                        "Asun Rice",
-                        "Goat Meat Pepper Soup",
-                      ].map((item) => (
+                      {selectedItem.products.map((item) => (
                         <div
-                          key={item}
+                          key={item.name}
                           className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1"
                         >
-                          <p className="text-sm">{item}</p>
+                          <p className="text-sm">{item.name}</p>
                         </div>
                       ))}
                     </div>

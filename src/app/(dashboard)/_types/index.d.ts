@@ -1,8 +1,8 @@
+import { Menu } from "../apps-tools/menu/_schemas";
+
 export interface ItemCardProps {
-  imgUrl: string;
-  title: string;
-  type: string;
-  price: string;
-  quantity: number;
-  rating: number;
+  menu: Menu;
+  isEditing?: boolean;
+  onDelete?: (e: Menu) => void;
+  onEdit?: (e: Menu) => void;
 }

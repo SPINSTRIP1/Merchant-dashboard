@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import React, { useState } from "react";
-import UploadFile from "../upload-file";
+import UploadFile from "../../../../_components/upload-file";
 import { useCatalogs } from "../../_hooks/use-catalogs";
 import { useInventoryForm } from "../../_context";
 import SelectDropdown from "@/components/select-dropdown";

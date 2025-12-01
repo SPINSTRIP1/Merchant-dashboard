@@ -88,7 +88,7 @@ export default function InventoryItem() {
     },
     {
       title: "Current Price",
-      value: formatAmount(Number(data?.sellingPrice || 0)),
+      value: formatAmount(data?.sellingPrice || 0),
       icon: CoinsDollarIcon,
     },
     {
@@ -166,7 +166,6 @@ export default function InventoryItem() {
                   taxPercentage: Number(data?.taxPercentage) || 0,
                   quantity: data?.inventory.quantity || 0,
                   maxStockLevel: data?.inventory.maxStockLevel || 0,
-                  minStockLevelPercentage: data?.inventory.minStockLevel || 0,
                   showInMenu: data?.showInMenu,
                   isFeatured: data?.isFeatured,
                   variant: data?.variant || undefined,

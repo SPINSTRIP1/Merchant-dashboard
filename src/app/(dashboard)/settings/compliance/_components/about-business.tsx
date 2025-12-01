@@ -140,7 +140,7 @@ export default function AboutBusiness() {
           onFileSelect={(fileKey) => {
             if (fileKey) {
               handleFieldChange("logo", fileKey);
-              console.log("Logo uploaded, fileKey:", fileKey);
+              // console.log("Logo uploaded, fileKey:", fileKey);
             }
           }}
         />

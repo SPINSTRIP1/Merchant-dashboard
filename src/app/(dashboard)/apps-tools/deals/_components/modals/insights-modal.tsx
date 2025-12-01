@@ -58,17 +58,12 @@ export default function InsightsModal({
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1">Menu Items</h2>
             <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
-              {[
-                "Jollof Rice and Chicken",
-                "Fried Rice and Chicken",
-                "Asun Rice",
-                "Goat Meat Pepper Soup",
-              ].map((item) => (
+              {deal.products.map((item) => (
                 <div
-                  key={item}
+                  key={item.id}
                   className="border border-neutral-accent rounded-xl w-fit py-0.5 px-1"
                 >
-                  <p className="text-sm text-secondary-text">{item}</p>
+                  <p className="text-sm text-secondary-text">{item.name}</p>
                 </div>
               ))}
             </div>

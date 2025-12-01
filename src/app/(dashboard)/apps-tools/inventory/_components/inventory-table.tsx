@@ -24,7 +24,7 @@ import {
   ViewOffSlashIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, Package } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import InventoryModal from "./modals/inventory-modal";
@@ -40,6 +40,7 @@ import { useInventoryForm } from "../_context";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
+import EmptyState from "@/components/empty-state";
 
 export const statusColors: Record<StockStatus, string> = {
   IN_STOCK: "text-[#34C759] bg-[#34C75926]",
@@ -207,8 +208,34 @@ export default function InventoryTable() {
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">No items found</p>
+                <TableCell colSpan={9} className="py-0">
+                  <EmptyState
+                    icon={<Package className="h-16 w-16 text-primary" />}
+                    title="No Inventory Items"
+                    description={
+                      searchQuery
+                        ? "No items match your search criteria. Try adjusting your filters."
+                        : "You haven't added any inventory items yet. Add your first item to get started!"
+                    }
+                    action={
+                      !searchQuery ? (
+                        <button
+                          onClick={() => {
+                            form.reset();
+                            setAction("add");
+                          }}
+                          className="rounded-2xl bg-primary h-10 text-white flex justify-center items-center gap-2 px-4"
+                        >
+                          <HugeiconsIcon
+                            icon={PlusSignSquareIcon}
+                            size={20}
+                            color="#FFFFFF"
+                          />
+                          <p className="font-normal">Add Your First Item</p>
+                        </button>
+                      ) : undefined
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -225,9 +252,7 @@ export default function InventoryTable() {
 
                   <TableCell>{item.category.name}</TableCell>
                   <TableCell>{item.inventory.stockLevel}</TableCell>
-                  <TableCell>
-                    {formatAmount(Number(item.sellingPrice))}
-                  </TableCell>
+                  <TableCell>{formatAmount(item.sellingPrice)}</TableCell>
                   <TableCell className="w-[140px]">
                     <div
                       className={`${

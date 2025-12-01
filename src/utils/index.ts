@@ -22,8 +22,10 @@ export const decrypt = (encrypted: string): string => {
 };
 
 // Format amount to Nigerian Naira
-export const formatAmount = (amount: number): string => {
-  return `₦${amount.toLocaleString("en-NG", {
+export const formatAmount = (amount: number | string): string => {
+  const numericAmount =
+    typeof amount === "string" ? parseFloat(amount) : amount;
+  return `₦${numericAmount.toLocaleString("en-NG", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

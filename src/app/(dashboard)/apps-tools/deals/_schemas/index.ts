@@ -1,4 +1,5 @@
 import z from "zod";
+import { inventoryProductSchema } from "../../inventory/_schemas";
 
 export const campaignSchema = z.object({
   name: z.string().min(2, "Campaign name must be at least 2 characters"),
@@ -25,6 +26,7 @@ export const dealSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
   productIds: z.array(z.string()),
+  products: z.array(inventoryProductSchema),
   // .min(1, "At least one product must be selected"),
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"]),
   isFeatured: z.boolean(),

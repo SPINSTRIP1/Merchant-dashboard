@@ -5,7 +5,7 @@ import PaginationButton from "@/components/pagination-button";
 import SearchBar from "@/components/search-bar";
 import { Delete02Icon, Exchange01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import DeleteModal from "../_components/modals/delete-modal";
@@ -19,6 +19,7 @@ import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import EmptyState from "@/components/empty-state";
 
 export default function Archives() {
   const router = useRouter();
@@ -193,32 +194,15 @@ export default function Archives() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col w-full items-center justify-center py-20">
-          <div className="bg-neutral-accent rounded-full p-6 mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-16 w-16 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-bold text-primary-text mb-2">
-            No Archived Deals
-          </h3>
-          <p className="text-secondary-text text-sm text-center max-w-md">
-            {searchQuery
+        <EmptyState
+          icon={<Archive className="h-16 w-16 text-primary" />}
+          title="No Archived Deals"
+          description={
+            searchQuery
               ? "No archived deals match your search criteria"
-              : "You don't have any archived deals yet. Archived deals will appear here."}
-          </p>
-        </div>
+              : "You don't have any archived deals yet. Archived deals will appear here."
+          }
+        />
       ) : (
         items.map((deal, index) => (
           <ContainerWrapper key={index} className="mt-5">

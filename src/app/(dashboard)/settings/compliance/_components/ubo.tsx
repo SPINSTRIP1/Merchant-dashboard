@@ -179,10 +179,10 @@ export default function UBO() {
               if (fileKey) {
                 // Update the bankStatement field for this specific UBO
                 updateUboField(uboIndex, "bankStatement", fileKey);
-                console.log(
-                  `UBO ${uboIndex + 1} bank statement uploaded, fileKey:`,
-                  fileKey
-                );
+                // console.log(
+                //   `UBO ${uboIndex + 1} bank statement uploaded, fileKey:`,
+                //   fileKey
+                // );
               }
             }}
           />

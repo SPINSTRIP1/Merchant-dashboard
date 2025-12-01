@@ -16,7 +16,7 @@ interface UseServerPaginationOptions {
   endpoint: string;
   initialPage?: number;
   searchQuery?: string;
-  filters?: Record<string, string>;
+  filters?: Record<string, string | boolean | number>;
 }
 
 export function useServerPagination<T>({
@@ -38,17 +38,18 @@ export function useServerPagination<T>({
     queryFn: async () => {
       try {
         // Build query params
-        const params = new URLSearchParams();
-        params.set("page", currentPage.toString());
+        const params: Record<string, string | boolean | number> = {
+          page: currentPage,
+        };
 
         if (searchQuery) {
-          params.set("search", searchQuery);
+          params.search = searchQuery;
         }
 
         // Add filter params
         Object.entries(filters).forEach(([key, value]) => {
-          if (value) {
-            params.set(key, value);
+          if (value !== undefined && value !== null && value !== "") {
+            params[key] = value;
           }
         });
 
@@ -60,7 +61,7 @@ export function useServerPagination<T>({
         );
         return response.data.data;
       } catch (error) {
-        console.error(`Error fetching ${queryKey}:`, error);
+        console.log(`Error fetching ${queryKey}:`, error);
         return null;
       }
     },

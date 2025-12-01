@@ -1,8 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { apps as initialApps } from "@/constants";
 
-interface AppState {
-  [appName: string]: boolean;
+export interface AppState {
+  [appName: string]: {
+    isActive: boolean;
+    default?: boolean;
+    amount?: number;
+    description?: string;
+    tagLine?: string;
+  };
 }
 
 interface AppsState {
@@ -14,7 +20,7 @@ interface AppsState {
 const initializeAppsState = (): AppState => {
   const state: AppState = {};
   initialApps.forEach((app) => {
-    state[app.name] = app.isActive;
+    state[app.name] = { isActive: app.isActive, default: app.default };
   });
   return state;
 };
@@ -30,14 +36,17 @@ const appsSlice = createSlice({
   reducers: {
     toggleApp: (state, action: PayloadAction<string>) => {
       const appName = action.payload;
-      state.appsState[appName] = !state.appsState[appName];
+      state.appsState[appName] = {
+        ...state.appsState[appName],
+        isActive: !state.appsState[appName].isActive,
+      };
     },
     setAppState: (
       state,
       action: PayloadAction<{ appName: string; isActive: boolean }>
     ) => {
       const { appName, isActive } = action.payload;
-      state.appsState[appName] = isActive;
+      state.appsState[appName].isActive = isActive;
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
