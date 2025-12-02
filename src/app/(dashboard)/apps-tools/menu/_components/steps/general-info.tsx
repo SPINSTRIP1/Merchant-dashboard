@@ -59,7 +59,7 @@ export default function GeneralInfo() {
             { label: "Unavailable", value: "UNAVAILABLE" },
           ]}
           radioClassName="!w-full"
-          className="!grid !grid-cols-3"
+          className="!grid !grid-cols-2 md:!grid-cols-3"
           onValueChange={(value) => {
             handleFieldChange("status", value);
           }}

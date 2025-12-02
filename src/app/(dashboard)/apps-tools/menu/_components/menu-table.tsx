@@ -137,7 +137,7 @@ export default function MenuTable() {
         onDeleteClick={handleDeleteClick}
         onEditClick={handleEditClick}
       />
-      <div className="flex gap-x-5">
+      <div className="flex flex-col lg:flex-row gap-x-5">
         <div className="w-full flex-1">
           <div className="flex flex-col md:flex-row md:items-center flex-wrap gap-3 justify-between w-full">
             <h1 className="text-sm lg:text-base font-bold">Menu</h1>
@@ -207,7 +207,7 @@ export default function MenuTable() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-10">
-                      <p className="text-gray-500">Loading inventory...</p>
+                      <p className="text-gray-500">Loading menus...</p>
                     </TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
@@ -246,7 +246,9 @@ export default function MenuTable() {
                         setAction("details");
                       }}
                     >
-                      <TableCell>{item.code}</TableCell>
+                      <TableCell className="min-w-[100px]">
+                        {item.code}
+                      </TableCell>
                       <TableCell>
                         <Item
                           item={{

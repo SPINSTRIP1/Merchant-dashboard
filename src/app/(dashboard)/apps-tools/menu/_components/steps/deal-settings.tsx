@@ -47,7 +47,7 @@ export default function DealSettings() {
           placeholder="Brief description of this option goes here..."
         />
 
-        {!isLoading && <p>Fetching deals...</p>}
+        {isLoading && <p>Fetching deals...</p>}
         <SelectDropdown
           className="!rounded-2xl border border-neutral-accent"
           placeholder="Select Deal"

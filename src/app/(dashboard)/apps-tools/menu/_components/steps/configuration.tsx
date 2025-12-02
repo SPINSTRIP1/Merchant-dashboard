@@ -43,19 +43,21 @@ export default function Configuration() {
     }
   };
 
-  const addExtra = () => {
-    setValue("extras", [...extras, { name: "", price: 0 }]);
+  const addExtra = ({ name, price }: { name: string; price: number }) => {
+    setValue("extras", [...extras, { name, price }]);
   };
 
-  const updateExtra = (
-    index: number,
-    field: "name" | "price",
-    value: string | number
-  ) => {
-    const updatedExtras = [...extras];
-    updatedExtras[index] = { ...updatedExtras[index], [field]: value };
-    setValue("extras", updatedExtras);
-  };
+  const [extraInput, setExtraInput] = React.useState({ name: "", price: 0 });
+
+  // const updateExtra = (
+  //   index: number,
+  //   field: "name" | "price",
+  //   value: string | number
+  // ) => {
+  //   const updatedExtras = [...extras];
+  //   updatedExtras[index] = { ...updatedExtras[index], [field]: value };
+  //   setValue("extras", updatedExtras);
+  // };
   const [nutritionInput, setNutritionInput] = React.useState("");
   return (
     <div className="space-y-7">
@@ -115,6 +117,9 @@ export default function Configuration() {
             }}
           />
         </div>
+        <p className="text-center mt-4">
+          Click on the + icon or press Enter to add an item to the list.
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label>Add Ons</Label>
@@ -171,7 +176,7 @@ export default function Configuration() {
           </label>
           {extras.map((extra, index) => (
             <div key={index} className="flex items-center pt-2 gap-x-2">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => addExtra()}
                 className="flex-shrink-0"
@@ -181,24 +186,55 @@ export default function Configuration() {
                   size={24}
                   color={"#6F6D6D"}
                 />
-              </button>
+              </button> */}
               <Input
                 className="rounded-none border-b bg-transparent border-neutral-accent"
                 placeholder="Add Item"
-                value={extra.name}
-                onChange={(e) => updateExtra(index, "name", e.target.value)}
+                defaultValue={extra.name}
               />
               <Input
                 type="number"
                 className="!rounded-2xl max-w-[169px] border border-neutral-accent"
                 placeholder="₦0.00"
-                value={extra.price || ""}
-                onChange={(e) =>
-                  updateExtra(index, "price", parseFloat(e.target.value) || 0)
-                }
+                defaultValue={extra.price || ""}
               />
             </div>
           ))}
+          <div className="flex items-center pt-2 gap-x-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (extraInput.name.trim() && extraInput.price >= 0)
+                  addExtra(extraInput);
+              }}
+              className="flex-shrink-0"
+            >
+              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+            </button>
+            <Input
+              className="rounded-none border-b bg-transparent border-neutral-accent"
+              placeholder="Add Item"
+              value={extraInput.name}
+              onChange={(e) =>
+                setExtraInput({ ...extraInput, name: e.target.value })
+              }
+            />
+            <Input
+              type="number"
+              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
+              placeholder="₦0.00"
+              value={extraInput.price || ""}
+              onChange={(e) =>
+                setExtraInput({
+                  ...extraInput,
+                  price: parseFloat(e.target.value) || 0,
+                })
+              }
+            />
+          </div>
+          <p className="text-center mt-4">
+            Click on the + icon to add an item to the extras list.
+          </p>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { TrendingUp } from "lucide-react";
 export default function TopMenus() {
   const topMenus: ItemCardProps[] = [];
   return (
-    <div className="max-w-[267px] w-full">
+    <div className="lg:max-w-[267px] w-full">
       <Dropdown header="Top Menus" placeholder="July" options={months} />
       {topMenus.length === 0 ? (
         <EmptyState

@@ -18,12 +18,7 @@ export const DEFAULT_MENU_VALUES: Menu = {
   availabilityType: "ALWAYS_AVAILABLE",
   addOns: [],
   nutritionAllergens: [],
-  extras: [
-    {
-      name: "",
-      price: 0,
-    },
-  ],
+  extras: [],
   files: [],
   availabilitySchedule: { days: [], startTime: "", endTime: "" },
   tag: "",
