@@ -16,7 +16,6 @@ type AppWithStatus = {
   amount?: number;
   isActive: boolean;
   default?: boolean;
-  tagLine?: string;
 };
 
 export default function Apps() {
@@ -41,7 +40,7 @@ export default function Apps() {
           value={searchQuery}
           onChange={(e) => updateSearchQuery(e.target.value)}
         />
-        <Dropdown header="" options={["All", "Some"]} placeholder="All" />
+        <Dropdown header="" options={["All"]} placeholder="All" />
       </div>
       <div className="grid my-5 gap-5 md:grid-cols-2">
         {filteredApps.length > 0 ? (
@@ -70,7 +69,6 @@ export default function Apps() {
                     onCheckedChange={() => toggleAppState(app.name)}
                   />
                 </div>
-                <p className="text-primary-text font-medium">{app.tagLine}</p>
                 <p className="text-sm text-secondary-text line-clamp-3">
                   {app.description}
                 </p>

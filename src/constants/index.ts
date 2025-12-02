@@ -2,128 +2,122 @@ export const apps = [
   {
     name: "Wallet",
     description:
-      "Handle and pay your bills instantly, divide costs with friends effortlessly, and stack up rewards as you go. SpinStrip Wallet takes care of the money stuff so you can stay in the moment.",
-    tagLine: "Pay, split, and enjoy all in one tap.",
+      "A secure and seamless payment tool that allows customers to pay instantly and split bills with ease. As a merchant, you receive fast, reliable payments while benefiting from SpinStrip’s reward-driven spending system that encourages customers to return.",
     isActive: true,
     default: true,
     route: "/apps-tools/wallet",
   },
   {
     name: "Event Planner",
-    description:
-      "Turn plans into experiences. From parties to hangouts, this Events Planner helps you create, organize, and share plans effortlessly, so nobody ever says “so what’s the plan?” again. ",
-    tagLine: "Plan it. Live it.",
-    amount: 588,
+    description: `Create, organise, and manage your events effortlessly. From RSVPs and reminders to 
+promotions and guest engagement, this Event Planner gives you everything you need to turn 
+ideas into fully booked experiences. `,
+    amount: 288,
     isActive: false,
     route: "/apps-tools/event-planner",
   },
   {
     name: "Menu",
-    description:
-      "Browse full menus, check prices, and scope out specialties before you even leave the house. No surprises. Just confident choices and great meals.",
-    tagLine: "Know before you go",
+    description: `Showcase your full menu offerings, including pricing, photos, and specialities, so customers know 
+exactly what to expect before visiting. Update items in real time to reduce confusion, set expectations, 
+and highlight best-sellers or promotions. `,
     amount: 588,
     isActive: false,
     route: "/apps-tools/menu",
   },
   {
     name: "Chat",
-    description:
-      "Conversations that lead to memories. Chat with friends, groups, or new people on your wavelength, right inside the app. ",
-    tagLine: "Talk. Connect. Go.",
+    description: `Enable customers to communicate with your business seamlessly. Answer questions, confirm 
+bookings, provide updates, and build strong customer relationships through quick and convenient 
+messaging.`,
     isActive: true,
     default: true,
     route: "/apps-tools/chat",
   },
   {
     name: "Inventory",
-    description:
-      "Save all your favorite experiences in one place—restaurants you love, events you attended, and places you want to try next. Your city, your collection.",
-    tagLine: "Your city, curated by you",
+    description: `Manage stock, menu items, and product availability in real time. Update items instantly, track what’s 
+selling, and ensure your SpinStrip listing always reflects accurate information, improving customer 
+trust and reducing order issues. `,
     amount: 588,
     isActive: false,
     route: "/apps-tools/inventory",
   },
   {
     name: "Groups/Community",
-    description:
-      "Whether you're joining a community or creating your own, this is where real connections happen. Foodies, adventurers, creatives, nightlife lovers—everyone has a home here. ",
-    tagLine: "Find your tribe.",
+    description: `Engage customers by joining or creating communities relevant to your business, such as food lovers, 
+nightlife explorers, coffee enthusiasts, or creative circles. Build lasting loyalty by connecting with 
+audiences who share your niche. `,
     amount: 588,
     isActive: false,
     route: "/apps-tools/groups-community",
   },
   {
     name: "Places",
-    description:
-      "Discover spots that fit your vibe—lounges, cafés, hidden gems, and everywhere worth going. Real ratings, real experiences.",
-    tagLine: "The city in your pocket",
+    description: `Get discovered by customers searching for restaurants, lounges, cafes, hotels, shops, or service-based 
+businesses. Appear in curated lists, location searches, and personalised recommendations to reach the right 
+audience. `,
     isActive: false,
     route: "/apps-tools/places",
-    amount: 421,
+    amount: 588,
   },
   {
     name: "Socials",
-    description:
-      "Share your experiences, build your presence, and let people discover the city through your lens. Creators earn as they post. ",
-    tagLine: "Your life. Your city. Your spotlight",
+    description: `Showcase your brand through photos, videos, and customer experiences shared on SpinStrip. As 
+users tag, review, and post about your business, you gain visibility, social proof, and a growing digital 
+presence. `,
     isActive: false,
-    amount: 421,
     route: "/apps-tools/socials",
+    amount: 588,
   },
   {
     name: "Reviews",
-    description:
-      "See what people actually think before you commit. Leave honest reviews, help others decide, and discover places through trusted voices—not ads.",
-    tagLine: "Real stories. Real ratings",
+    description: `Gain insights from transparent customer feedback. Positive reviews help build credibility, while 
+constructive feedback helps improve service. Reviews on SpinStrip are designed to enhance trust and 
+influence decision-making. `,
     isActive: true,
     default: true,
     route: "/apps-tools/reviews",
   },
   {
     name: "Deals",
-    description:
-      "Enjoy the city without breaking the bank. Unlock exclusive discounts on food, drinks, events, experiences, and more. ",
-    tagLine: "Good vibes, better prices",
+    description: `Attract more customers by offering exclusive SpinStrip discounts or limited-time promotions. Deals 
+help your business stand out, boost off-peak demand, and increase customer loyalty. `,
     isActive: false,
     route: "/apps-tools/deals",
-    amount: 421,
   },
   {
     name: "Customers",
-    description:
-      "Manage your customer relationships, track orders, and build loyalty. Keep your regulars coming back and turn first-timers into lifelong fans.",
-    tagLine: "Know your people. Grow your business.",
+    description: `View and understand your customer base through detailed insights. Track visits, preferences, and 
+feedback to better tailor your services. SpinStrip helps you turn new visitors into loyal, returning 
+customers. `,
     isActive: true,
     default: true,
     route: "/apps-tools/customers",
   },
   {
     name: "Payment Method",
-    description:
-      "Cards, bank transfers, digital wallets- add your preferred method and pay securely in one tap. ",
-    tagLine: "Pay however you want.",
+    description: `Offer customers flexible payment options, including cards, bank transfers, and digital wallets. All 
+methods integrate seamlessly with SpinStrip, ensuring secure, fast, and reliable transactions. `,
     isActive: true,
     default: true,
     route: "/apps-tools/payment-method",
   },
   {
     name: "Memberships",
-    description:
-      "Level up your lifestyle. Get priority reservations, premium deals, VIP event access, and perks that make every outing feel special.",
-    tagLine: "Unlock the good life.",
+    description: `Offer premium perks through SpinStrip’s membership system. Provide special access, priority 
+bookings, exclusive menus, and VIP experiences that reward loyal customers and increase repeat 
+visits. `,
     isActive: false,
-    amount: 421,
     route: "/apps-tools/memberships",
   },
   {
     name: "Ads",
-    description:
-      "Put your brand in front of people looking for exactly what you offer. Smart targeting, high intent, real results.",
-    tagLine: "Reach customers ready to explore.",
+    description: `Promote your brand directly to high-intent customers who are ready to explore, book, or spend. Run 
+targeted, location-based ads that appear in searches, feeds, and recommendations. Smart targeting 
+ensures real visibility, real engagement, and real results. `,
     isActive: false,
     route: "/apps-tools/ads",
-    amount: 421,
   },
 ];
 
