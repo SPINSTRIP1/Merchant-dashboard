@@ -92,10 +92,10 @@ export const inventoryProductSchema = z
       .number()
       .int()
       .positive("Max stock level must be positive"),
-    // minStockLevelPercentage: z
-    //   .number()
-    //   .min(0, "Minimum stock percentage cannot be negative")
-    //   .max(100, "Minimum stock percentage cannot exceed 100"),
+    minStockLevel: z
+      .number()
+      .min(0, "Minimum stock percentage cannot be negative")
+      .max(100, "Minimum stock percentage cannot exceed 100"),
     status: productStatusSchema,
     showInMenu: z.boolean(),
     isFeatured: z.boolean(),

@@ -8,6 +8,9 @@ import { DEALS_SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { X } from "lucide-react";
 import { Deal } from "../../../deals/_schemas";
+import Link from "next/link";
+import { Switch } from "@/components/ui/switch";
+import toast from "react-hot-toast";
 
 export default function Visibility() {
   const {
@@ -26,6 +29,21 @@ export default function Visibility() {
       } catch (error) {
         console.log("Error fetching deals:", error);
         return [];
+      }
+    },
+  });
+  const { data: subscriptionStatus } = useQuery({
+    queryKey: ["deals-subscription-status"],
+    queryFn: async () => {
+      try {
+        const response = await api.get(DEALS_SERVER_URL + "/subscriptions");
+        return response.data.data as { subscribed: boolean };
+      } catch (error) {
+        console.log("Error fetching subscription status:", error);
+        toast.error("Failed to fetch subscription status.");
+        return {
+          subscribed: false,
+        };
       }
     },
   });
@@ -53,7 +71,10 @@ export default function Visibility() {
     return data?.find((deal: Deal) => deal.id === dealId);
   };
   const options =
-    data?.map((deal) => ({ label: deal.name, value: deal.id! })) || [];
+    data?.map((deal) => ({
+      label: `${deal.name} (-${deal.discountPercentage}%) off`,
+      value: deal.id!,
+    })) || [];
   return (
     <div className="space-y-7">
       <div className="space-y-1.5">
@@ -73,6 +94,19 @@ export default function Visibility() {
             });
           }}
         />
+        <p className="text-[#000000E5] flex items-center gap-x-2 mt-7 text-sm">
+          Menu app is not turned ON.
+          <Switch
+            showLabel={false}
+            checked={showInMenu}
+            onCheckedChange={(checked) => {
+              setValue("showInMenu", checked, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }}
+          />
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label>Mark as Featured</Label>
@@ -93,11 +127,11 @@ export default function Visibility() {
         />
       </div>
       <div className="space-y-1.5">
-        <Label>Add to Deals</Label>
+        <Label>Give a discount</Label>
 
         <SelectDropdown
           className="!rounded-2xl border border-neutral-accent"
-          placeholder="Add to Deals"
+          placeholder="Select available deals to apply a discount"
           options={options}
           value={""}
           onValueChange={(value) => {
@@ -105,7 +139,19 @@ export default function Visibility() {
           }}
           category="Deals"
         />
-
+        <p className="text-[#000000E5] mt-7 text-sm">
+          Want to give a discount?{" "}
+          <Link
+            className="font-bold text-primary"
+            href={
+              subscriptionStatus?.subscribed
+                ? "/apps-tools/deals"
+                : "/apps-tools"
+            }
+          >
+            Create Deals
+          </Link>
+        </p>
         {dealIds.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {dealIds.map((dealId) => {

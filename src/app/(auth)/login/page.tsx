@@ -81,6 +81,12 @@ export default function LoginPage() {
                     emailOrUsername: e.target.value,
                   }))
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 placeholder="Enter your Email Address"
               />
             </div>
@@ -91,6 +97,12 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, password: e.target.value }))
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 placeholder="Enter your Password"
                 type={showPassword ? "text" : "password"}
               />
