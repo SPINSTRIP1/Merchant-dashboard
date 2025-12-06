@@ -32,7 +32,7 @@ export default function Apps() {
   const filteredApps = useAppSelector(selectFilteredApps);
   return (
     <section>
-      <ContainerWrapper className="h-[161px] p-0 overflow-hidden bg-primary-background mb-6">
+      <div className="h-[161px] rounded-[32px] !p-0 overflow-hidden bg-primary-background mb-6">
         <Image
           src={"/icons/app-bg.png"}
           alt={"Apps Background"}
@@ -40,7 +40,7 @@ export default function Apps() {
           height={700}
           className="w-full h-full object-cover"
         />
-      </ContainerWrapper>
+      </div>
       <div className="flex items-center justify-between w-full">
         <h1 className="text-sm lg:text-base font-bold">Apps</h1>
         <SearchBar
