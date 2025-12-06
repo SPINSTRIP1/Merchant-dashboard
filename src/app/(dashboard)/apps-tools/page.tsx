@@ -32,7 +32,7 @@ export default function Apps() {
   const filteredApps = useAppSelector(selectFilteredApps);
   return (
     <section>
-      <div className="h-[161px] rounded-[32px] !p-0 overflow-hidden bg-primary-background mb-6">
+      <div className="h-[161px] 2xl:h-[200px] rounded-[32px] !p-0 overflow-hidden mb-6">
         <Image
           src={"/icons/app-bg.png"}
           alt={"Apps Background"}
