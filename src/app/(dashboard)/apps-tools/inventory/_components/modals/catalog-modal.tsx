@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { catalogSchema, type Catalog } from "../../_schemas";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios-client";
 import { INVENTORY_SERVER_URL } from "@/constants";
+import SideModal from "@/app/(dashboard)/_components/side-modal";
 
 export default function CatalogModal({
   isOpen,
@@ -20,8 +21,6 @@ export default function CatalogModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentTagInput, setCurrentTagInput] = useState("");
   const [currentCategoryTagInput, setCurrentCategoryTagInput] = useState("");
@@ -62,18 +61,7 @@ export default function CatalogModal({
 
   const tags = watch("tags");
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      setTimeout(() => setIsAnimating(true), 10);
-    } else {
-      setIsAnimating(false);
-      setTimeout(() => setIsVisible(false), 300);
-    }
-  }, [isOpen]);
-
   const handleClose = () => {
-    setIsAnimating(false);
     setTimeout(() => {
       onClose();
       reset();
@@ -369,53 +357,36 @@ export default function CatalogModal({
     }
   };
 
-  if (!isVisible) return null;
+  if (!isOpen) return null;
 
   return (
-    <div
-      className={`fixed inset-0 bg-black flex items-center justify-end z-50 transition-all duration-300 ease-in-out ${
-        isAnimating ? "bg-opacity-50" : "bg-opacity-0"
-      }`}
-    >
-      <div
-        className={`bg-white relative rounded-l-3xl p-3 lg:p-4 shadow-xl max-w-[92vw] lg:max-w-[632px] w-full h-screen overflow-y-auto scrollbar-hide transition-transform duration-300 ease-in-out ${
-          isAnimating ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <button
+    <SideModal isOpen={isOpen} onClose={onClose}>
+      <StepIndicator
+        className="mb-16 mt-10 pr-5 md:mt-0 w-full justify-end items-end"
+        currentStep={currentStep}
+        steps={["Create Catalog", "Create Category"]}
+      />
+      {renderContent()}
+      <div className="w-full gap-x-2 flex items-center mt-5 justify-center">
+        <Button
           type="button"
-          onClick={handleClose}
-          className="p-1 absolute top-4 left-3 bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
+          className="w-full"
+          size={"lg"}
+          variant={"secondary"}
+          onClick={() => setCurrentStep(1)}
         >
-          <X size={20} />
-        </button>
-        <StepIndicator
-          className="mb-16 mt-10 pr-5 md:mt-0 w-full justify-end items-end"
-          currentStep={currentStep}
-          steps={["Create Catalog", "Create Category"]}
-        />
-        {renderContent()}
-        <div className="w-full gap-x-2 flex items-center mt-5 justify-center">
-          <Button
-            type="button"
-            className="w-full"
-            size={"lg"}
-            variant={"secondary"}
-            onClick={() => setCurrentStep(1)}
-          >
-            Previous
-          </Button>
-          <Button
-            type="button"
-            className="w-full"
-            size={"lg"}
-            onClick={handleNext}
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : currentStep === 2 ? "Submit" : "Next"}
-          </Button>
-        </div>
+          Previous
+        </Button>
+        <Button
+          type="button"
+          className="w-full"
+          size={"lg"}
+          onClick={handleNext}
+          disabled={loading}
+        >
+          {loading ? "Submitting..." : currentStep === 2 ? "Submit" : "Next"}
+        </Button>
       </div>
-    </div>
+    </SideModal>
   );
 }

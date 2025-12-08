@@ -1,10 +1,7 @@
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-
   children: React.ReactNode;
   className?: string;
 }
@@ -25,14 +22,6 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {children}
-        <div className="w-full flex items-center justify-center">
-          <Button
-            className="w-full mt-3 max-w-52 py-3 h-auto"
-            onClick={onClose}
-          >
-            Close
-          </Button>
-        </div>
       </div>
     </div>
   );

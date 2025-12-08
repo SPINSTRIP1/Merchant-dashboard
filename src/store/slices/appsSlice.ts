@@ -14,6 +14,7 @@ export interface AppState {
 interface AppsState {
   appsState: AppState;
   searchQuery: string;
+  categoryFilter: string;
 }
 
 // Initialize apps state from constants
@@ -28,6 +29,7 @@ const initializeAppsState = (): AppState => {
 const initialState: AppsState = {
   appsState: initializeAppsState(),
   searchQuery: "",
+  categoryFilter: "",
 };
 
 const appsSlice = createSlice({
@@ -51,9 +53,13 @@ const appsSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    setCategoryFilter: (state, action: PayloadAction<string>) => {
+      state.categoryFilter = action.payload;
+    },
     resetAppsState: (state) => {
       state.appsState = initializeAppsState();
       state.searchQuery = "";
+      state.categoryFilter = "";
     },
     bulkUpdateApps: (state, action: PayloadAction<AppState>) => {
       state.appsState = { ...state.appsState, ...action.payload };
@@ -65,6 +71,7 @@ export const {
   toggleApp,
   setAppState,
   setSearchQuery,
+  setCategoryFilter,
   resetAppsState,
   bulkUpdateApps,
 } = appsSlice.actions;

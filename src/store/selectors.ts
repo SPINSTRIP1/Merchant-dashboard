@@ -15,6 +15,8 @@ export const selectAuthError = (state: RootState) => state.auth.error;
 // Apps selectors
 export const selectAppsState = (state: RootState) => state.apps.appsState;
 export const selectSearchQuery = (state: RootState) => state.apps.searchQuery;
+export const selectCategoryFilter = (state: RootState) =>
+  state.apps.categoryFilter;
 
 // Memoized selector for active apps
 export const selectActiveApps = createSelector(
@@ -35,17 +37,40 @@ export const selectAppsWithStatus = createSelector(
   }
 );
 
-// Memoized selector for filtered apps (with search)
+// Memoized selector for filtered apps (with search and category)
 export const selectFilteredApps = createSelector(
-  [selectAppsWithStatus, selectSearchQuery],
-  (apps, searchQuery) => {
-    if (!searchQuery.trim()) return apps;
+  [selectAppsWithStatus, selectSearchQuery, selectCategoryFilter],
+  (apps, searchQuery, categoryFilter) => {
+    let filteredApps = apps;
 
-    const query = searchQuery.toLowerCase();
-    return apps.filter(
-      (app) =>
-        app.name.toLowerCase().includes(query) ||
-        app.description.toLowerCase().includes(query)
-    );
+    // Filter by category
+    if (categoryFilter) {
+      filteredApps = filteredApps.filter((app) => {
+        switch (categoryFilter) {
+          case "free":
+            return !app.amount || app.amount === 0;
+          case "paid":
+            return app.amount && app.amount > 0;
+          case "default":
+            return app.default === true;
+          case "community":
+            return !app.default;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredApps = filteredApps.filter(
+        (app) =>
+          app.name.toLowerCase().includes(query) ||
+          app.description.toLowerCase().includes(query)
+      );
+    }
+
+    return filteredApps;
   }
 );

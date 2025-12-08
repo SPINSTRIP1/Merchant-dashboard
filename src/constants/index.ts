@@ -98,6 +98,7 @@ help your business stand out, boost off-peak demand, and increase customer loyal
     route: "/apps-tools/deals",
     icon: "/icons/Deals.png",
     integrated: true,
+    publisher: "John Doe",
   },
   {
     name: "Customers",

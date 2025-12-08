@@ -41,6 +41,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
 import EmptyState from "@/components/empty-state";
+import AddButton from "@/app/(dashboard)/_components/add-button";
+import CatalogModal from "./modals/catalog-modal";
 
 export const statusColors: Record<StockStatus, string> = {
   IN_STOCK: "text-[#34C759] bg-[#34C75926]",
@@ -64,6 +66,8 @@ export default function InventoryTable() {
     setAction,
     action,
   } = useInventoryForm();
+  const [showModal, setShowModal] = useState(false);
+
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -165,16 +169,20 @@ export default function InventoryTable() {
             }}
           />
         </div>
-        <button
-          onClick={() => {
-            form.reset();
-            setAction("add");
-          }}
-          className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-7"
-        >
-          <HugeiconsIcon icon={PlusSignSquareIcon} size={24} color="#FFFFFF" />
-          <p className="font-normal">Add Item</p>
-        </button>
+        <div className="flex items-center gap-x-2">
+          <AddButton
+            onClick={() => {
+              form.reset();
+              setAction("add");
+            }}
+            title="Add Item"
+          />
+          <AddButton
+            onClick={() => setShowModal(true)}
+            title="Create Catalog"
+            className="bg-primary-accent text-primary"
+          />
+        </div>
       </div>
       <div className="bg-foreground rounded-3xl p-5 mt-8">
         <Table>
@@ -428,6 +436,13 @@ export default function InventoryTable() {
         headTitle={`Are you sure you want to duplicate ${
           selectedItem?.name || "this item"
         }?`}
+      />
+      <CatalogModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          queryClient.invalidateQueries({ queryKey: ["inventory-catalogs"] });
+        }}
       />
     </section>
   );

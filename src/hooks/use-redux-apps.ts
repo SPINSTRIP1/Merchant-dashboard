@@ -4,12 +4,14 @@ import {
   selectAppsState,
   selectAppsWithStatus,
   selectSearchQuery,
+  selectCategoryFilter,
 } from "@/store/selectors";
 import {
   toggleApp,
   setAppState,
   resetAppsState,
   setSearchQuery,
+  setCategoryFilter,
 } from "@/store/slices/appsSlice";
 
 export const useReduxApps = () => {
@@ -19,6 +21,7 @@ export const useReduxApps = () => {
   const appsState = useAppSelector(selectAppsState);
   const appsWithStatus = useAppSelector(selectAppsWithStatus);
   const searchQuery = useAppSelector(selectSearchQuery);
+  const categoryFilter = useAppSelector(selectCategoryFilter);
 
   const toggleAppState = (appName: string) => {
     dispatch(toggleApp(appName));
@@ -36,14 +39,20 @@ export const useReduxApps = () => {
     dispatch(setSearchQuery(query));
   };
 
+  const updateCategoryFilter = (category: string) => {
+    dispatch(setCategoryFilter(category));
+  };
+
   return {
     activeApps,
     appsState,
     appsWithStatus,
     searchQuery,
+    categoryFilter,
     toggleAppState,
     setAppActiveState,
     resetApps,
     updateSearchQuery,
+    updateCategoryFilter,
   };
 };
