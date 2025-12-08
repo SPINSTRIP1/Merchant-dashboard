@@ -55,7 +55,7 @@ export default function ClientPage() {
       </button> */}
 
       {data === "PENDING" ? (
-        <div className="flex flex-col mt-10 bg-foreground py-20 rounded-3xl gap-y-2 items-center justify-center">
+        <div className="flex flex-col mt-10 bg-foreground px-5 py-20 rounded-3xl gap-y-2 items-center justify-center">
           <div className="bg-white relative overflow-hidden p-3 rounded-full shadow-md">
             <HugeiconsIcon
               icon={CheckmarkCircle01Icon}

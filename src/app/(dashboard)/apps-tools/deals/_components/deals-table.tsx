@@ -30,6 +30,7 @@ import api from "@/lib/api/axios-client";
 import { formatDateDisplay, formatDateForInput } from "@/utils";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 import EmptyState from "@/components/empty-state";
+import SubscribeModal from "./modals/subscribe-modal";
 
 export default function DealsTable() {
   const [selectedItem, setSelectedItem] = useState<Deal | null>(null);
@@ -46,6 +47,7 @@ export default function DealsTable() {
     form,
   } = useDealsForm();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const queryClient = useQueryClient();
 
   // Use server pagination hook with search and filters
@@ -150,15 +152,20 @@ export default function DealsTable() {
               }}
               title="Create Deal"
             />
+            <AddButton
+              onClick={() => setShowModal(true)}
+              title="Create Campaign"
+              className="bg-primary-accent text-primary"
+            />
 
             <Link
               href={"/apps-tools/deals/archives"}
               className="rounded-2xl bg-primary-accent h-12 md:h-10 text-primary flex justify-center items-center gap-2 px-4"
             >
-              <p className="font-normal">Archives</p>
+              <p className="font-normal text-sm">Archives</p>
               <HugeiconsIcon
                 icon={ArrowRight02Icon}
-                size={24}
+                size={22}
                 color="#6932E2"
               />
             </Link>
@@ -373,6 +380,7 @@ export default function DealsTable() {
         onClose={() => setAction(null)}
         title={selectedItem?.name || ""}
         onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
+        onDeactivateConfirm={() => setAction("deactivate")}
       />
       <DeactivateModal
         isOpen={action === "deactivate"}
@@ -385,6 +393,13 @@ export default function DealsTable() {
         isOpen={action === "insights"}
         onClose={() => setAction(null)}
         deal={selectedItem}
+      />
+      <SubscribeModal
+        isOpen={showModal}
+        onClose={() => {
+          queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+          setShowModal(false);
+        }}
       />
     </section>
   );

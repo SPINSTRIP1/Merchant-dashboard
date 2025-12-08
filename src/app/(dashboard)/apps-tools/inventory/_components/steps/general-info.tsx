@@ -6,10 +6,8 @@ import UploadFile from "../../../../_components/upload-file";
 import { useCatalogs } from "../../_hooks/use-catalogs";
 import { useInventoryForm } from "../../_context";
 import SelectDropdown from "@/components/select-dropdown";
-import { Plus, X } from "lucide-react";
+import { Info, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 
 export default function GeneralInfo() {
@@ -173,6 +171,12 @@ export default function GeneralInfo() {
             ))}
           </div>
         )}
+        <div className="flex items-center gap-x-1 text-secondary-text">
+          <Info size={14} />
+          <p className="text-xs">
+            Add at least 3 tags to your product to make it more discoverable.
+          </p>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-5">
         <div className="space-y-1.5">
@@ -220,43 +224,43 @@ export default function GeneralInfo() {
       <div className="space-y-1.5">
         <Label>Variants</Label>
 
-        <div className="flex items-center pt-2 gap-x-2">
-          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+        <div className="flex items-center pt-2 gap-x-3">
+          <p>Color:</p>
           <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Color"
+            className="rounded-none border-b pl-0 bg-transparent border-neutral-accent"
+            placeholder="e.g. Blue, Green, burgundy, etc."
             {...register("variant.color")}
           />
         </div>
-        <div className="flex items-center pt-2 gap-x-2">
-          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+        <div className="flex items-center pt-2 gap-x-3">
+          <p>Size:</p>
           <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Size"
+            className="rounded-none border-b pl-0 bg-transparent border-neutral-accent"
+            placeholder="e.g. Inches, cm, litre, medium, large, etc."
             {...register("variant.size")}
           />
         </div>
-        <div className="flex items-center pt-2 gap-x-2">
-          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+        <div className="flex items-center pt-2 gap-x-3">
+          <p>Dimensions:</p>
           <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Dimensions"
+            className="rounded-none border-b pl-0 bg-transparent border-neutral-accent"
+            placeholder="e.g. Length, breadth, depth, or height, etc"
             {...register("variant.dimensions")}
           />
         </div>
-        <div className="flex items-center pt-2 gap-x-2">
-          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+        <div className="flex items-center pt-2 gap-x-3">
+          <p>Shape:</p>
           <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Shape"
+            className="rounded-none border-b pl-0 bg-transparent border-neutral-accent"
+            placeholder="e.g. Circle, square, triangle, rectangle, oval, etc"
             {...register("variant.shape")}
           />
         </div>
-        <div className="flex items-center pt-2 gap-x-2">
-          <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
+        <div className="flex items-center pt-2 gap-x-3">
+          <p>Form:</p>
           <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Form"
+            className="rounded-none border-b pl-0 bg-transparent border-neutral-accent"
+            placeholder="e.g. Solid, liquid, gas, etc."
             {...register("variant.form")}
           />
         </div>

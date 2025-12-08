@@ -11,26 +11,40 @@ export const campaignSchema = z.object({
 });
 export type Campaign = z.infer<typeof campaignSchema>;
 
-export const dealSchema = z.object({
-  campaignId: z.string().optional(),
-  name: z.string().min(2, "Deal name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  discountPercentage: z
-    .number()
-    .min(1, "Discount must be at least 1%")
-    .max(100, "Discount cannot exceed 100%"),
-  maximumThreshold: z
-    .number()
-    .min(0, "Maximum threshold must be a positive number")
-    .optional(),
-  startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().min(1, "End date is required"),
-  productIds: z.array(z.string()),
-  products: z.array(inventoryProductSchema),
-  // .min(1, "At least one product must be selected"),
-  status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"]),
-  isFeatured: z.boolean(),
-  id: z.string().optional(),
-});
+export const dealSchema = z
+  .object({
+    campaignId: z.string().min(1, "Campaign is required"),
+    name: z.string().min(2, "Deal name must be at least 2 characters"),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    discountPercentage: z
+      .number()
+      .min(1, "Discount must be at least 1%")
+      .max(100, "Discount cannot exceed 100%"),
+    maximumThreshold: z
+      .number()
+      .min(0, "Maximum threshold must be a positive number")
+      .optional(),
+    startDate: z.string().min(1, "Start date is required"),
+    endDate: z.string().min(1, "End date is required"),
+    productIds: z.array(z.string()),
+    products: z.array(inventoryProductSchema),
+    // .min(1, "At least one product must be selected"),
+    status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"]),
+    isFeatured: z.boolean(),
+    id: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (start >= end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End date must be after start date",
+        path: ["endDate"],
+      });
+    }
+  });
 
 export type Deal = z.infer<typeof dealSchema>;

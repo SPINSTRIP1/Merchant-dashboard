@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Label } from "./label";
+import { Label } from "../label";
 
 // Define the supported input types (excluding select)
 export type FormInputType =

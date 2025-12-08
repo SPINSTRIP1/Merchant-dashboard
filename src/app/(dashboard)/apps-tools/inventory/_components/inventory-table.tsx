@@ -112,7 +112,7 @@ export default function InventoryTable() {
       toast.error("Failed to change item status");
     }
   };
-  console.log(items);
+
   return (
     <section>
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">

@@ -258,15 +258,18 @@ const MobileSidebar = memo(({ isOpen, toggle }: MobileSidebarProps) => {
   const sidebarClass = useMemo(
     () =>
       cn(
-        "fixed w-[95%] max-w-[350px] lg:hidden h-screen p-5 z-50 bg-[#F8F8F8] border-r border-gray-300 shadow-md transition duration-700 ease-in-out",
-        isOpen ? "-translate-x-4" : "-translate-x-[110%]"
+        "fixed w-[120%] lg:hidden bg-black/50 z-50 transition duration-700 ease-in-out",
+        isOpen ? "-translate-x-4" : "-translate-x-[120%]"
       ),
     [isOpen]
   );
 
   return (
-    <div className={sidebarClass}>
-      <div className="h-[95%] overflow-y-auto flex flex-col justify-between scrollbar-hide">
+    <div className={sidebarClass} onClick={handleToggleSidebar}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[350px] h-screen p-5 pl-6 shadow-md bg-[#F8F8F8] border-r border-gray-300 overflow-y-auto flex flex-col justify-between scrollbar-hide"
+      >
         <div>
           <CloseButton onClick={handleToggleSidebar} />
 

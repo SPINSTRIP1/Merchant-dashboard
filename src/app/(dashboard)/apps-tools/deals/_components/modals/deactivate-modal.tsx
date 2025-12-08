@@ -21,7 +21,7 @@ export default function DeactivateModal({
 
   useEffect(() => {
     if (currentStep === 2) {
-      setTimeout(handleClose, 3);
+      setTimeout(handleClose, 3000);
     }
   }, [currentStep, handleClose]);
 

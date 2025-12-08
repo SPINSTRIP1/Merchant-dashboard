@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { useMenuForm } from "../../_context";
 import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import { FormInput } from "@/components/ui/form-input";
+import { FormInput } from "@/components/ui/forms/form-input";
 
 export default function GeneralInfo() {
   const {

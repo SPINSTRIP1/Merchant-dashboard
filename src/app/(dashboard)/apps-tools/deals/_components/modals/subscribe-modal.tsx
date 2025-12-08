@@ -21,7 +21,8 @@ export default function SubscribeModal({
 
   const {
     register,
-    formState: { errors, isValid },
+    formState: { errors },
+    trigger,
     reset,
     getValues,
   } = useForm<Campaign>({
@@ -36,6 +37,16 @@ export default function SubscribeModal({
   });
 
   const handleNext = async () => {
+    const isValid = await trigger([
+      "name",
+      "description",
+      "startDate",
+      "endDate",
+    ]);
+    if (!isValid) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
     setLoading(true);
     try {
       const payload = getValues();
@@ -55,11 +66,15 @@ export default function SubscribeModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
       <div
         className={
           "bg-foreground rounded-3xl flex flex-col gap-y-3 px-4 py-5  shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
         }
+        onClick={(e) => e.stopPropagation()}
       >
         <h1 className="text-2xl text-primary-text font-bold">
           Create a Campaign
@@ -127,7 +142,7 @@ export default function SubscribeModal({
             className="w-full"
             size={"lg"}
             onClick={handleNext}
-            disabled={loading || !isValid}
+            disabled={loading}
           >
             {loading ? "Submitting..." : "Submit"}
           </Button>

@@ -16,13 +16,15 @@ export default function DashboardLayout({
     <Providers>
       <div className={"flex gap-x-2"}>
         <Sidebar />
-        <div className="w-full h-full">
-          <MobileSidebar
-            isOpen={isOpen}
-            toggle={() => setIsOpen((prev) => !prev)}
-          />
+        <MobileSidebar
+          isOpen={isOpen}
+          toggle={() => setIsOpen((prev) => !prev)}
+        />
+        <div className="w-full p-3 lg:p-0 h-full">
           <Navbar toggle={() => setIsOpen((prev) => !prev)} />
-          <MaxWidthWrapper className="flex-1 !pt-0">{children}</MaxWidthWrapper>
+          <MaxWidthWrapper className="flex-1 px-0 lg:px-2.5 !pt-0">
+            {children}
+          </MaxWidthWrapper>
         </div>
       </div>
     </Providers>

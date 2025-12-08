@@ -16,6 +16,8 @@ import { DEFAULT_DEALS_VALUES } from "../_constants";
 import api from "@/lib/api/axios-client";
 import { DEALS_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
+import { handleAxiosError } from "@/lib/api/handle-axios-error";
+import { AxiosError } from "axios";
 
 export type ActionType =
   | "add"
@@ -55,7 +57,7 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [loading, setLoading] = useState(false);
-  const { getValues, setValue, reset } = form;
+  const { getValues, setValue, reset, trigger } = form;
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -76,7 +78,16 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
   );
 
   const submitDeal = useCallback(async () => {
-    const isValid = await form.trigger();
+    const formData = getValues();
+    const isValid = await trigger([
+      "name",
+      "description",
+      "discountPercentage",
+      "maximumThreshold",
+      "startDate",
+      "endDate",
+      "campaignId",
+    ]);
     if (!isValid) {
       // const errors = form.formState.errors;
       // console.log("Form validation errors:", errors);
@@ -87,8 +98,13 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
       toast.error("Please check all form fields and try again.");
       return;
     }
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    if (start >= end) {
+      toast.error("End date must be after start date.");
+      return;
+    }
     setLoading(true);
-    const formData = getValues();
     const isUpdating = Boolean(formData.id);
     try {
       let res;
@@ -114,16 +130,18 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
       if (error instanceof z.ZodError) {
         toast.error("Please check all form fields and try again.");
       } else {
+        const err = handleAxiosError(error as AxiosError);
         toast.error(
-          `Failed to ${
-            isUpdating ? "update" : "create"
-          } deal. Please try again.`
+          err ||
+            `Failed to ${
+              isUpdating ? "update" : "create"
+            } deal. Please try again.`
         );
       }
     } finally {
       setLoading(false);
     }
-  }, [getValues, queryClient, reset, setAction]);
+  }, [getValues, queryClient, trigger, reset, setAction]);
 
   return (
     <DealsContext.Provider

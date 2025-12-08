@@ -12,6 +12,7 @@ interface DeleteModalProps {
   description?: string;
   headTitle?: string;
   successMessage?: string;
+  onDeactivateConfirm?: () => void;
 }
 
 export default function DeleteModal({
@@ -24,6 +25,7 @@ export default function DeleteModal({
   description = "This deal will be deleted permanently and cannot be recovered",
   headTitle,
   successMessage,
+  onDeactivateConfirm,
 }: Readonly<DeleteModalProps>) {
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -49,7 +51,11 @@ export default function DeleteModal({
             <div className="flex mt-4 gap-x-3 w-full items-center">
               <Button
                 variant={"secondary"}
-                onClick={onClose}
+                onClick={() => {
+                  if (onDeactivateConfirm) {
+                    onDeactivateConfirm();
+                  } else onClose();
+                }}
                 className="w-full h-[51px] py-3"
               >
                 {secondaryText}

@@ -1,5 +1,5 @@
 "use client";
-import ContainerWrapper from "@/components/container-wrapper";
+
 import Dropdown from "@/components/dropdown";
 import { Modal } from "@/components/modal";
 import SearchBar from "@/components/search-bar";
@@ -119,26 +119,39 @@ export default function Apps() {
         )}
       </div>
       <Modal
-        className="max-w-[309px]"
+        className="max-w-[349px]"
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       >
-        <ContainerWrapper className="h-[100px] rounded-lg bg-primary-background mb-3">
-          <div></div>
-        </ContainerWrapper>
+        <Image
+          src={selectedApp?.icon || ""}
+          alt={selectedApp?.name || ""}
+          width={100}
+          height={100}
+          className="w-32 mx-auto mb-3 h-32 object-contain"
+        />
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <h2 className="text-sm lg:text-base font-bold text-primary-text">
               {selectedApp?.name}
             </h2>
-            <Switch
-              checked={selectedApp?.isActive || false}
-              onCheckedChange={() => {
-                if (selectedApp?.name) {
-                  toggleAppState(selectedApp.name);
-                }
-              }}
-            />
+            {selectedApp?.default ? (
+              <div className="bg-primary-accent flex-shrink-0 border-primary text-primary border px-2.5 py-0.5 rounded-3xl">
+                <p className="text-xs">DEFAULT</p>
+              </div>
+            ) : (
+              <Switch
+                checked={selectedApp?.isActive || false}
+                onCheckedChange={() => {
+                  if (selectedApp?.name) {
+                    setSelectedApp((prev) =>
+                      prev ? { ...prev, isActive: !prev.isActive } : prev
+                    );
+                    toggleAppState(selectedApp.name);
+                  }
+                }}
+              />
+            )}
           </div>
           <p className="text-sm text-secondary-text">
             {selectedApp?.description}
