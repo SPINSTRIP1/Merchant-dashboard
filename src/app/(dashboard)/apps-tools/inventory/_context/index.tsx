@@ -92,6 +92,7 @@ export function InventoryFormProvider({
     setLoading(true);
     try {
       const { files, ...formData } = getValues();
+      delete formData.media;
       const isUpdating = Boolean(formData.id);
       let res;
       if (isUpdating) {

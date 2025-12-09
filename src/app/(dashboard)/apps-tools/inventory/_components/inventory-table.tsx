@@ -65,6 +65,7 @@ export default function InventoryTable() {
     searchQuery,
     setAction,
     action,
+    resetForm,
   } = useInventoryForm();
   const [showModal, setShowModal] = useState(false);
 
@@ -116,7 +117,6 @@ export default function InventoryTable() {
       toast.error("Failed to change item status");
     }
   };
-
   return (
     <section>
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
@@ -315,8 +315,10 @@ export default function InventoryTable() {
                                 taxPercentage: Number(item.taxPercentage) || 0,
                                 quantity: item.inventory.quantity || 0,
                                 reorderThreshold: item.reorderThreshold || 0,
-                                // maxStockLevel:
-                                //   item.inventory.maxStockLevel || 0,
+                                discountPercentage:
+                                  Number(item.discountPercentage) || 0,
+                                maxStockLevel:
+                                  item.inventory.maxStockLevel || 0,
                                 // minStockLevelPercentage:
                                 //   item.inventory.minStockLevel || 0,
                                 showInMenu: item.showInMenu,
@@ -415,7 +417,10 @@ export default function InventoryTable() {
       <InventoryModal
         isOpen={action === "add" || action === "edit"}
         action={action}
-        onClose={() => setAction(null)}
+        onClose={() => {
+          resetForm();
+          setAction(null);
+        }}
       />
       <DeleteModal
         isOpen={action === "delete"}

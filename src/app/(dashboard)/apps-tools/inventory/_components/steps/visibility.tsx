@@ -4,13 +4,16 @@ import { Label } from "@/components/ui/label";
 import React from "react";
 import { useInventoryForm } from "../../_context";
 import { useQuery } from "@tanstack/react-query";
-import { DEALS_SERVER_URL } from "@/constants";
+import { DEALS_SERVER_URL, MENUS_SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { X } from "lucide-react";
 import { Deal } from "../../../deals/_schemas";
 import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
 import toast from "react-hot-toast";
+import { Menu } from "../../../menu/_schemas";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { MENU_QUERY_KEY } from "../../../menu/_constants";
 
 export default function Visibility() {
   const {
@@ -31,6 +34,10 @@ export default function Visibility() {
         return [];
       }
     },
+  });
+  const { items: menus } = useServerPagination<Menu>({
+    queryKey: MENU_QUERY_KEY,
+    endpoint: `${MENUS_SERVER_URL}/menu-items`,
   });
   const { data: subscriptionStatus } = useQuery({
     queryKey: ["deals-subscription-status"],
@@ -94,19 +101,21 @@ export default function Visibility() {
             });
           }}
         />
-        <p className="text-[#000000E5] flex items-center gap-x-2 mt-7 text-sm">
-          Menu app is not turned ON.
-          <Switch
-            showLabel={false}
-            checked={showInMenu}
-            onCheckedChange={(checked) => {
-              setValue("showInMenu", checked, {
-                shouldDirty: true,
-                shouldValidate: true,
-              });
-            }}
-          />
-        </p>
+        {menus && menus?.length ? null : (
+          <p className="text-[#000000E5] flex items-center gap-x-2 mt-7 text-sm">
+            Menu app is not turned ON.
+            <Switch
+              showLabel={false}
+              checked={showInMenu}
+              onCheckedChange={(checked) => {
+                setValue("showInMenu", checked, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
+          </p>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label>Mark as Featured</Label>
