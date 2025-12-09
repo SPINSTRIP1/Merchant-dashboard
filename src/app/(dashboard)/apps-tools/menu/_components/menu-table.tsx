@@ -69,7 +69,7 @@ export default function MenuTable() {
       endpoint: `${MENUS_SERVER_URL}/menu-items`,
       searchQuery: debouncedSearch,
       filters: {
-        stockStatus: statusFilter,
+        status: statusFilter,
         category: sortBy,
       },
     });
@@ -111,7 +111,7 @@ export default function MenuTable() {
         currentPage,
         debouncedSearch,
         {
-          stockStatus: statusFilter,
+          status: statusFilter,
           category: sortBy,
         },
       ],

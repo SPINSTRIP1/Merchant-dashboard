@@ -48,7 +48,9 @@ export default function ItemCard({
       <h2 className="font-bold text-primary-text text-base mt-2">
         {menu.name}
       </h2>
-      <p className="text-xs text-gray-500">{menu.category}</p>
+      <p className="text-xs text-gray-500">
+        {menu.category || "Uncategorized"}
+      </p>
       <div className="flex items-center justify-between mt-3">
         <div className="flex gap-x-2">
           <div className="flex items-center gap-x-1">

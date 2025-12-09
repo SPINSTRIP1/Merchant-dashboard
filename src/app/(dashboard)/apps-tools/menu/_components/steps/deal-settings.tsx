@@ -6,14 +6,17 @@ import { useMenuForm } from "../../_context";
 import { DEALS_SERVER_URL } from "@/constants";
 import { Deal } from "../../../deals/_schemas";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api/axios-client";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function DealSettings() {
   const {
     form: { watch, setValue },
+    handleCreateDeals,
   } = useMenuForm();
+  const router = useRouter();
   const isFeatured = watch("isFeatured");
   const dealId = watch("dealId");
   const { data: subscriptionStatus } = useQuery({
@@ -70,26 +73,34 @@ export default function DealSettings() {
           options={options}
           value={dealId || ""}
           onValueChange={(value) => {
-            setValue("dealId", value);
+            setValue("dealId", value == dealId ? undefined : value, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
           }}
           category="Deals"
           isLoading={isLoading}
         />
-        {items && items.length ? null : (
-          <p className="text-[#000000E5] mt-2 text-sm">
-            Want to apply a compaign?{" "}
-            <Link
-              className="font-bold text-primary"
-              href={
+        {/* {items && items.length ? null : ( */}
+        <p className="text-[#000000E5] mt-2 text-sm">
+          Want to apply a campaign?{" "}
+          <Button
+            type="button"
+            variant="link"
+            className="font-bold text-primary p-0 h-auto"
+            onClick={() => {
+              handleCreateDeals();
+              router.push(
                 subscriptionStatus?.subscribed
                   ? "/apps-tools/deals"
                   : "/apps-tools"
-              }
-            >
-              Create Deals
-            </Link>
-          </p>
-        )}
+              );
+            }}
+          >
+            Create Deals
+          </Button>
+        </p>
+        {/* )} */}
       </div>
     </div>
   );

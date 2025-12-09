@@ -20,6 +20,8 @@ import {
 import api from "@/lib/api/axios-client";
 import { MENUS_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
+import { handleAxiosError } from "@/lib/api/handle-axios-error";
+import { AxiosError } from "axios";
 
 export type ActionType =
   | "add"
@@ -48,6 +50,8 @@ interface MenuContextType {
   setSortBy: React.Dispatch<React.SetStateAction<string>>;
   action: ActionType;
   setAction: React.Dispatch<React.SetStateAction<ActionType>>;
+  saveFormToLocalStorage: () => void;
+  handleCreateDeals: () => void;
 }
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
@@ -75,6 +79,31 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Restore form data from localStorage on mount
+  useEffect(() => {
+    const savedFormData = localStorage.getItem("menuFormDraft");
+    const savedStep = localStorage.getItem("menuFormStep");
+
+    if (savedFormData && savedStep) {
+      try {
+        const parsedData = JSON.parse(savedFormData);
+        // Use setTimeout to ensure state updates happen after initial render
+        setTimeout(() => {
+          reset(parsedData);
+          setCurrentStep(parseInt(savedStep));
+          setAction("add");
+          setTimeout(() => {
+            toast.success("Restored your previous menu draft");
+          }, 100);
+        }, 300);
+      } catch (error) {
+        console.log("Error restoring form data:", error);
+        localStorage.removeItem("menuFormDraft");
+        localStorage.removeItem("menuFormStep");
+      }
+    }
+  }, [reset]);
   // Function to trigger validation on field change
   const handleFieldChange = useCallback(
     (fieldName: string, value: unknown) => {
@@ -89,6 +118,9 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
   const resetForm = useCallback(() => {
     reset(DEFAULT_MENU_VALUES as Menu);
     setCurrentStep(1);
+    // Clear localStorage
+    localStorage.removeItem("menuFormDraft");
+    localStorage.removeItem("menuFormStep");
   }, [reset]);
 
   // Submit Menu data
@@ -144,10 +176,11 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.log("Error submitting menu:", error);
+      const err = handleAxiosError(error as AxiosError);
       if (error instanceof z.ZodError) {
         toast.error("Please check all form fields and try again.");
       } else {
-        toast.error("Failed to create menu. Please try again.");
+        toast.error(err || "Failed to create menu. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -175,6 +208,20 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentStep]);
 
+  // Save form data to localStorage
+  const saveFormToLocalStorage = useCallback(() => {
+    const formData = getValues();
+    localStorage.setItem("menuFormDraft", JSON.stringify(formData));
+    localStorage.setItem("menuFormStep", currentStep.toString());
+  }, [getValues, currentStep]);
+
+  // Handle Create Deals button - save form and navigate
+  const handleCreateDeals = useCallback(() => {
+    saveFormToLocalStorage();
+    toast.success("Menu draft saved! You can continue after creating a deal.");
+    setAction(null);
+  }, [saveFormToLocalStorage]);
+
   return (
     <MenuContext.Provider
       value={{
@@ -197,6 +244,8 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
         setSortBy,
         action,
         setAction,
+        saveFormToLocalStorage,
+        handleCreateDeals,
       }}
     >
       <FormProvider {...form}>{children}</FormProvider>

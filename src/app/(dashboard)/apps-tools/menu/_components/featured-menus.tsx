@@ -1,9 +1,8 @@
-import Dropdown from "@/components/dropdown";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import React from "react";
 import { Menu } from "../_schemas";
 import { MENU_QUERY_KEY } from "../_constants";
-import { MENUS_SERVER_URL, months } from "@/constants";
+import { MENUS_SERVER_URL } from "@/constants";
 import EmptyState from "@/components/empty-state";
 import { Star } from "lucide-react";
 import ItemCard from "@/app/(dashboard)/_components/item-card";
@@ -24,7 +23,7 @@ export default function FeaturedMenus({
   });
   return (
     <div>
-      <Dropdown header="Featured Menus" options={months} placeholder="July" />
+      <h2 className="font-bold text-primary-text text-sm">Featured Menus</h2>
       <div className="flex gap-4">
         {isLoading ? (
           <div className="flex gap-4 mb-5 w-full">

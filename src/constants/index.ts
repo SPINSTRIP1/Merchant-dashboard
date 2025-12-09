@@ -53,8 +53,7 @@ trust and reducing order issues. `,
   {
     name: "Groups/Community",
     description: `Engage customers by joining or creating communities relevant to your business, such as food lovers, 
-nightlife explorers, coffee enthusiasts, or creative circles. Build lasting loyalty by connecting with 
-audiences who share your niche. `,
+nightlife explorers, coffee enthusiasts, or creative circles. Build lasting loyalty by connecting with your audience.`,
     amount: 588,
     isActive: false,
     route: "/apps-tools/groups-community",

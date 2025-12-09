@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { useMenuForm } from "../../_context";
 import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
 import { FormInput } from "@/components/ui/forms/form-input";
+import { CategorySelectWithAdd } from "@/components/category-select-with-add";
 
 export default function GeneralInfo() {
   const {
@@ -36,17 +37,19 @@ export default function GeneralInfo() {
       </div>
       <div className="space-y-1.5">
         <Label>Category</Label>
-        <MultiSelect
+        <CategorySelectWithAdd
           value={category}
           options={[
             { label: "Breakfast", value: "BREAKFAST" },
             { label: "Lunch", value: "LUNCH" },
             { label: "Dinner", value: "DINNER" },
-            { label: "Add Category", value: "OTHER" },
           ]}
           onValueChange={(value) => {
             handleFieldChange("category", value);
           }}
+          // onAddCategory={(newCategory) => {
+          //   handleFieldChange("category", newCategory.value);
+          // }}
         />
       </div>
       <div className="space-y-1.5">
@@ -69,7 +72,7 @@ export default function GeneralInfo() {
         control={control}
         label="Tag"
         name="tag"
-        placeholder='Enter Item Tag e.g "🔥 Best Seller"'
+        placeholder='Enter Item Tag e.g "Best Seller"'
       />
       <FormInput
         control={control}

@@ -187,7 +187,7 @@ export default function CatalogModal({
               <div className="flex items-center gap-2">
                 <Input
                   className="!rounded-2xl border border-neutral-accent"
-                  placeholder='Enter Item Tag e.g "🔥 Best Seller"'
+                  placeholder='Enter Item Tag e.g "Best Seller"'
                   value={currentTagInput}
                   onChange={(e) => setCurrentTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -285,7 +285,7 @@ export default function CatalogModal({
                   <div className="flex items-center gap-2">
                     <Input
                       className="!rounded-2xl border border-neutral-accent"
-                      placeholder='Enter Category Tag e.g "🔥 Best Seller"'
+                      placeholder='Enter Category Tag e.g "Best Seller"'
                       value={currentCategoryTagInput}
                       onChange={(e) =>
                         setCurrentCategoryTagInput(e.target.value)
