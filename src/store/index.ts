@@ -11,7 +11,7 @@ import appsReducer from "./slices/appsSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"], // Only persist auth state
+  whitelist: ["auth", "apps"], // Only persist auth and apps state
 };
 
 const rootReducer = combineReducers({

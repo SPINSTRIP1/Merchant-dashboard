@@ -6,6 +6,9 @@ import { useMenuForm } from "../../_context";
 import { DEALS_SERVER_URL } from "@/constants";
 import { Deal } from "../../../deals/_schemas";
 import { useServerPagination } from "@/hooks/use-server-pagination";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api/axios-client";
 
 export default function DealSettings() {
   const {
@@ -13,7 +16,20 @@ export default function DealSettings() {
   } = useMenuForm();
   const isFeatured = watch("isFeatured");
   const dealId = watch("dealId");
-
+  const { data: subscriptionStatus } = useQuery({
+    queryKey: ["deals-subscription-status"],
+    queryFn: async () => {
+      try {
+        const response = await api.get(DEALS_SERVER_URL + "/subscriptions");
+        return response.data.data as { subscribed: boolean };
+      } catch (error) {
+        console.log("Error fetching subscription status:", error);
+        return {
+          subscribed: false,
+        };
+      }
+    },
+  });
   const { items, isLoading } = useServerPagination<Deal>({
     queryKey: "deals",
     endpoint: `${DEALS_SERVER_URL}/deals`,
@@ -59,6 +75,21 @@ export default function DealSettings() {
           category="Deals"
           isLoading={isLoading}
         />
+        {items && items.length ? null : (
+          <p className="text-[#000000E5] mt-2 text-sm">
+            Want to apply a compaign?{" "}
+            <Link
+              className="font-bold text-primary"
+              href={
+                subscriptionStatus?.subscribed
+                  ? "/apps-tools/deals"
+                  : "/apps-tools"
+              }
+            >
+              Create Deals
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

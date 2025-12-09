@@ -8,6 +8,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import React from "react";
 import { useMenuForm } from "../../_context";
 import { Controller } from "react-hook-form";
+import { X } from "lucide-react";
 
 export default function Configuration() {
   const {
@@ -83,12 +84,23 @@ export default function Configuration() {
       <div className="space-y-1.5">
         <Label>Nutrition/Allergens (Optional)</Label>
         {nutritionAllergens.map((item, index) => (
-          <Input
-            key={index}
-            className="!rounded-2xl border border-neutral-accent"
-            value={item.name}
-            readOnly
-          />
+          <div key={index} className="flex items-center pt-2 gap-x-2">
+            <Input
+              className="!rounded-2xl border border-neutral-accent"
+              value={item.name}
+              readOnly
+            />
+            <button
+              onClick={() => {
+                const updatedList = [...nutritionAllergens];
+                updatedList.splice(index, 1);
+                setValue("nutritionAllergens", updatedList);
+              }}
+              className="bg-primary-accent rounded-full p-3"
+            >
+              <X size={20} className="text-primary" />
+            </button>
+          </div>
         ))}
         <div className="flex items-center pt-2 gap-x-2">
           <button

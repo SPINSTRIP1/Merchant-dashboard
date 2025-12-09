@@ -41,7 +41,7 @@ export default function Media() {
   const removeMediaImage = (index: number) => {
     const currentMedia = [...media];
     currentMedia.splice(index, 1);
-    handleFieldChange("media", currentMedia);
+    handleFieldChange("images", currentMedia);
   };
 
   return (

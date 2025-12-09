@@ -15,7 +15,7 @@ export default function FeaturedMenus({
   onDeleteClick?: (menu: Menu) => void;
   onEditClick?: (menu: Menu) => void;
 }) {
-  const { items } = useServerPagination<Menu>({
+  const { items, isLoading } = useServerPagination<Menu>({
     queryKey: MENU_QUERY_KEY,
     endpoint: `${MENUS_SERVER_URL}/menu-items`,
     filters: {
@@ -26,7 +26,16 @@ export default function FeaturedMenus({
     <div>
       <Dropdown header="Featured Menus" options={months} placeholder="July" />
       <div className="flex gap-4">
-        {items.length === 0 ? (
+        {isLoading ? (
+          <div className="flex gap-4 mb-5 w-full">
+            {[...Array(4)].map((_, index) => (
+              <div
+                key={index}
+                className="w-full max-w-[286px] h-[178px] bg-neutral-accent rounded-2xl animate-pulse"
+              />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <EmptyState
             icon={<Star className="h-16 w-16 text-primary" />}
             title="No Featured Menus"

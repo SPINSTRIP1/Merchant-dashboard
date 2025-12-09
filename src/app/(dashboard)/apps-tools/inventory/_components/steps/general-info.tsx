@@ -9,6 +9,7 @@ import SelectDropdown from "@/components/select-dropdown";
 import { Info, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { MultiSelectWithTooltip } from "@/components/multi-select-with-tooltip";
 
 export default function GeneralInfo() {
   const { catalogs } = useCatalogs();
@@ -198,8 +199,29 @@ export default function GeneralInfo() {
       </div>
       <div className="space-y-1.5">
         <Label>Product Type</Label>
-
-        <SelectDropdown
+        <MultiSelectWithTooltip
+          value={watch("productType")}
+          options={[
+            {
+              label: "Definite",
+              value: "DEFINITE",
+              description:
+                "Products with fixed quantity tracking. Inventory decreases with each sale (e.g., physical goods, packaged items).",
+            },
+            {
+              label: "Indefinite",
+              value: "INDEFINITE",
+              description:
+                "Products without quantity limits. Used for services, digital goods, or items with unlimited availability.",
+            },
+          ]}
+          className="lg:grid"
+          radioClassName="lg:w-full"
+          onValueChange={(value) => {
+            handleFieldChange("productType", value);
+          }}
+        />
+        {/* <SelectDropdown
           className="!rounded-2xl border border-neutral-accent"
           placeholder="Select Product Type"
           value={watch("productType")}
@@ -211,7 +233,7 @@ export default function GeneralInfo() {
             handleFieldChange("productType", value);
           }}
           category="Product Type"
-        />
+        /> */}
       </div>
       <div className="space-y-1.5">
         <Label>Brand</Label>

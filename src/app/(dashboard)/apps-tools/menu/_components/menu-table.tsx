@@ -103,6 +103,42 @@ export default function MenuTable() {
     }
   };
 
+  const handleMenuStatusChange = async (menuId: string, newStatus: string) => {
+    // Optimistic update - update the cache for the current query
+    queryClient.setQueryData(
+      [
+        MENU_QUERY_KEY,
+        currentPage,
+        debouncedSearch,
+        {
+          stockStatus: statusFilter,
+          category: sortBy,
+        },
+      ],
+      (oldData: { data: Menu[] } | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((item: Menu) =>
+            item.id === menuId ? { ...item, status: newStatus } : item
+          ),
+        };
+      }
+    );
+
+    try {
+      await api.patch(`${MENUS_SERVER_URL}/menu-items/${menuId}`, {
+        status: newStatus,
+      });
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update status");
+      // Revert on error
+      queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+    }
+  };
+
   const handleEditClick = (item: Menu) => {
     form.reset({
       id: item.id,
@@ -260,7 +296,11 @@ export default function MenuTable() {
                       </TableCell>
                       <TableCell>{formatAmount(item.price)}</TableCell>
                       <TableCell className="w-[140px]">
-                        <MenuStatusBadge status={item.status} />
+                        <MenuStatusBadge
+                          status={item.status}
+                          onStatusChange={handleMenuStatusChange}
+                          menuId={item.id}
+                        />
                       </TableCell>
                       <TableCell>{item.tag}</TableCell>
 
