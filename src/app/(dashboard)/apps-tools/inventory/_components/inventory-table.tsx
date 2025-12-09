@@ -314,8 +314,9 @@ export default function InventoryTable() {
                                 costPrice: Number(item.costPrice) || 0,
                                 taxPercentage: Number(item.taxPercentage) || 0,
                                 quantity: item.inventory.quantity || 0,
-                                maxStockLevel:
-                                  item.inventory.maxStockLevel || 0,
+                                reorderThreshold: item.reorderThreshold || 0,
+                                // maxStockLevel:
+                                //   item.inventory.maxStockLevel || 0,
                                 // minStockLevelPercentage:
                                 //   item.inventory.minStockLevel || 0,
                                 showInMenu: item.showInMenu,

@@ -18,7 +18,7 @@ export default function StockManagement() {
         />
       </div> */}
       <div className="grid grid-cols-2 gap-5">
-        <div className="space-y-1.5">
+        {/* <div className="space-y-1.5">
           <Label>Min. Stock Level</Label>
           <Input
             className="!rounded-2xl border border-neutral-accent"
@@ -33,7 +33,7 @@ export default function StockManagement() {
             placeholder="20"
             {...register("maxStockLevel")}
           />
-        </div>
+        </div> */}
         <div className="space-y-1.5">
           <Label>Quantity in Stock</Label>
           <Input
