@@ -158,3 +158,4 @@ export const COMPLIANCE_SERVER_URL = "https://spinstrip-compliance.fly.dev";
 export const INVENTORY_SERVER_URL = "https://spinstrip-inventory.fly.dev";
 export const DEALS_SERVER_URL = "https://spinstrip-deals.fly.dev";
 export const MENUS_SERVER_URL = "https://spinstrip-menu.fly.dev";
+export const PLACES_SERVER_URL = "https://spinstrip-places.fly.dev";

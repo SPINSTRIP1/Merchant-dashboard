@@ -54,11 +54,11 @@ export default function Apps() {
   return (
     <section>
       <div className="h-[161px] 2xl:h-[200px] rounded-[32px] !p-0 overflow-hidden mb-6">
-        <Image
+        <img
           src={"/apps-tools.png"}
           alt={"Apps Background"}
-          width={700}
-          height={700}
+          width={900}
+          height={900}
           className="w-full h-full object-cover"
         />
       </div>
