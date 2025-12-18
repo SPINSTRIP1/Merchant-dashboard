@@ -9,6 +9,7 @@ export default function SideModal({
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  className?: string;
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);

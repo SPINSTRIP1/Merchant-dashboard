@@ -1,16 +1,18 @@
 import { cn } from "@/lib/utils";
 import { PlusSignSquareIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react";
 import React from "react";
 
 export default function AddButton({
   onClick,
   title,
   className,
+  icon,
 }: {
   onClick: () => void;
   title: string;
   className?: string;
+  icon?: IconSvgElement;
 }) {
   return (
     <button
@@ -21,7 +23,7 @@ export default function AddButton({
       )}
     >
       <HugeiconsIcon
-        icon={PlusSignSquareIcon}
+        icon={icon || PlusSignSquareIcon}
         size={22}
         color={className ? "#6932e2" : "#FFFFFF"}
       />

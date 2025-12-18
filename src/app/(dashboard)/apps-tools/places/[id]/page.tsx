@@ -14,6 +14,9 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import React, { useState } from "react";
+import FacilityManagement from "./_components/facility-management";
+import VisitorManagement from "./_components/visitor-management";
+import BookingReservation from "./_components/booking-reservation";
 
 export default function Page() {
   const stats = [
@@ -75,7 +78,23 @@ export default function Page() {
       link: "/apps-tools/bookings",
     },
   ] as const;
-  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [selectedOption, setSelectedOption] = useState<string>(
+    "Facility Management"
+  );
+
+  const renderContent = () => {
+    switch (selectedOption) {
+      case "Facility Management":
+        return <FacilityManagement />;
+      case "Visitor Management":
+        return <VisitorManagement />;
+
+      case "Bookings & Reservations":
+        return <BookingReservation />;
+      default:
+        return null;
+    }
+  };
   return (
     <div>
       <div className="flex flex-wrap mb-5 gap-4">
@@ -118,7 +137,7 @@ export default function Page() {
           </Link>
         ))}
       </div>
-      <div className="my-10  flex items-center mx-auto w-full justify-center">
+      <div className="mt-10 mb-5  flex items-center mx-auto w-full justify-center">
         {[
           "Facility Management",
           "Visitor Management",
@@ -140,6 +159,7 @@ export default function Page() {
           </span>
         ))}
       </div>
+      {renderContent()}
     </div>
   );
 }

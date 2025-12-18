@@ -3,7 +3,6 @@
 import { PLACES_SERVER_URL } from "@/constants";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import PlacesModal from "./_components/modals/places-modal";
-import { useState } from "react";
 import ContainerWrapper from "@/components/container-wrapper";
 import AddButton from "../../_components/add-button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -12,6 +11,8 @@ import { Place } from "./_schemas";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { usePlacesForm } from "./_context";
+import Loader from "@/components/loader";
 
 export default function PlacesPage() {
   // const stats = [
@@ -52,25 +53,25 @@ export default function PlacesPage() {
   //   },
   // ];
   // if (isLoading) return <Loader />;
-  const { items } = useServerPagination<Place>({
+  const { items, isLoading } = useServerPagination<Place>({
     queryKey: "places",
     endpoint: `${PLACES_SERVER_URL}/places`,
   });
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const { action, setAction } = usePlacesForm();
+  if (isLoading) return <Loader />;
   return (
     <div>
       {items && items.length > 0 ? (
         <ContainerWrapper>
           <div className="flex mb-3 items-center justify-between">
             <h1 className="text-lg font-bold">Published Places</h1>
-            <AddButton title="Add Place" onClick={() => setIsModalOpen(true)} />
+            <AddButton title="Add Place" onClick={() => setAction("add")} />
           </div>
           {items.map((place) => (
             <Link
               key={place.id}
-              href={`/dashboard/apps-tools/places/${place.id}`}
+              href={`/apps-tools/places/${place.id}`}
               className="py-3 border-b last:border-b-0 last:pb-1 flex items-center justify-between"
             >
               <p className="font-medium">
@@ -99,7 +100,7 @@ export default function PlacesPage() {
             Set up Places tto get the most out of your facility
           </p>
           <Button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setAction("add")}
             size={"lg"}
             className="w-[368px] mt-2 h-[51px]"
           >
@@ -107,7 +108,7 @@ export default function PlacesPage() {
           </Button>
         </div>
       )}
-      <PlacesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <PlacesModal isOpen={action === "add"} onClose={() => setAction(null)} />
     </div>
   );
 }

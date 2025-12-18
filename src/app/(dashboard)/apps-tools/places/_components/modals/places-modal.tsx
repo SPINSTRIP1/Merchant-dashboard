@@ -37,6 +37,39 @@ export default function PlacesModal({
           name="name"
           placeholder="Enter Name of Place"
         />
+        <FormSelect
+          control={control}
+          label="Type of Place"
+          name="placeType"
+          placeholder="Type of Place"
+          options={[
+            { label: "Hotel", value: "HOTEL" },
+            { label: "Short Let", value: "SHORT_LET" },
+            { label: "Beach Resort", value: "BEACH_RESORT" },
+            { label: "Recreation Center", value: "RECREATION_CENTER" },
+            { label: "Business Hub", value: "BUSINESS_HUB" },
+            { label: "Stadium", value: "STADIUM" },
+            { label: "Sport Facility", value: "SPORT_FACILITY" },
+            { label: "Country Club", value: "COUNTRY_CLUB" },
+            { label: "Sport Recreation Club", value: "SPORT_RECREATION_CLUB" },
+            { label: "Hospital", value: "HOSPITAL" },
+            { label: "Clinic", value: "CLINIC" },
+            { label: "Pharmacy", value: "PHARMACY" },
+            { label: "Spa Wellness Center", value: "SPA_WELLNESS_CENTER" },
+            { label: "Gym", value: "GYM" },
+            { label: "Studio", value: "STUDIO" },
+            { label: "Airport", value: "AIRPORT" },
+            { label: "Rail Station", value: "RAIL_STATION" },
+            { label: "Road Transport Hub", value: "ROAD_TRANSPORT_HUB" },
+            { label: "Water Transport Hub", value: "WATER_TRANSPORT_HUB" },
+            { label: "Religious Centre", value: "RELIGIOUS_CENTRE" },
+            { label: "Police Station", value: "POLICE_STATION" },
+            { label: "Court", value: "COURT" },
+            { label: "Military Barracks", value: "MILITARY_BARRACKS" },
+            { label: "Bank", value: "BANK" },
+            { label: "Strip Club", value: "STRIP_CLUB" },
+          ]}
+        />
 
         <FormInput
           control={control}
@@ -58,21 +91,21 @@ export default function PlacesModal({
             label="City"
             name="city"
             placeholder="City"
-            options={[]}
+            options={["Ikeja", "Port Harcourt"]}
           />
           <FormSelect
             control={control}
             label="State"
             name="state"
             placeholder="State"
-            options={[]}
+            options={["Lagos", "Rivers"]}
           />
           <FormSelect
             control={control}
             label="Country"
             name="country"
             placeholder="Country"
-            options={[]}
+            options={["Nigeria"]}
           />
         </div>
         <FormInput
@@ -80,12 +113,6 @@ export default function PlacesModal({
           label="Closest Landmarks"
           name="landmarks"
           placeholder="Landmark"
-        />
-        <FormInput
-          control={control}
-          label="Address"
-          name="address"
-          placeholder="Enter Street Name and Number"
         />
 
         <FormArrayInput
@@ -100,7 +127,7 @@ export default function PlacesModal({
         <FormArrayInput
           control={control}
           name="phoneNumbers"
-          label="Phone Numbers"
+          label="Contact Phone Numbers"
           placeholder="Add Phone Number"
           type="tel"
           description="Click on the + icon or press Enter to add a phone number."
@@ -111,11 +138,27 @@ export default function PlacesModal({
           name="website"
           placeholder="Enter Website URL"
         />
-        <UploadFile label="Upload Environmental Safety Policy" />
-        <UploadFile label="Upload Security Policy " />
-        <UploadFile label="Upload Disclaimers" />
-        <UploadFile label="Upload Proof of Ownership (Rent/Lease Receipt or Property Document)" />
-        <UploadFile label="Upload Proof of Ownership (Video)" type="video" />
+        <UploadFile
+          label="Upload Environmental Safety Policy"
+          onFileSelect={(file) => console.log(file)}
+        />
+        <UploadFile
+          label="Upload Security Policy "
+          onFileSelect={(file) => console.log(file)}
+        />
+        <UploadFile
+          label="Upload Disclaimers"
+          onFileSelect={(file) => console.log(file)}
+        />
+        <UploadFile
+          label="Upload Proof of Ownership (Rent/Lease Receipt or Property Document)"
+          onFileSelect={(file) => console.log(file)}
+        />
+        <UploadFile
+          label="Upload Proof of Ownership (Video)"
+          type="video"
+          onFileSelect={(file) => console.log(file)}
+        />
 
         <div className="flex justify-center mt-6 gap-x-3 items-center">
           <Button

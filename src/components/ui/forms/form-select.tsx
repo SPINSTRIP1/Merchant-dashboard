@@ -71,7 +71,7 @@ export function FormSelect<TFieldValues extends FieldValues>({
             </FormControl>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>{category || "Select Category"}</SelectLabel>
+                <SelectLabel>{category || label}</SelectLabel>
                 {options?.map((option) => {
                   const normalized = normalizeOption(option);
                   return (

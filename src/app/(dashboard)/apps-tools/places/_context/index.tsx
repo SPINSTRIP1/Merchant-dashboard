@@ -83,6 +83,7 @@ export function PlacesFormProvider({
 
   const submitPlace = useCallback(async () => {
     const formData = getValues();
+    delete formData.website;
     const isValid = await trigger();
     if (!isValid) {
       toast.error("Please check all form fields and try again.");
@@ -105,10 +106,9 @@ export function PlacesFormProvider({
         toast.success(
           message || `Place ${isUpdating ? "updated" : "created"} successfully!`
         );
+        queryClient.invalidateQueries({ queryKey: ["places"] });
         reset(DEFAULT_PLACES_VALUES as Place);
         setAction(null);
-        queryClient.invalidateQueries({ queryKey: ["Places-stats"] });
-        queryClient.invalidateQueries({ queryKey: ["Places"] });
       }
     } catch (error) {
       console.log("Error submitting Place:", error);
