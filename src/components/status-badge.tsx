@@ -9,8 +9,10 @@ import React from "react";
 
 export default function StatusBadge({
   status,
+  title,
 }: {
   status: "REJECTED" | "PENDING" | "ACTIVE" | "WARNING" | "UNVERIFIED";
+  title?: string;
 }) {
   const statusColors = {
     REJECTED: {
@@ -65,7 +67,7 @@ export default function StatusBadge({
         color={statusColors[status].text}
       />
       <p className="text-[9px] font-medium uppercase">
-        {statusColors[status].title}
+        {title || statusColors[status].title}
       </p>
     </div>
   );

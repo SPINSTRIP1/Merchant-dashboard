@@ -15,7 +15,7 @@ import type { AuthTokens, UserData } from "@/store/slices/authSlice";
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
   // baseURL: SERVER_URL,
-  timeout: 10000,
+  timeout: 100000,
   headers: {
     "Content-Type": "application/json",
   },

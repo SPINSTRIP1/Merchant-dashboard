@@ -53,7 +53,7 @@ export default function Apps() {
   ];
   return (
     <section>
-      <div className="h-[161px] 2xl:h-[200px] rounded-[32px] !p-0 overflow-hidden mb-6">
+      <div className="h-[120px] md:h-[161px] 2xl:h-[200px] rounded-[32px] !p-0 overflow-hidden mb-6">
         <img
           src={"/apps-tools.png"}
           alt={"Apps Background"}
@@ -62,7 +62,7 @@ export default function Apps() {
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-x-3 justify-between w-full">
         <h1 className="text-sm lg:text-base font-bold">Apps</h1>
         <SearchBar
           placeholder="Search Apps"
@@ -124,7 +124,7 @@ export default function Apps() {
                 alt={app.name}
                 width={100}
                 height={100}
-                className="w-20 h-20 object-contain flex-shrink-0"
+                className="size-16 md:size-20 object-contain flex-shrink-0"
               />
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -181,7 +181,7 @@ export default function Apps() {
           alt={selectedApp?.name || ""}
           width={100}
           height={100}
-          className="w-[100px] mx-auto mb-3 h-[100px] object-contain"
+          className="size-[80px] mx-auto mb-3 md:size-[100px] object-contain"
         />
         <div className="space-y-1">
           <div className="flex items-center justify-between">

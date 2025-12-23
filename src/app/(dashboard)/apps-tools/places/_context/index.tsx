@@ -18,15 +18,8 @@ import { PLACES_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
+import { ActionType } from "@/app/(dashboard)/_types";
 
-export type ActionType =
-  | "add"
-  | "edit"
-  | "delete"
-  | "deactivate"
-  | "insights"
-  | "reactivate"
-  | null;
 interface PlacesContextType {
   form: ReturnType<typeof useForm<Place>>;
   loading: boolean;
@@ -41,6 +34,7 @@ interface PlacesContextType {
   setSortBy: React.Dispatch<React.SetStateAction<string>>;
   action: ActionType;
   setAction: React.Dispatch<React.SetStateAction<ActionType>>;
+  handleReset: () => void;
 }
 
 const PlacesContext = createContext<PlacesContextType | undefined>(undefined);
@@ -80,11 +74,32 @@ export function PlacesFormProvider({
     },
     [setValue]
   );
-
+  const handleReset = useCallback(() => {
+    reset(DEFAULT_PLACES_VALUES as Place);
+    setAction(null);
+  }, [reset, setAction]);
   const submitPlace = useCallback(async () => {
-    const formData = getValues();
-    delete formData.website;
-    const isValid = await trigger();
+    const {
+      environmentalSafetyPolicy,
+      privacyPolicy,
+      disclaimers,
+      ownershipDocument,
+      ownershipVideo,
+      coverImage,
+      ...formData
+    } = getValues();
+    const isValid = await trigger([
+      "name",
+      "description",
+      "placeType",
+      "address",
+      "city",
+      "state",
+      "country",
+      "emails",
+      "phoneNumbers",
+      // "coverImage",
+    ]);
     if (!isValid) {
       toast.error("Please check all form fields and try again.");
       return;
@@ -96,20 +111,78 @@ export function PlacesFormProvider({
       let res;
       if (isUpdating) {
         const { id, ...updateData } = formData;
-        res = await api.patch(PLACES_SERVER_URL + "/places/" + id, updateData);
+        res = await api.patch(PLACES_SERVER_URL + "/places/" + id, {
+          name: updateData.name,
+          description: updateData.description,
+          address: updateData.address,
+          landmarks: updateData.landmarks,
+          city: updateData.city,
+          state: updateData.state,
+          country: updateData.country,
+          longitude: updateData.longitude,
+          latitude: updateData.latitude,
+          placeType: updateData.placeType,
+          emails: updateData.emails,
+          phoneNumbers: updateData.phoneNumbers,
+          website: updateData.website,
+        });
       } else res = await api.post(PLACES_SERVER_URL + "/places", formData);
-      const { status, message } = res.data as {
+      const { status, message, data } = res.data as {
         status: string;
         message?: string;
+        data: Place;
       };
       if (status === "success") {
-        toast.success(
-          message || `Place ${isUpdating ? "updated" : "created"} successfully!`
-        );
-        queryClient.invalidateQueries({ queryKey: ["places"] });
-        reset(DEFAULT_PLACES_VALUES as Place);
-        setAction(null);
+        try {
+          const formData = new FormData();
+
+          if (coverImage instanceof File) {
+            formData.append("coverImage", coverImage);
+          }
+          if (environmentalSafetyPolicy instanceof File) {
+            formData.append(
+              "environmentalSafetyPolicy",
+              environmentalSafetyPolicy
+            );
+          }
+          if (privacyPolicy instanceof File) {
+            formData.append("privacyPolicy", privacyPolicy);
+          }
+          if (disclaimers instanceof File) {
+            formData.append("disclaimers", disclaimers);
+          }
+          if (ownershipDocument instanceof File) {
+            formData.append("ownershipDocument", ownershipDocument);
+          }
+          if (ownershipVideo instanceof File) {
+            formData.append("ownershipVideo", ownershipVideo);
+          }
+          if ([...formData.entries()].length > 0) {
+            console.log("yup");
+            await api.post(
+              PLACES_SERVER_URL + `/places/${data.id}/media`,
+              formData,
+              {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+              }
+            );
+          }
+        } catch (error) {
+          console.log("Error uploading files:", error);
+          toast.error(
+            `Place ${
+              isUpdating ? "updated" : "created"
+            } but failed to upload cover image and files. Please try again.`
+          );
+        }
       }
+      toast.success(
+        message || `Place ${isUpdating ? "updated" : "created"} successfully!`
+      );
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      handleReset();
     } catch (error) {
       console.log("Error submitting Place:", error);
       if (error instanceof z.ZodError) {
@@ -126,7 +199,7 @@ export function PlacesFormProvider({
     } finally {
       setLoading(false);
     }
-  }, [getValues, queryClient, trigger, reset, setAction]);
+  }, [getValues, queryClient, trigger, handleReset]);
 
   return (
     <PlacesContext.Provider
@@ -144,6 +217,7 @@ export function PlacesFormProvider({
         setSortBy,
         action,
         setAction,
+        handleReset,
       }}
     >
       <FormProvider {...form}>{children}</FormProvider>

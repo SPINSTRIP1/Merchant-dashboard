@@ -3,89 +3,74 @@
 import { PLACES_SERVER_URL } from "@/constants";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import PlacesModal from "./_components/modals/places-modal";
-import ContainerWrapper from "@/components/container-wrapper";
-import AddButton from "../../_components/add-button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
 import { Place } from "./_schemas";
-import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { usePlacesForm } from "./_context";
 import Loader from "@/components/loader";
+import Places from "./_components/places";
+import DeleteModal from "../deals/_components/modals/delete-modal";
+import { useState } from "react";
+import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
+import { DEFAULT_PLACES_VALUES } from "./_constants";
 
 export default function PlacesPage() {
-  // const stats = [
-  //   {
-  //     title: "Total Deals",
-  //     value: data?.total ?? 0,
-  //     icon: DiscountTag02Icon,
-  //     textColor: "#6932E2",
-  //     bgColor: "#EBE2FF",
-  //   },
-  //   {
-  //     title: "Active Deals",
-  //     value: data?.active ?? 0,
-  //     icon: DeliveryBox01Icon,
-  //     textColor: "#34C759",
-  //     bgColor: "#DDF6E2",
-  //   },
-  //   {
-  //     title: "Inactive Deals",
-  //     value: data?.inactive ?? 0,
-  //     icon: InformationDiamondIcon,
-  //     textColor: "#FF8D28",
-  //     bgColor: "#F6E9DD",
-  //   },
-  //   {
-  //     title: "Canceled Deals",
-  //     value: data?.canceled ?? 0,
-  //     icon: CancelCircleIcon,
-  //     textColor: "#FF383C",
-  //     bgColor: "#F6DDDD",
-  //   },
-  //   {
-  //     title: "Archived Deals",
-  //     value: data?.archived ?? 0,
-  //     icon: Archive02Icon,
-  //     textColor: "#0088FF",
-  //     bgColor: "#D9EDFF",
-  //   },
-  // ];
-  // if (isLoading) return <Loader />;
-  const { items, isLoading } = useServerPagination<Place>({
+  const { items, isLoading } = useServerPagination<
+    Place & { coverImage?: string }
+  >({
     queryKey: "places",
     endpoint: `${PLACES_SERVER_URL}/places`,
   });
-
-  const { action, setAction } = usePlacesForm();
+  const { action, setAction, form, handleReset } = usePlacesForm();
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const { deleteItem } = useOptimisticDelete<Place & { id: string }>({
+    queryKey: ["places"],
+    deleteEndpoint: `${PLACES_SERVER_URL}/places`,
+    successMessage: "Place deleted successfully",
+    errorMessage: "Failed to delete place",
+  });
+  const pendingPlaces = items?.filter((place) => place.status !== "PUBLISHED");
+  const publishedPlaces = items?.filter(
+    (place) => place.status === "PUBLISHED"
+  );
   if (isLoading) return <Loader />;
   return (
     <div>
       {items && items.length > 0 ? (
-        <ContainerWrapper>
-          <div className="flex mb-3 items-center justify-between">
-            <h1 className="text-lg font-bold">Published Places</h1>
-            <AddButton title="Add Place" onClick={() => setAction("add")} />
-          </div>
-          {items.map((place) => (
-            <Link
-              key={place.id}
-              href={`/apps-tools/places/${place.id}`}
-              className="py-3 border-b last:border-b-0 last:pb-1 flex items-center justify-between"
-            >
-              <p className="font-medium">
-                {place.name} - {place.city}
-              </p>
-
-              <HugeiconsIcon
-                icon={ArrowRight02Icon}
-                size={22}
-                color={"#6F6D6D"}
-              />
-            </Link>
-          ))}
-        </ContainerWrapper>
+        <div className="space-y-6">
+          <Places
+            title="Pending Places"
+            places={pendingPlaces}
+            onAdd={() => {
+              form.reset(DEFAULT_PLACES_VALUES);
+              setAction("add");
+            }}
+            onEdit={(place) => {
+              form.reset(place);
+              setAction("edit");
+            }}
+            onDelete={(place) => {
+              setSelectedPlace(place);
+              setAction("delete");
+            }}
+          />
+          <Places
+            title="Published Places"
+            places={publishedPlaces}
+            onAdd={() => {
+              form.reset(DEFAULT_PLACES_VALUES);
+              setAction("add");
+            }}
+            onEdit={(place) => {
+              form.reset(place);
+              setAction("edit");
+            }}
+            onDelete={(place) => {
+              setSelectedPlace(place);
+              setAction("delete");
+            }}
+          />
+        </div>
       ) : (
         <div className="flex items-center justify-center flex-col gap-y-1.5 flex-1 mt-52">
           <Image
@@ -108,7 +93,19 @@ export default function PlacesPage() {
           </Button>
         </div>
       )}
-      <PlacesModal isOpen={action === "add"} onClose={() => setAction(null)} />
+      <PlacesModal
+        isOpen={action === "add" || action === "edit"}
+        onClose={handleReset}
+        action={action}
+      />
+      <DeleteModal
+        isOpen={action === "delete"}
+        onClose={() => setAction(null)}
+        title={selectedPlace?.name || ""}
+        description="This place will be deleted permanently and cannot be recovered"
+        secondaryText="Cancel"
+        onDeleteConfirm={() => deleteItem(selectedPlace?.id || "")}
+      />
     </div>
   );
 }

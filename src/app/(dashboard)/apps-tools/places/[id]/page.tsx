@@ -17,8 +17,23 @@ import React, { useState } from "react";
 import FacilityManagement from "./_components/facility-management";
 import VisitorManagement from "./_components/visitor-management";
 import BookingReservation from "./_components/booking-reservation";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { PLACES_SERVER_URL } from "@/constants";
+import { useParams, useRouter } from "next/navigation";
+import { Place } from "../_schemas";
+import Loader from "@/components/loader";
+import { ChevronLeft } from "lucide-react";
 
 export default function Page() {
+  const { id } = useParams();
+  const { items, isLoading } = useServerPagination<
+    Place & { coverImage?: string }
+  >({
+    queryKey: "places",
+    endpoint: `${PLACES_SERVER_URL}/places`,
+  });
+  const router = useRouter();
+  const place = items.find((place) => place.id === id);
   const stats = [
     {
       title: "Visitors",
@@ -81,11 +96,10 @@ export default function Page() {
   const [selectedOption, setSelectedOption] = useState<string>(
     "Facility Management"
   );
-
   const renderContent = () => {
     switch (selectedOption) {
       case "Facility Management":
-        return <FacilityManagement />;
+        return <FacilityManagement place={place} />;
       case "Visitor Management":
         return <VisitorManagement />;
 
@@ -95,8 +109,26 @@ export default function Page() {
         return null;
     }
   };
+  if (isLoading) {
+    return <Loader />;
+  }
   return (
     <div>
+      <div className="flex items-center mb-6 gap-x-2">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-x-2"
+        >
+          <ChevronLeft /> <p className="font-bold">Places</p>
+        </button>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-x-2"
+        >
+          <ChevronLeft />{" "}
+          <p className="font-bold text-primary-text">{place?.name}</p>
+        </button>
+      </div>
       <div className="flex flex-wrap mb-5 gap-4">
         {stats.map((stat) => (
           <div

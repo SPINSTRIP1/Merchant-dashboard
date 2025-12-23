@@ -6,3 +6,14 @@ export interface ItemCardProps {
   onDelete?: (e: Menu) => void;
   onEdit?: (e: Menu) => void;
 }
+
+export type ActionType =
+  | "add"
+  | "edit"
+  | "delete"
+  | "deactivate"
+  | "insights"
+  | "reactivate"
+  | "details"
+  | "duplicate"
+  | null;

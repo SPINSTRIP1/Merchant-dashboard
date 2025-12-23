@@ -33,12 +33,12 @@ export default function FacilityModal({
       facilityCategory: "",
       description: "",
       fees: [
-        {
-          tierName: "",
-          amount: 0,
-          tierLevel: 1,
-          description: "",
-        },
+        // {
+        //   tierName: "",
+        //   amount: 0,
+        //   tierLevel: 1,
+        //   description: "",
+        // },
       ],
       freeAccess: true,
     },
@@ -153,7 +153,6 @@ export default function FacilityModal({
               {imageUploadFields.map((fieldId, index) => (
                 <div key={fieldId} className="relative w-full max-w-[158px]">
                   <UploadFile
-                    fileName={`image-${index}`}
                     label={index === 0 ? "Thumbnail" : `Image ${index + 1}`}
                     onFileSelect={(file) => handleFileSelect(file, index)}
                     value={files[index]}

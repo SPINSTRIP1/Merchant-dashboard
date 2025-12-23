@@ -6,6 +6,7 @@ import React, {
   useCallback,
   DragEvent,
   ChangeEvent,
+  useEffect,
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -13,18 +14,11 @@ import {
   ImageAdd01Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
+import { Control, FieldValues, Path, useController } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 
 export type FileUploadType = "image" | "file";
-
-interface FileUploadProps {
-  type?: FileUploadType;
-  className?: string;
-  onFileSelect?: (file: File | null) => void;
-  acceptedFormats?: string[];
-  maxSizeInMB?: number;
-  label?: string;
-  value?: File | null;
-}
 
 // File type mappings for better performance
 const FILE_TYPE_MAP: Record<string, string> = {
@@ -40,43 +34,70 @@ const FILE_TYPE_MAP: Record<string, string> = {
 const DEFAULT_IMAGE_FORMATS = ["JPG", "JPEG", "PNG", "SVG", "WEBP"];
 const DEFAULT_FILE_FORMATS = ["PDF", "DOC", "DOCX", "XLS", "XLSX", "TXT"];
 
-export default function UploadFile({
+interface FormUploadImageProps<T extends FieldValues> {
+  control: Control<T>;
+  name: Path<T>;
+  label?: string;
+  type?: FileUploadType;
+  className?: string;
+  acceptedFormats?: string[];
+  maxSizeInMB?: number;
+  description?: string;
+}
+
+export function FormUploadImage<T extends FieldValues>({
+  control,
+  name,
+  label,
   type = "image",
   className,
-  onFileSelect,
   acceptedFormats = type === "image"
     ? DEFAULT_IMAGE_FORMATS
     : DEFAULT_FILE_FORMATS,
   maxSizeInMB = 10,
-  label,
-  value,
-}: FileUploadProps) {
+  description,
+}: FormUploadImageProps<T>) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(value || null);
-  const [error, setError] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync with external value prop
-  React.useEffect(() => {
-    if (value && value !== selectedFile) {
-      setSelectedFile(value);
-      setError("");
+  const {
+    field,
+    fieldState: { error },
+  } = useController({
+    name,
+    control,
+  });
 
-      // Create image preview for the value
-      if (type === "image" && value.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result as string);
-        };
-        reader.readAsDataURL(value);
-      }
-    } else if (!value && selectedFile) {
-      // Clear if value is null/undefined
-      setSelectedFile(null);
+  const fieldValue = field.value as File | string | null | undefined;
+
+  // Check if field value is a URL string
+  const isUrlString =
+    typeof fieldValue === "string" && fieldValue.startsWith("http");
+  const selectedFile = isUrlString
+    ? null
+    : (fieldValue as File | null | undefined);
+
+  // Sync image preview with field value
+  useEffect(() => {
+    if (isUrlString) {
+      // If it's a URL, use it directly as preview
+      setImagePreview(fieldValue as string);
+    } else if (
+      selectedFile &&
+      type === "image" &&
+      selectedFile.type?.startsWith("image/")
+    ) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    } else if (!fieldValue) {
       setImagePreview(null);
     }
-  }, [value, type, selectedFile]);
+  }, [fieldValue, selectedFile, type, isUrlString]);
 
   // Memoized computations
   const acceptString = useMemo(() => {
@@ -119,16 +140,14 @@ export default function UploadFile({
     async (file: File) => {
       const validationError = validateFile(file);
       if (validationError) {
-        setError(validationError);
-        setSelectedFile(null);
+        setLocalError(validationError);
+        field.onChange(null);
         setImagePreview(null);
-        onFileSelect?.(null);
         return;
       }
 
-      setError("");
-      setSelectedFile(file);
-      onFileSelect?.(file);
+      setLocalError("");
+      field.onChange(file);
 
       // Create image preview for image files
       if (type === "image" && file.type.startsWith("image/")) {
@@ -139,7 +158,7 @@ export default function UploadFile({
         reader.readAsDataURL(file);
       }
     },
-    [validateFile, onFileSelect, type]
+    [validateFile, field, type]
   );
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -180,14 +199,13 @@ export default function UploadFile({
   );
 
   const removeFile = useCallback(() => {
-    setSelectedFile(null);
+    field.onChange(null);
     setImagePreview(null);
-    setError("");
-    onFileSelect?.(null);
+    setLocalError("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }, [onFileSelect]);
+  }, [field]);
 
   // Memoized icon selection
   const iconComponent = useMemo(
@@ -201,14 +219,20 @@ export default function UploadFile({
     return `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`;
   }, [selectedFile]);
 
+  // Check if we have any value (File or URL)
+  const hasValue = !!fieldValue;
+
+  const displayError = localError || error?.message;
+
   return (
-    <div className="space-y-2.5 w-full ">
+    <div className="space-y-1.5 w-full">
+      {label && <Label htmlFor={name}>{label}</Label>}
       <div
         className={cn(
-          "rounded-2xl h-[169px] w-full  bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
+          "rounded-2xl h-[169px] w-full bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
           isDragOver && "border-primary bg-primary-accent/20",
-          error && "border-red-500 bg-red-50",
-          selectedFile && "border-green-500 bg-green-50",
+          displayError && "border-red-500 bg-red-50",
+          hasValue && !displayError && "border-green-500 bg-green-50",
           className
         )}
         onDragOver={handleDragOver}
@@ -224,16 +248,26 @@ export default function UploadFile({
           className="hidden"
         />
 
-        {selectedFile ? (
+        {hasValue && !displayError ? (
           <div className="flex flex-col items-center gap-2 w-full h-full">
             {type === "image" && imagePreview ? (
               <div className="relative w-full h-full flex flex-col items-center justify-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
-                  alt={selectedFile.name}
+                  alt={selectedFile?.name || "Uploaded image"}
                   className="w-full h-full object-cover rounded-lg"
                 />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile();
+                  }}
+                  className="size-6 flex items-center justify-center bg-red-500 absolute right-2 top-2 rounded-full"
+                  type="button"
+                >
+                  <X size={15} className="text-white" />
+                </button>
               </div>
             ) : (
               <>
@@ -244,10 +278,12 @@ export default function UploadFile({
                   strokeWidth={0.9}
                 />
                 <p className="text-sm font-medium text-green-700 truncate max-w-full px-2">
-                  {selectedFile.name}
+                  {selectedFile?.name ||
+                    (isUrlString ? "Image uploaded" : "File selected")}
                 </p>
                 <p className="text-xs text-green-600">
-                  {fileSizeDisplay || "File selected"}
+                  {fileSizeDisplay ||
+                    (isUrlString ? "Click to replace" : "File selected")}
                 </p>
                 <button
                   onClick={(e) => {
@@ -267,26 +303,24 @@ export default function UploadFile({
             <HugeiconsIcon
               icon={iconComponent}
               size={48}
-              color={error ? "#ef4444" : "#6F6D6D"}
+              color={displayError ? "#ef4444" : "#6F6D6D"}
               strokeWidth={0.9}
             />
-            {error && (
-              <p
-                className={cn(
-                  "text-sm",
-                  error ? "text-red-500" : "text-gray-700"
-                )}
-              >
-                {error}
-              </p>
-            )}
           </>
         )}
       </div>
-      {label && (
-        <div className="border px-2 border-background-light bg-background py-0.5 w-fit rounded-xl mx-auto">
-          <label className="text-sm font-medium">{label}</label>
+
+      {description && !displayError && (
+        <div className="flex items-center justify-center flex-col pt-2">
+          <p className="text-sm text-secondary-text">{description}</p>
+          <span className="text-[9px] font-semibold text-gray-500">
+            {acceptedFormats.join(", ")} formats supported
+          </span>
         </div>
+      )}
+
+      {displayError && (
+        <p className="text-sm font-medium text-destructive">{displayError}</p>
       )}
     </div>
   );

@@ -1,6 +1,5 @@
 import ContainerWrapper from "@/components/container-wrapper";
 import React from "react";
-import ImageGallery from "./image-gallery";
 import { Globe02Icon, Time01Icon } from "@hugeicons/core-free-icons";
 import {
   Delete02Icon,
@@ -12,39 +11,46 @@ import Image from "next/image";
 import FacilityCard from "./facility-card";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 import FacilityModal from "./modals/facility-modal";
+import { Place } from "../../_schemas";
+import { PLACE_TYPES } from "../../_constants";
 
-export default function FacilityManagement() {
+export default function FacilityManagement({
+  place,
+}: {
+  place: (Place & { coverImage?: string }) | undefined;
+}) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  if (!place) {
+    return <p className="text-center text-primary-text">Place not found.</p>;
+  }
+  const placeType = PLACE_TYPES.find(
+    (type) => type.value === place.placeType
+  )?.label;
   return (
     <>
       <div className="text-sm flex flex-col items-end justify-end space-y-5">
         <AddButton title="Add Facility" onClick={() => setIsModalOpen(true)} />
-        <ContainerWrapper className="space-y-3">
+        <ContainerWrapper className="space-y-3 w-full">
           <div>
             <h1 className="text-2xl font-bold text-primary-text">
-              Radisson Blu Hotels - Ikeha
+              {place.name} - {place.city}
             </h1>
-            <p className="text-base text-primary-text">Hotel</p>
+            <p className="text-base text-primary-text">{placeType}</p>
           </div>
-          <ImageGallery
-            images={[
-              "/places/1.jpg",
-              "/places/2.png",
-              "/places/3.png",
-              "/places/4.png",
-              "/places/4.png",
-            ]}
+          <Image
+            src={place.coverImage || ""}
+            alt={place.name}
+            width={960}
+            height={650}
+            className="w-full h-[206px] object-cover object-center rounded-xl"
           />
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Rem qui
-            repellendus cum libero, ut laborum iusto, voluptatibus beatae
-            commodi quisquam esse optio, magni neque corrupti ex in sunt non
-            temporibus!
-          </p>
+          <p>{place.description}</p>
           <div className="flex items-center justify-between gap-x-2 my-3">
             <div className="flex items-center gap-x-2">
               <HugeiconsIcon icon={Location01Icon} size={24} color="#6F6D6D" />
-              <p className="text-sm">Lekki, Lagos</p>
+              <p className="text-sm">
+                {place.city}, {place.state}
+              </p>
             </div>
             <div className="flex items-center gap-x-2">
               <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
@@ -52,7 +58,7 @@ export default function FacilityManagement() {
             </div>
             <div className="flex items-center gap-x-2">
               <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
-              <p className="text-sm">www.reallygreatsite.com</p>
+              <p className="text-sm">{place.website || "N/A"}</p>
             </div>
 
             <div className="flex items-center">
@@ -83,7 +89,7 @@ export default function FacilityManagement() {
                   className="w-5 h-5 object-cover"
                 />
               </div>
-              <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
+              {/* <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
                 <Image
                   src={"/avatars/4.jpg"}
                   alt={"avatar"}
@@ -91,10 +97,10 @@ export default function FacilityManagement() {
                   height={40}
                   className="w-5 h-5 object-cover"
                 />
-              </div>
+              </div> */}
               <div className="bg-background-light rounded-3xl px-1.5 py-1">
                 <p className="text-[10px] text-secondary-text uppercase">
-                  +24k others
+                  +10 others
                 </p>
               </div>
             </div>
@@ -152,17 +158,17 @@ export default function FacilityManagement() {
               <h2 className="font-bold mb-1 text-primary-text">
                 Contact Phone
               </h2>
-              <p>08102345060</p>
+              <p>{place?.phoneNumbers?.[0] || "N/A"}</p>
             </div>
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">
                 Contact Email
               </h2>
-              <p>contact@example.com</p>
+              <p>{place?.emails?.[0] || "N/A"}</p>
             </div>
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">Location</h2>
-              <p>112, Lekki, Lagos.</p>
+              <p>{place?.address || "N/A"}</p>
             </div>
           </div>
         </ContainerWrapper>

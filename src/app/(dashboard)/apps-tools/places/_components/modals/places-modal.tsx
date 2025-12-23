@@ -4,7 +4,11 @@ import { FormInput } from "@/components/ui/forms/form-input";
 import SideModal from "@/app/(dashboard)/_components/side-modal";
 import { FormSelect } from "@/components/ui/forms/form-select";
 import { FormArrayInput } from "@/components/ui/forms/form-array-input";
-import UploadFile from "../upload-file";
+import { UploadFile } from "../upload-file";
+import { FormUploadImage } from "@/components/ui/forms/form-upload-image";
+import { AddressAutocomplete } from "../address-autocomplete";
+import { PLACE_TYPES } from "../../_constants";
+import { ActionType } from "@/app/(dashboard)/_types";
 
 export default function PlacesModal({
   isOpen,
@@ -13,12 +17,12 @@ export default function PlacesModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  action?: "edit" | "add" | null;
+  action?: ActionType;
 }) {
   const {
     submitPlace,
     loading,
-    form: { control },
+    form: { control, setValue },
   } = usePlacesForm();
 
   const getButtonLabel = () => {
@@ -28,6 +32,7 @@ export default function PlacesModal({
 
     return action === "edit" ? "Update" : "Publish";
   };
+
   return (
     <SideModal isOpen={isOpen} onClose={onClose}>
       <div className="space-y-7 pt-16 pb-5">
@@ -42,33 +47,7 @@ export default function PlacesModal({
           label="Type of Place"
           name="placeType"
           placeholder="Type of Place"
-          options={[
-            { label: "Hotel", value: "HOTEL" },
-            { label: "Short Let", value: "SHORT_LET" },
-            { label: "Beach Resort", value: "BEACH_RESORT" },
-            { label: "Recreation Center", value: "RECREATION_CENTER" },
-            { label: "Business Hub", value: "BUSINESS_HUB" },
-            { label: "Stadium", value: "STADIUM" },
-            { label: "Sport Facility", value: "SPORT_FACILITY" },
-            { label: "Country Club", value: "COUNTRY_CLUB" },
-            { label: "Sport Recreation Club", value: "SPORT_RECREATION_CLUB" },
-            { label: "Hospital", value: "HOSPITAL" },
-            { label: "Clinic", value: "CLINIC" },
-            { label: "Pharmacy", value: "PHARMACY" },
-            { label: "Spa Wellness Center", value: "SPA_WELLNESS_CENTER" },
-            { label: "Gym", value: "GYM" },
-            { label: "Studio", value: "STUDIO" },
-            { label: "Airport", value: "AIRPORT" },
-            { label: "Rail Station", value: "RAIL_STATION" },
-            { label: "Road Transport Hub", value: "ROAD_TRANSPORT_HUB" },
-            { label: "Water Transport Hub", value: "WATER_TRANSPORT_HUB" },
-            { label: "Religious Centre", value: "RELIGIOUS_CENTRE" },
-            { label: "Police Station", value: "POLICE_STATION" },
-            { label: "Court", value: "COURT" },
-            { label: "Military Barracks", value: "MILITARY_BARRACKS" },
-            { label: "Bank", value: "BANK" },
-            { label: "Strip Club", value: "STRIP_CLUB" },
-          ]}
+          options={PLACE_TYPES}
         />
 
         <FormInput
@@ -78,41 +57,48 @@ export default function PlacesModal({
           placeholder="Describe the Place"
           type="textarea"
         />
-        <FormInput
-          control={control}
-          label="Address"
-          name="address"
-          placeholder="Enter Street Name and Number"
-        />
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-          <FormSelect
+          <FormInput
             control={control}
             label="City"
             name="city"
             placeholder="City"
-            options={["Ikeja", "Port Harcourt"]}
           />
-          <FormSelect
+          <FormInput
             control={control}
             label="State"
             name="state"
             placeholder="State"
-            options={["Lagos", "Rivers"]}
           />
-          <FormSelect
+          <FormInput
             control={control}
             label="Country"
             name="country"
             placeholder="Country"
-            options={["Nigeria"]}
           />
         </div>
+        <AddressAutocomplete
+          control={control}
+          name="address"
+          label="Address"
+          placeholder="Enter Street Name and Number"
+          onSelect={(suggestion) => {
+            setValue("latitude", suggestion.location.lat);
+            setValue("longitude", suggestion.location.lng);
+          }}
+        />
         <FormInput
           control={control}
           label="Closest Landmarks"
           name="landmarks"
           placeholder="Landmark"
+        />
+        <FormUploadImage
+          control={control}
+          name="coverImage"
+          label="Upload Cover Image"
+          description="Click to upload image or drop image here"
         />
 
         <FormArrayInput
@@ -139,25 +125,30 @@ export default function PlacesModal({
           placeholder="Enter Website URL"
         />
         <UploadFile
+          control={control}
+          name="environmentalSafetyPolicy"
           label="Upload Environmental Safety Policy"
-          onFileSelect={(file) => console.log(file)}
         />
         <UploadFile
-          label="Upload Security Policy "
-          onFileSelect={(file) => console.log(file)}
+          control={control}
+          name="privacyPolicy"
+          label="Upload Privacy Policy"
         />
         <UploadFile
+          control={control}
+          name="disclaimers"
           label="Upload Disclaimers"
-          onFileSelect={(file) => console.log(file)}
         />
         <UploadFile
+          control={control}
+          name="ownershipDocument"
           label="Upload Proof of Ownership (Rent/Lease Receipt or Property Document)"
-          onFileSelect={(file) => console.log(file)}
         />
         <UploadFile
+          control={control}
+          name="ownershipVideo"
           label="Upload Proof of Ownership (Video)"
           type="video"
-          onFileSelect={(file) => console.log(file)}
         />
 
         <div className="flex justify-center mt-6 gap-x-3 items-center">

@@ -22,14 +22,8 @@ import { MENUS_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
+import { ActionType } from "@/app/(dashboard)/_types";
 
-export type ActionType =
-  | "add"
-  | "edit"
-  | "delete"
-  | "duplicate"
-  | "details"
-  | null;
 interface MenuContextType {
   form: ReturnType<typeof useForm<Menu>>;
   handleNext: () => Promise<void>;

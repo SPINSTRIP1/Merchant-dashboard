@@ -16,8 +16,8 @@ import { DEFAULT_INVENTORY_VALUES, addInventorySteps } from "../_constants";
 import api from "@/lib/api/axios-client";
 import { INVENTORY_SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
+import { ActionType } from "@/app/(dashboard)/_types";
 
-export type ActionType = "add" | "edit" | "delete" | "duplicate" | null;
 interface InventoryContextType {
   form: ReturnType<typeof useForm<InventoryProduct>>;
   handleNext: () => Promise<void>;
