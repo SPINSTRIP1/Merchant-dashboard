@@ -83,7 +83,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`font-sf-pro bg-background h-full text-secondary-text antialiased`}
+        className={`font-sf-pro bg-background h-full text-secondary-text antialiased overflow-x-hidden`}
       >
         <ReduxProvider>
           {children}

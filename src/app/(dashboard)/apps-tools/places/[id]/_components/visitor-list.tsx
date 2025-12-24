@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package } from "lucide-react";
+// import { UsersRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import EmptyState from "@/components/empty-state";
@@ -36,42 +36,42 @@ interface Visitor {
 
 export default function VisitorList() {
   const items: Visitor[] = [
-    {
-      id: "1",
-      name: "John Doe",
-      phoneNumber: "123-456-7890",
-      room: 101,
-      checkInDate: "21 Jul 2025",
-      checkOutDate: "25 Jul 2025",
-      email: "aycom505@gmail.com",
-    },
-    {
-      id: "2",
-      name: "John Doe",
-      phoneNumber: "123-456-7890",
-      room: 101,
-      checkInDate: "21 Jul 2025",
-      checkOutDate: "25 Jul 2025",
-      email: "aycom505@gmail.com",
-    },
-    {
-      id: "3",
-      name: "John Doe",
-      phoneNumber: "123-456-7890",
-      room: 101,
-      checkInDate: "21 Jul 2025",
-      checkOutDate: "25 Jul 2025",
-      email: "aycom505@gmail.com",
-    },
-    {
-      id: "4",
-      name: "John Doe",
-      phoneNumber: "123-456-7890",
-      room: 101,
-      checkInDate: "21 Jul 2025",
-      checkOutDate: "25 Jul 2025",
-      email: "aycom505@gmail.com",
-    },
+    // {
+    //   id: "1",
+    //   name: "John Doe",
+    //   phoneNumber: "123-456-7890",
+    //   room: 101,
+    //   checkInDate: "21 Jul 2025",
+    //   checkOutDate: "25 Jul 2025",
+    //   email: "aycom505@gmail.com",
+    // },
+    // {
+    //   id: "2",
+    //   name: "John Doe",
+    //   phoneNumber: "123-456-7890",
+    //   room: 101,
+    //   checkInDate: "21 Jul 2025",
+    //   checkOutDate: "25 Jul 2025",
+    //   email: "aycom505@gmail.com",
+    // },
+    // {
+    //   id: "3",
+    //   name: "John Doe",
+    //   phoneNumber: "123-456-7890",
+    //   room: 101,
+    //   checkInDate: "21 Jul 2025",
+    //   checkOutDate: "25 Jul 2025",
+    //   email: "aycom505@gmail.com",
+    // },
+    // {
+    //   id: "4",
+    //   name: "John Doe",
+    //   phoneNumber: "123-456-7890",
+    //   room: 101,
+    //   checkInDate: "21 Jul 2025",
+    //   checkOutDate: "25 Jul 2025",
+    //   email: "aycom505@gmail.com",
+    // },
   ];
 
   const router = useRouter();
@@ -114,6 +114,7 @@ export default function VisitorList() {
   //   };
   const [searchQuery, setSearchQuery] = useState("");
   const isLoading = false;
+
   return (
     <section className="w-full mt-6">
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
@@ -201,19 +202,17 @@ export default function VisitorList() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">Loading inventory...</p>
+                  <p className="text-gray-500">Loading visitors...</p>
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-0">
                   <EmptyState
-                    icon={<Package className="h-16 w-16 text-primary" />}
-                    title="No Inventory Items"
+                    // icon={<UsersRound className="h-16 w-16 text-primary" />}
+                    title="No Visitors Added Yet"
                     description={
-                      searchQuery
-                        ? "No items match your search criteria. Try adjusting your filters."
-                        : "You haven't added any inventory items yet. Add your first item to get started!"
+                      "There are no visitors added yet. Start by adding new visitors to manage and track them effectively."
                     }
                   />
                 </TableCell>
@@ -227,7 +226,7 @@ export default function VisitorList() {
                   className="border-b-0 cursor-pointer hover:bg-neutral"
                   key={item.id}
                 >
-                  <TableCell>{item.name}</TableCell>
+                  <TableCell className="py-4 ">{item.name}</TableCell>
                   <TableCell>{item.email}</TableCell>
                   <TableCell>{item.phoneNumber}</TableCell>
 

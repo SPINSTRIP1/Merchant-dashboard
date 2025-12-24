@@ -13,6 +13,7 @@ import AddButton from "@/app/(dashboard)/_components/add-button";
 import FacilityModal from "./modals/facility-modal";
 import { Place } from "../../_schemas";
 import { PLACE_TYPES } from "../../_constants";
+import EmptyState from "@/components/empty-state";
 
 export default function FacilityManagement({
   place,
@@ -176,42 +177,28 @@ export default function FacilityManagement({
           <div className="bg-[#F6E9DD]  py-3 px-3 rounded-2xl">
             <h2 className="font-bold text-lg text-primary-text">Facilities</h2>
           </div>
-          <div className="grid grid-cols-3 gap-10 mt-5">
-            {[
-              {
-                title: "Deluxe Room",
-                imgUrl: "/places/1.jpg",
-                description:
-                  "Standard suite with the best amenities and serene comfort ",
-                maxOccupancy: 3,
-                bedSize: "King Size",
-                pricePerNight: 250,
-                amenities: ["Pool", "Gym", "Sauna"],
-              },
-              {
-                title: "Deluxe Room",
-                imgUrl: "/places/2.png",
-                description:
-                  "Standard suite with the best amenities and serene comfort ",
-                maxOccupancy: 3,
-                bedSize: "King Size",
-                pricePerNight: 250,
-                amenities: ["Pool", "Gym", "Sauna"],
-              },
-              {
-                title: "Deluxe Room",
-                imgUrl: "/places/3.png",
-                description:
-                  "Standard suite with the best amenities and serene comfort ",
-                maxOccupancy: 3,
-                bedSize: "King Size",
-                pricePerNight: 250,
-                amenities: ["Pool", "Gym", "Sauna"],
-              },
-            ].map((facility, index) => (
-              <FacilityCard key={index} {...facility} />
-            ))}
-          </div>
+          {place?.facilities && place.facilities.length > 0 ? (
+            <div className="grid grid-cols-3 gap-10 mt-5">
+              {place.facilities.map((facility, index) => (
+                <FacilityCard
+                  key={index}
+                  title={facility.name}
+                  description={facility.description}
+                  imgUrl={facility.images?.[0] || ""}
+                  maxOccupancy={12}
+                  bedSize={"King Size"}
+                  pricePerNight={12}
+                  amenities={[]}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              // icon={<MapPin className="h-16 w-16 text-primary" />}
+              title="No Facilities"
+              description={"No facilities available for this place yet"}
+            />
+          )}
         </ContainerWrapper>
       </div>
       <FacilityModal

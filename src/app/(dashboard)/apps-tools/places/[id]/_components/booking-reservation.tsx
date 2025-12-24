@@ -24,7 +24,7 @@ import {
   LocationUser02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { EllipsisVertical, Package } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { formatAmount } from "@/utils";
@@ -49,27 +49,27 @@ interface Booking {
 
 export default function BookingReservation() {
   const items: Booking[] = [
-    {
-      id: "1",
-      roomNumber: 101,
-      roomType: "Standard",
-      availability: "Available",
-      price: 100,
-    },
-    {
-      id: "2",
-      roomNumber: 102,
-      roomType: "VIP",
-      availability: "Occupied",
-      price: 200,
-    },
-    {
-      id: "3",
-      roomNumber: 103,
-      roomType: "Suite",
-      availability: "Blocked",
-      price: 300,
-    },
+    // {
+    //   id: "1",
+    //   roomNumber: 101,
+    //   roomType: "Standard",
+    //   availability: "Available",
+    //   price: 100,
+    // },
+    // {
+    //   id: "2",
+    //   roomNumber: 102,
+    //   roomType: "VIP",
+    //   availability: "Occupied",
+    //   price: 200,
+    // },
+    // {
+    //   id: "3",
+    //   roomNumber: 103,
+    //   roomType: "Suite",
+    //   availability: "Blocked",
+    //   price: 300,
+    // },
   ];
 
   const router = useRouter();
@@ -191,19 +191,21 @@ export default function BookingReservation() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">Loading inventory...</p>
+                  <p className="text-gray-500">
+                    Loading bookings & reservations...
+                  </p>
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-0">
                   <EmptyState
-                    icon={<Package className="h-16 w-16 text-primary" />}
-                    title="No Inventory Items"
+                    // icon={<Package className="h-16 w-16 text-primary" />}
+                    title="No Bookings & Reservations Added Yet"
                     description={
                       searchQuery
                         ? "No items match your search criteria. Try adjusting your filters."
-                        : "You haven't added any inventory items yet. Add your first item to get started!"
+                        : "You haven't added any bookings or reservations yet. Add your first one to get started!"
                     }
                   />
                 </TableCell>

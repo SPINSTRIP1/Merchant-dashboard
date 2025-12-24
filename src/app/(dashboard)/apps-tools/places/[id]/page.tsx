@@ -15,7 +15,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import React, { useState } from "react";
 import FacilityManagement from "./_components/facility-management";
-import VisitorManagement from "./_components/visitor-management";
 import BookingReservation from "./_components/booking-reservation";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { PLACES_SERVER_URL } from "@/constants";
@@ -23,6 +22,11 @@ import { useParams, useRouter } from "next/navigation";
 import { Place } from "../_schemas";
 import Loader from "@/components/loader";
 import { ChevronLeft } from "lucide-react";
+import ActivitiesExperience from "./_components/activities-experience";
+import EmptyState from "@/components/empty-state";
+import VisitorList from "./_components/visitor-list";
+import Reviews from "./_components/reviews";
+import { Event } from "../../event-planner/_components/events-table";
 
 export default function Page() {
   const { id } = useParams();
@@ -71,7 +75,8 @@ export default function Page() {
       bgColor: "#D9EDFF",
     },
   ];
-  const settingsItems = [
+
+  const quickLinks = [
     {
       title: "Add Event",
       icon: AddSquareIcon,
@@ -93,18 +98,45 @@ export default function Page() {
       link: "/apps-tools/bookings",
     },
   ] as const;
+
   const [selectedOption, setSelectedOption] = useState<string>(
     "Facility Management"
   );
+  const events: Event[] = [];
+
   const renderContent = () => {
     switch (selectedOption) {
       case "Facility Management":
         return <FacilityManagement place={place} />;
       case "Visitor Management":
-        return <VisitorManagement />;
+        return <VisitorList />;
 
       case "Bookings & Reservations":
         return <BookingReservation />;
+
+      case "Activities & Experiences":
+        return events.length === 0 ? (
+          <EmptyState
+            // icon={<MapPin className="h-16 w-16 text-primary" />}
+            title="No Activities or Experiences"
+            description={
+              "No activities or experiences available for this place yet"
+            }
+          />
+        ) : (
+          <>
+            <ActivitiesExperience
+              events={events}
+              title="Activities in this Place"
+            />
+            <ActivitiesExperience
+              events={events}
+              title="Events in this Place"
+            />
+          </>
+        );
+      case "Reviews":
+        return <Reviews />;
       default:
         return null;
     }
@@ -129,11 +161,11 @@ export default function Page() {
           <p className="font-bold text-primary-text">{place?.name}</p>
         </button>
       </div>
-      <div className="flex flex-wrap mb-5 gap-4">
+      <div className="flex flex-wrap mb-5 gap-5 2xl:grid 2xl:grid-cols-5">
         {stats.map((stat) => (
           <div
             key={stat.title}
-            className="bg-foreground h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
+            className="bg-foreground h-[165px] max-w-[180px] md:max-w-[210px] 2xl:max-w-full w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
           >
             <div
               className="rounded-full p-2 bg-primary-accent w-fit"
@@ -155,12 +187,12 @@ export default function Page() {
         ))}
       </div>
       <h2 className="font-bold mb-5">Quicklinks</h2>
-      <div className="flex flex-wrap gap-5">
-        {settingsItems.map((item) => (
+      <div className="flex flex-wrap gap-5 2xl:grid 2xl:grid-cols-4">
+        {quickLinks.map((item) => (
           <Link
             key={item.title}
             href={item.link}
-            className="p-6 bg-foreground relative rounded-[32px] w-full md:min-w-[269px] md:max-w-[269px] flex flex-col items-center justify-center h-[165px] gap-2 cursor-pointer hover:shadow-md transition-shadow"
+            className="p-6 bg-foreground relative rounded-[32px] w-full md:min-w-[269px] md:max-w-[269px] 2xl:max-w-full flex flex-col items-center justify-center h-[165px] gap-2 cursor-pointer hover:shadow-md transition-shadow"
           >
             <div className="w-12 h-12 bg-primary-accent rounded-full flex items-center justify-center">
               <HugeiconsIcon icon={item.icon} size={24} color={"#6932E2"} />
@@ -169,7 +201,7 @@ export default function Page() {
           </Link>
         ))}
       </div>
-      <div className="mt-10 mb-5  flex items-center mx-auto w-full justify-center">
+      <div className="mt-10 mb-5  flex items-center justify-center w-full">
         {[
           "Facility Management",
           "Visitor Management",

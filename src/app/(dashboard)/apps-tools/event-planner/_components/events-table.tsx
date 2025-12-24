@@ -14,14 +14,14 @@ import React, { useState } from "react";
 import DetailsModal from "./details-modal";
 import AddEventsModal from "./add-events-modal";
 
-export interface DealItem {
+export interface Event {
   title: string;
   location: string;
   date: string;
   tagline: string;
   imgUrl: string;
 }
-export const events: DealItem[] = [
+export const events: Event[] = [
   {
     title: "2025 Tech Expo",
     location: "Lekki, Lagos",

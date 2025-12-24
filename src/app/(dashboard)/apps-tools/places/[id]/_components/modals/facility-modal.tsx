@@ -40,13 +40,15 @@ export default function FacilityModal({
         //   description: "",
         // },
       ],
-      freeAccess: true,
+      isGated: false,
+      files: [],
+      // images: [],
     },
   });
   const [imageUploadFields, setImageUploadFields] = useState([0]); // Start with one field
   const files = watch("files") || [];
-  const facilityAccess = watch("facilityAccess") || "";
-  const freeAccess = watch("freeAccess") || false;
+  const accessType = watch("accessType") || "";
+  const isGated = watch("isGated") || false;
   const fees = watch("fees") || [];
   // const media = watch("images") || [];
 
@@ -197,7 +199,7 @@ export default function FacilityModal({
         <div className="space-y-1.5">
           <Label>Facility Access</Label>
           <MultiSelect
-            value={facilityAccess}
+            value={accessType}
             options={[
               { label: "Open", value: "OPEN" },
               { label: "Priced", value: "PRICED" },
@@ -205,11 +207,11 @@ export default function FacilityModal({
             radioClassName="!w-full"
             className="!grid !grid-cols-2"
             onValueChange={(value) => {
-              setValue("facilityAccess", value as "OPEN" | "PRICED");
+              setValue("accessType", value as "OPEN" | "PRICED");
             }}
           />
         </div>
-        {facilityAccess === "PRICED" ? (
+        {accessType === "PRICED" ? (
           <div>
             <label htmlFor="extras" className="text-secondary-text text-sm">
               Priced Facility Price
@@ -280,12 +282,12 @@ export default function FacilityModal({
               Click on the + icon to add an item to the extras list.
             </p>
           </div>
-        ) : facilityAccess === "OPEN" ? (
+        ) : accessType === "OPEN" ? (
           <>
             <div className="space-y-1.5">
               <Label>Is the Facility Free or Gated (requires gate fee)?</Label>
               <MultiSelect
-                value={freeAccess ? "FREE" : "GATED"}
+                value={isGated ? "GATED" : "FREE"}
                 options={[
                   { label: "Free", value: "FREE" },
                   { label: "Gated", value: "GATED" },
@@ -293,7 +295,7 @@ export default function FacilityModal({
                 radioClassName="!w-full"
                 className="!grid !grid-cols-2"
                 onValueChange={(value) => {
-                  setValue("freeAccess", value === "FREE");
+                  setValue("isGated", value === "GATED");
                 }}
               />
             </div>

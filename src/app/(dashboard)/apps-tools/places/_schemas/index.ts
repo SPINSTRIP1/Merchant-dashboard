@@ -19,8 +19,9 @@ export const facilitySchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   fees: z.array(feeTierSchema),
   files: z.array(z.instanceof(File)).optional(),
-  facilityAccess: z.enum(["OPEN", "PRICED"]).optional(),
-  freeAccess: z.boolean().optional(),
+  accessType: z.enum(["OPEN", "PRICED"]).optional(),
+  isGated: z.boolean().optional(),
+  images: z.array(z.string()).optional(),
 });
 
 export type Facility = z.infer<typeof facilitySchema>;
