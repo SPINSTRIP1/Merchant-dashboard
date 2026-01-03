@@ -12,11 +12,12 @@ interface PaginatedResponse<T> {
 }
 
 interface UseServerPaginationOptions {
-  queryKey: string;
+  queryKey: string | string[];
   endpoint: string;
   initialPage?: number;
   searchQuery?: string;
   filters?: Record<string, string | boolean | number>;
+  enabled?: boolean;
 }
 
 export function useServerPagination<T>({
@@ -25,16 +26,19 @@ export function useServerPagination<T>({
   initialPage = 1,
   searchQuery = "",
   filters = {},
+  enabled = true,
 }: UseServerPaginationOptions) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Get current page from URL or use initial page
   const currentPage = Number(searchParams.get("page")) || initialPage;
-
+  const key = Array.isArray(queryKey)
+    ? [...queryKey, currentPage, searchQuery, filters]
+    : [queryKey, currentPage, searchQuery, filters];
   // Fetch paginated data from server
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: [queryKey, currentPage, searchQuery, filters],
+    queryKey: key,
     queryFn: async () => {
       try {
         // Build query params
@@ -65,6 +69,7 @@ export function useServerPagination<T>({
         return null;
       }
     },
+    enabled,
   });
 
   // Handle page change

@@ -2,8 +2,7 @@ import z from "zod";
 
 // Fee tier schema for facilities
 export const feeTierSchema = z.object({
-  tierName: z.string().min(2, "Tier name is required"),
-  tierLevel: z.number().min(1, "Tier level must be at least 1"),
+  name: z.string().min(2, "Tier name is required"),
   amount: z.number().min(0, "Amount must be positive"),
   description: z.string().optional(),
 });
@@ -87,6 +86,35 @@ export const placeSchema = z.object({
   privacyPolicyUrl: z.string().optional(),
   userId: z.string().optional(),
   rejectionReason: z.string().optional(),
+  operatingHours: z
+    .object({
+      schedule: z.array(
+        z.object({
+          day: z.string(),
+          isOpen: z.boolean(),
+          openingTime: z.string(),
+          closingTime: z.string(),
+        })
+      ),
+      holidays: z.array(
+        z.object({
+          name: z.string(),
+          date: z.string(),
+          isRecurring: z.boolean(),
+          isOpen: z.boolean(),
+          openingTime: z.string(),
+          closingTime: z.string(),
+        })
+      ),
+    })
+    .optional(),
+  metadata: z
+    .object({
+      amenities: z.string(),
+      rating: z.string(),
+      category: z.string(),
+    })
+    .optional(),
 });
 
 export type Place = z.infer<typeof placeSchema>;

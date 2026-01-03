@@ -224,37 +224,39 @@ export default function Sidebar() {
   }, [logout]);
 
   return (
-    <div className="bg-[#F8F8F8] min-w-[252px] px-4 max-w-[252px] border-r hidden border-gray-300 shadow-md lg:flex flex-col min-h-[924px] max-h-[1024px] 2xl:max-h-screen w-64">
-      {/* Logo/Brand Section */}
-      <Link href="/" className="p-6 w-full flex items-center justify-center">
-        <Image
-          src="/logo.svg"
-          alt="Spinstrip Logo"
-          className="w-[88px] h-[34px]"
-          width={100}
-          height={34}
-          priority
-        />
-      </Link>
+    <section className="hidden lg:block fixed left-0 top-0 min-h-[924px] h-full max-h-[1024px] 2xl:max-h-screen">
+      <div className="bg-[#F8F8F8] min-w-[262px] px-6 max-w-[262px] h-full border-r border-gray-300 shadow-md flex flex-col  w-64">
+        {/* Logo/Brand Section */}
+        <Link href="/" className="p-6 w-full flex items-center justify-center">
+          <Image
+            src="/logo.svg"
+            alt="Spinstrip Logo"
+            className="w-[88px] h-[34px]"
+            width={100}
+            height={34}
+            priority
+          />
+        </Link>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 mt-10 py-6">
-        <ul className="space-y-2">
-          {navigationLinks.map((link) => (
-            <NavigationItem
-              key={link.name}
-              link={link}
-              pathName={pathName}
-              activeApps={activeApps}
-              toggleDropdown={toggleDropdown}
-              onToggleDropdown={handleToggleDropdown}
-            />
-          ))}
-        </ul>
-      </nav>
+        {/* Navigation Links */}
+        <nav className="flex-1 mt-10 py-6">
+          <ul className="space-y-2">
+            {navigationLinks.map((link) => (
+              <NavigationItem
+                key={link.name}
+                link={link}
+                pathName={pathName}
+                activeApps={activeApps}
+                toggleDropdown={toggleDropdown}
+                onToggleDropdown={handleToggleDropdown}
+              />
+            ))}
+          </ul>
+        </nav>
 
-      {/* User Profile Section */}
-      <UserProfile user={user} onLogout={handleLogout} />
-    </div>
+        {/* User Profile Section */}
+        <UserProfile user={user} onLogout={handleLogout} />
+      </div>
+    </section>
   );
 }

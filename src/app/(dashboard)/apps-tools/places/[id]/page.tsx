@@ -16,10 +16,8 @@ import Link from "next/link";
 import React, { useState } from "react";
 import FacilityManagement from "./_components/facility-management";
 import BookingReservation from "./_components/booking-reservation";
-import { useServerPagination } from "@/hooks/use-server-pagination";
 import { PLACES_SERVER_URL } from "@/constants";
 import { useParams, useRouter } from "next/navigation";
-import { Place } from "../_schemas";
 import Loader from "@/components/loader";
 import { ChevronLeft } from "lucide-react";
 import ActivitiesExperience from "./_components/activities-experience";
@@ -27,49 +25,57 @@ import EmptyState from "@/components/empty-state";
 import VisitorList from "./_components/visitor-list";
 import Reviews from "./_components/reviews";
 import { Event } from "../../event-planner/_components/events-table";
+import api from "@/lib/api/axios-client";
+import { useQuery } from "@tanstack/react-query";
+import { SinglePlace } from "../_components/claim-places-steps/find-place";
 
 export default function Page() {
   const { id } = useParams();
-  const { items, isLoading } = useServerPagination<
-    Place & { coverImage?: string }
-  >({
-    queryKey: "places",
-    endpoint: `${PLACES_SERVER_URL}/places`,
+  const { data: place, isLoading } = useQuery<SinglePlace>({
+    queryKey: ["single-place", id],
+    queryFn: async () => {
+      try {
+        const response = await api.get(PLACES_SERVER_URL + `/places/${id}`);
+        return response.data.data;
+      } catch (error) {
+        console.log("Error fetching products:", error);
+        return [];
+      }
+    },
   });
   const router = useRouter();
-  const place = items.find((place) => place.id === id);
   const stats = [
     {
       title: "Visitors",
-      value: 0,
+      value: place?.stats.visitors ?? 0,
       icon: DrinkIcon,
       textColor: "#6932E2",
       bgColor: "#EBE2FF",
     },
     {
       title: "Facilities",
-      value: 0,
+      value: place?.stats.facilities ?? 0,
       icon: DesertIcon,
       textColor: "#34C759",
       bgColor: "#DDF6E2",
     },
     {
       title: "Revenue",
-      value: 0,
+      value: place?.stats.revenue ?? 0,
       icon: Cash02Icon,
       textColor: "#FF9500",
       bgColor: "#F6E9DD",
     },
     {
       title: "Sales",
-      value: 0,
+      value: place?.stats.sales ?? 0,
       icon: ChartLineData01Icon,
       textColor: "#FF3B30",
       bgColor: "#F6DDDD",
     },
     {
       title: "Reservations",
-      value: 0,
+      value: place?.stats.reservations ?? 0,
       icon: CircleArrowReload01Icon,
       textColor: "#0088FF",
       bgColor: "#D9EDFF",

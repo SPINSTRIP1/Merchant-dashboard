@@ -117,7 +117,9 @@ export function UploadFile<T extends FieldValues>({
               </p>
             </div>
           ) : (
-            <p className="text-gray-600">Upload document</p>
+            <p className="text-gray-600">
+              Upload {type === "video" ? "video" : "document"}
+            </p>
           )}
         </div>
         <HugeiconsIcon

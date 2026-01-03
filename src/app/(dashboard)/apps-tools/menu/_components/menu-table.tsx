@@ -169,10 +169,6 @@ export default function MenuTable() {
   };
   return (
     <section>
-      <FeaturedMenus
-        onDeleteClick={handleDeleteClick}
-        onEditClick={handleEditClick}
-      />
       <div className="flex flex-col lg:flex-row gap-x-5">
         <div className="w-full flex-1">
           <div className="flex flex-col md:flex-row md:items-center flex-wrap gap-3 justify-between w-full">
@@ -425,6 +421,10 @@ export default function MenuTable() {
         </div>
         <TopMenus />
       </div>
+      <FeaturedMenus
+        onDeleteClick={handleDeleteClick}
+        onEditClick={handleEditClick}
+      />
     </section>
   );
 }

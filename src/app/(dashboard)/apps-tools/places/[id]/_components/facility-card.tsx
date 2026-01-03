@@ -1,29 +1,26 @@
 import { formatAmount } from "@/utils";
-import Image from "next/image";
 import React from "react";
 
 interface FacilityCardProps {
   title: string;
   imgUrl: string;
   description: string;
-  maxOccupancy: number;
-  bedSize: string;
-  pricePerNight: number;
-  amenities: string[];
+  facilityType: string;
+  accessType: string;
+  price: number;
 }
 
 export default function FacilityCard({
   title,
   imgUrl,
   description,
-  maxOccupancy,
-  bedSize,
-  pricePerNight,
-  amenities,
+  facilityType,
+  accessType,
+  price,
 }: FacilityCardProps) {
   return (
     <div className="space-y-1.5">
-      <Image
+      <img
         src={imgUrl}
         alt={title}
         width={400}
@@ -34,29 +31,16 @@ export default function FacilityCard({
       <p>{description}</p>
 
       <div className="flex items-center justify-between w-full">
-        <h2 className="font-bold mb-1 text-primary-text">Max Occupancy</h2>
-        <p>{maxOccupancy}</p>
+        <h2 className="font-bold mb-1 text-primary-text">Facility Type</h2>
+        <p>{facilityType}</p>
       </div>
       <div className="flex items-center justify-between w-full">
-        <h2 className="font-bold mb-1 text-primary-text">Bed Size</h2>
-        <p>{bedSize}</p>
+        <h2 className="font-bold mb-1 text-primary-text capitalize">Access</h2>
+        <p className="capitalize">{accessType}</p>
       </div>
       <div className="flex items-center justify-between w-full">
-        <h2 className="font-bold mb-1 text-primary-text">Price per Night</h2>
-        <p>{formatAmount(pricePerNight)}</p>
-      </div>
-      <div className="flex items-center justify-between w-full">
-        <h2 className="font-bold mb-1 text-primary-text">Amenities</h2>
-        <div className="flex items-end max-w-sm justify-end flex-wrap gap-2">
-          {amenities.map((item) => (
-            <div
-              key={item}
-              className="border border-neutral-accent rounded-xl w-fit py-0.5 px-1"
-            >
-              <p className="text-xs text-secondary-text">{item}</p>
-            </div>
-          ))}
-        </div>
+        <h2 className="font-bold mb-1 text-primary-text">Price</h2>
+        <p>{formatAmount(price)}</p>
       </div>
     </div>
   );

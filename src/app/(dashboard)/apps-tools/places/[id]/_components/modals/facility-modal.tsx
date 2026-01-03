@@ -4,7 +4,7 @@ import SideModal from "@/app/(dashboard)/_components/side-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Facility, facilitySchema } from "../../../_schemas";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
 import UploadFile from "@/app/(dashboard)/_components/upload-file";
@@ -13,22 +13,25 @@ import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import React from "react";
 import { Input } from "@/components/ui/input";
+import api from "@/lib/api/axios-client";
+import { PLACES_SERVER_URL } from "@/constants";
+import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function FacilityModal({
   isOpen,
   onClose,
-  action = "add",
+  placeId,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  action?: "edit" | "add" | null;
+  placeId: string;
 }) {
-  const [loading] = useState(false);
-  const { control, watch, setValue, reset } = useForm<Facility>({
+  const { control, watch, setValue, reset, getValues } = useForm<Facility>({
     resolver: zodResolver(facilitySchema),
     mode: "onChange",
     defaultValues: {
-      placeId: "",
+      placeId,
       name: "",
       facilityCategory: "",
       description: "",
@@ -45,6 +48,7 @@ export default function FacilityModal({
       // images: [],
     },
   });
+  const queryClient = useQueryClient();
   const [imageUploadFields, setImageUploadFields] = useState([0]); // Start with one field
   const files = watch("files") || [];
   const accessType = watch("accessType") || "";
@@ -81,10 +85,7 @@ export default function FacilityModal({
   //   setValue("images", currentMedia);
   // };
   const addFees = ({ name, price }: { name: string; price: number }) => {
-    setValue("fees", [
-      ...fees,
-      { tierName: name, amount: price, tierLevel: 1, description: "" },
-    ]);
+    setValue("fees", [...fees, { name, amount: price, description: "" }]);
   };
 
   const [feesInput, setFeesInput] = React.useState({ name: "", price: 0 });
@@ -94,13 +95,58 @@ export default function FacilityModal({
     reset();
     onClose();
   };
-  const getButtonLabel = () => {
-    if (loading) {
-      return action === "edit" ? "Updating..." : "Submitting...";
-    }
+  const [loading, setLoading] = useState(false);
 
-    return action === "edit" ? "Update" : "Add Facility";
-  };
+  const submitFacility = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { files, ...formData } = getValues();
+      const res = await api.post(
+        PLACES_SERVER_URL + `/places/facilities`,
+        formData
+      );
+      console.log(res);
+      const { status, data } = res.data as {
+        status: string;
+        message?: string;
+        data: Facility;
+      };
+      if (status === "success" && files && files.length > 0) {
+        try {
+          const formData = new FormData();
+
+          files.forEach((file) => {
+            formData.append("files", file);
+          });
+
+          await api.post(
+            PLACES_SERVER_URL + `/places/facilities/${data.id}/images`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+        } catch (error) {
+          console.log("Error uploading files:", error);
+          toast.error(
+            `Facility created successfully but failed to upload cover image and files. Please try again.`
+          );
+        }
+      }
+      toast.success("Facility added successfully!");
+      queryClient.invalidateQueries({
+        queryKey: ["place-facility", formData.placeId],
+      });
+      handleClose();
+    } catch (error) {
+      console.log("Error submitting Facility:", error);
+      toast.error(`Failed to add facility. Please try again.`);
+    } finally {
+      setLoading(false);
+    }
+  }, [getValues, queryClient, handleClose]);
   return (
     <SideModal isOpen={isOpen} onClose={handleClose}>
       <div className="space-y-7 pt-14 pb-5">
@@ -112,9 +158,9 @@ export default function FacilityModal({
         />
         <FormInput
           control={control}
-          label="Name of Place"
+          label="Name of Facility"
           name="name"
-          placeholder="Enter Name of Place"
+          placeholder="Enter Name of Facility"
         />
 
         <FormInput
@@ -232,7 +278,7 @@ export default function FacilityModal({
                 <Input
                   className="rounded-none border-b bg-transparent border-neutral-accent"
                   placeholder="Add Item"
-                  defaultValue={fee.tierName}
+                  defaultValue={fee.name}
                 />
                 <Input
                   type="number"
@@ -303,7 +349,7 @@ export default function FacilityModal({
               <FormInput
                 control={control}
                 label="Create Gate"
-                name="fees.0.tierName"
+                name="fees.0.name"
                 placeholder="Enter gate name"
               />
               <FormInput
@@ -317,8 +363,12 @@ export default function FacilityModal({
           </>
         ) : null}
         <div className="flex justify-center mt-6 gap-x-3 items-center">
-          <Button className="w-[368px] h-[51px] py-3" disabled={loading}>
-            {getButtonLabel()}
+          <Button
+            onClick={submitFacility}
+            className="w-[368px] h-[51px] py-3"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Add Facility"}
           </Button>
         </div>
       </div>

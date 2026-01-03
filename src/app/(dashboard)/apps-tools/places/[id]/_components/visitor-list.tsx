@@ -1,4 +1,3 @@
-import Dropdown from "@/components/dropdown";
 import SearchBar from "@/components/search-bar";
 import {
   Table,
@@ -8,12 +7,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { UsersRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import EmptyState from "@/components/empty-state";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 import { GoogleSheetIcon } from "@hugeicons/core-free-icons";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { PLACES_SERVER_URL } from "@/constants";
+import PaginationButton from "@/components/pagination-button";
+import { useDebounce } from "../../_hooks/use-debounce";
 
 type Availability = "Available" | "Blocked" | "Occupied" | "Maintenance";
 
@@ -26,95 +28,28 @@ export const statusColors: Record<Availability, string> = {
 
 interface Visitor {
   id: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-  room: number;
-  checkInDate: string;
-  checkOutDate: string;
+  appointmentId: string;
+  visitorName: string;
+  visitorEmail: string;
+  visitorPhone: string;
+  purpose: string;
 }
 
 export default function VisitorList() {
-  const items: Visitor[] = [
-    // {
-    //   id: "1",
-    //   name: "John Doe",
-    //   phoneNumber: "123-456-7890",
-    //   room: 101,
-    //   checkInDate: "21 Jul 2025",
-    //   checkOutDate: "25 Jul 2025",
-    //   email: "aycom505@gmail.com",
-    // },
-    // {
-    //   id: "2",
-    //   name: "John Doe",
-    //   phoneNumber: "123-456-7890",
-    //   room: 101,
-    //   checkInDate: "21 Jul 2025",
-    //   checkOutDate: "25 Jul 2025",
-    //   email: "aycom505@gmail.com",
-    // },
-    // {
-    //   id: "3",
-    //   name: "John Doe",
-    //   phoneNumber: "123-456-7890",
-    //   room: 101,
-    //   checkInDate: "21 Jul 2025",
-    //   checkOutDate: "25 Jul 2025",
-    //   email: "aycom505@gmail.com",
-    // },
-    // {
-    //   id: "4",
-    //   name: "John Doe",
-    //   phoneNumber: "123-456-7890",
-    //   room: 101,
-    //   checkInDate: "21 Jul 2025",
-    //   checkOutDate: "25 Jul 2025",
-    //   email: "aycom505@gmail.com",
-    // },
-  ];
-
-  const router = useRouter();
-  //   const queryClient = useQueryClient();
-
-  // Use server pagination hook with search and filters
-  //   const { items, currentPage, totalPages, isLoading, handlePageChange } =
-  //     useServerPagination({
-  //       queryKey: "inventory-products",
-  //       endpoint: `${''}/products`,
-  //     //   searchQuery: debouncedSearch,
-  //     //   filters: {
-  //     //     stockStatus: statusFilter,
-  //     //     sortBy: sortBy,
-  //     //   },
-  //     });
-
-  // Optimistic delete hook
-  //   const { deleteItem } = useOptimisticDelete<InventoryProduct>({
-  //     queryKey: ["inventory-products", currentPage],
-  //     deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
-  //     successMessage: "Item deleted successfully",
-  //     errorMessage: "Failed to delete item",
-  //   });
-
-  //   const handleStatusChange = async (
-  //     id: string,
-  //     newStatus: "ACTIVE" | "INACTIVE"
-  //   ) => {
-  //     try {
-  //       await api.patch(`${INVENTORY_SERVER_URL}/products/${id}`, {
-  //         status: newStatus,
-  //       });
-  //       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
-  //       toast.success("Item status updated successfully");
-  //     } catch (error) {
-  //       console.log(error);
-  //       toast.error("Failed to change item status");
-  //     }
-  //   };
   const [searchQuery, setSearchQuery] = useState("");
-  const isLoading = false;
-
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const { id } = useParams() as { id: string | undefined };
+  const { items, currentPage, totalPages, isLoading, handlePageChange } =
+    useServerPagination<Visitor>({
+      queryKey: ["places-visitors", id || ""],
+      endpoint: `${PLACES_SERVER_URL}/places/${id}/visitors`,
+      enabled: !!id,
+      searchQuery: debouncedSearch,
+      // filters: {
+      //   stockStatus: statusFilter,
+      //   sortBy: sortBy,
+      // },
+    });
   return (
     <section className="w-full mt-6">
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
@@ -125,7 +60,7 @@ export default function VisitorList() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <div className="flex items-center gap-x-2">
+        {/* <div className="flex items-center gap-x-2">
           <Dropdown
             header=""
             options={["All", "In Stock", "Low Stock", "Out of Stock"]}
@@ -166,7 +101,7 @@ export default function VisitorList() {
               //   }
             }}
           />
-        </div>
+        </div> */}
         <div className="flex items-center gap-x-2">
           <AddButton onClick={() => {}} title="Add Visitor" />
           <AddButton
@@ -181,21 +116,16 @@ export default function VisitorList() {
         <Table>
           <TableHeader>
             <TableRow className="border-b-0">
-              {[
-                "Name",
-                "Email Address",
-                "Phone Number",
-                "Room",
-                "Check-In Date",
-                "Check-Out Date",
-              ].map((header) => (
-                <TableHead
-                  key={header}
-                  className="text-primary-text font-bold text-base"
-                >
-                  {header}
-                </TableHead>
-              ))}
+              {["Name", "Email Address", "Phone Number", "Purpose"].map(
+                (header) => (
+                  <TableHead
+                    key={header}
+                    className="text-primary-text font-bold text-base"
+                  >
+                    {header}
+                  </TableHead>
+                )
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -220,19 +150,14 @@ export default function VisitorList() {
             ) : (
               items?.map((item) => (
                 <TableRow
-                  onClick={() =>
-                    router.push("/apps-tools/inventory/item?id=" + item.id)
-                  }
                   className="border-b-0 cursor-pointer hover:bg-neutral"
                   key={item.id}
                 >
-                  <TableCell className="py-4 ">{item.name}</TableCell>
-                  <TableCell>{item.email}</TableCell>
-                  <TableCell>{item.phoneNumber}</TableCell>
+                  <TableCell className="py-4 ">{item.visitorName}</TableCell>
+                  <TableCell>{item.visitorEmail}</TableCell>
+                  <TableCell>{item.visitorPhone}</TableCell>
 
-                  <TableCell>{item.room}</TableCell>
-                  <TableCell>{item.checkInDate}</TableCell>
-                  <TableCell>{item.checkOutDate}</TableCell>
+                  <TableCell>{item.purpose}</TableCell>
                 </TableRow>
               ))
             )}
@@ -240,14 +165,13 @@ export default function VisitorList() {
         </Table>
       </div>
 
-      {/* Pagination Component */}
-      {/* {!isLoading && totalPages > 0 && (
+      {!isLoading && totalPages > 0 && (
         <PaginationButton
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      )} */}
+      )}
 
       {/* <DeleteModal
         isOpen={action === "delete"}

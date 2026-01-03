@@ -14,104 +14,72 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  CancelCircleHalfDotIcon,
-  CheckmarkCircle02Icon,
-  CleanIcon,
-  Delete02Icon,
-  Edit02Icon,
-  HourglassIcon,
-  LocationUser02Icon,
-} from "@hugeicons/core-free-icons";
+import { Delete02Icon, Edit02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { EllipsisVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import { formatAmount } from "@/utils";
 import EmptyState from "@/components/empty-state";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { PLACES_SERVER_URL } from "@/constants";
+import { useDebounce } from "../../_hooks/use-debounce";
+import PaginationButton from "@/components/pagination-button";
+import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
+import DeleteModal from "./modals/delete-modal";
 
-type Availability = "Available" | "Blocked" | "Occupied" | "Maintenance";
+type Status = "Pending" | "Confirmed" | "Cancelled" | "Completed" | "No-Show";
 
-export const statusColors: Record<Availability, string> = {
-  Available: "text-[#34C759] bg-[#34C75926]",
-  Maintenance: "text-[#FF8D28] bg-[#F6E9DD]",
-  Blocked: "text-[#FF383C] bg-[#FF383C26]",
-  Occupied: "text-[#0088FF] bg-[#0088FF26]",
+export const statusColors: Record<Status, string> = {
+  Completed: "text-[#34C759] bg-[#34C75926]",
+  Pending: "text-[#FF8D28] bg-[#F6E9DD]",
+  Cancelled: "text-[#FF383C] bg-[#FF383C26]",
+  "No-Show": "text-[#0088FF] bg-[#0088FF26]",
+  Confirmed: "text-[#FFD60A] bg-[#FFD60A26]",
 };
 
 interface Booking {
   id: string;
-  roomNumber: number;
-  roomType: "Standard" | "VIP" | "Suite";
-  availability: Availability;
-  price: number;
+  placeId: string;
+  facilityId: string;
+  feeId: string;
+  appointmentType: string;
+  scheduledDate: string;
+  endDate: string;
+  recurrencePattern: string;
+  visitorName: string;
+  visitorEmail: string;
+  visitorPhone: string;
+  purpose: string;
+  notes: string;
+  status: Status;
 }
 
 export default function BookingReservation() {
-  const items: Booking[] = [
-    // {
-    //   id: "1",
-    //   roomNumber: 101,
-    //   roomType: "Standard",
-    //   availability: "Available",
-    //   price: 100,
-    // },
-    // {
-    //   id: "2",
-    //   roomNumber: 102,
-    //   roomType: "VIP",
-    //   availability: "Occupied",
-    //   price: 200,
-    // },
-    // {
-    //   id: "3",
-    //   roomNumber: 103,
-    //   roomType: "Suite",
-    //   availability: "Blocked",
-    //   price: 300,
-    // },
-  ];
-
-  const router = useRouter();
-  //   const queryClient = useQueryClient();
-
-  // Use server pagination hook with search and filters
-  //   const { items, currentPage, totalPages, isLoading, handlePageChange } =
-  //     useServerPagination({
-  //       queryKey: "inventory-products",
-  //       endpoint: `${''}/products`,
-  //     //   searchQuery: debouncedSearch,
-  //     //   filters: {
-  //     //     stockStatus: statusFilter,
-  //     //     sortBy: sortBy,
-  //     //   },
-  //     });
-
-  // Optimistic delete hook
-  //   const { deleteItem } = useOptimisticDelete<InventoryProduct>({
-  //     queryKey: ["inventory-products", currentPage],
-  //     deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
-  //     successMessage: "Item deleted successfully",
-  //     errorMessage: "Failed to delete item",
-  //   });
-
-  //   const handleStatusChange = async (
-  //     id: string,
-  //     newStatus: "ACTIVE" | "INACTIVE"
-  //   ) => {
-  //     try {
-  //       await api.patch(`${INVENTORY_SERVER_URL}/products/${id}`, {
-  //         status: newStatus,
-  //       });
-  //       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
-  //       toast.success("Item status updated successfully");
-  //     } catch (error) {
-  //       console.log(error);
-  //       toast.error("Failed to change item status");
-  //     }
-  //   };
   const [searchQuery, setSearchQuery] = useState("");
-  const isLoading = false;
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [action, setAction] = useState<"delete" | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Booking | null>(null);
+  const { id } = useParams() as { id: string | undefined };
+  const { items, currentPage, totalPages, isLoading, handlePageChange } =
+    useServerPagination<Booking>({
+      queryKey: ["places-bookings", id || ""],
+      endpoint: `${PLACES_SERVER_URL}/places/${id}/appointments`,
+      enabled: !!id,
+      searchQuery: debouncedSearch,
+      filters: {
+        status: statusFilter,
+      },
+    });
+
+  const { deleteItem } = useOptimisticDelete<Booking>({
+    queryKey: ["places-bookings", currentPage],
+    deleteEndpoint: `${PLACES_SERVER_URL}/places/appointments`,
+    successMessage: "Item deleted successfully",
+    errorMessage: "Failed to delete item",
+  });
+
   return (
     <section className="w-full mt-6">
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
@@ -124,58 +92,51 @@ export default function BookingReservation() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <div className="flex items-center gap-x-2">
-          <Dropdown
-            header=""
-            options={["All", "In Stock", "Low Stock", "Out of Stock"]}
-            placeholder="All"
-            onSelect={() => {
-              //   if (value === "All Status") {
-              //     setStatusFilter("");
-              //   } else if (value === "In Stock") {
-              //     setStatusFilter("inStock");
-              //   } else if (value === "Low Stock") {
-              //     setStatusFilter("lowStock");
-              //   } else if (value === "Out of Stock") {
-              //     setStatusFilter("outOfStock");
-              //   }
-            }}
-          />
-          <Dropdown
-            header=""
-            options={["Name", "Price", "Stock", "Date Updated", "Date Created"]}
-            placeholder="Sort by"
-            onSelect={() => {
-              //   switch (value) {
-              //     case "Name":
-              //       setSortBy("name");
-              //       break;
-              //     case "Price":
-              //       setSortBy("price");
-              //       break;
-              //     case "Stock":
-              //       setSortBy("stock");
-              //       break;
-              //     case "Date Updated":
-              //       setSortBy("updated");
-              //       break;
-              //     case "Date Created":
-              //       setSortBy("created");
-              //       break;
-              //   }
-            }}
-          />
-        </div>
+
+        <Dropdown
+          header=""
+          options={[
+            "Pending",
+            "Confirmed",
+            "Cancelled",
+            "Completed",
+            "No-Show",
+          ]}
+          placeholder="Filter by Status"
+          onSelect={(value) => {
+            switch (value) {
+              case "Pending":
+                setStatusFilter("PENDING");
+                break;
+              case "Confirmed":
+                setStatusFilter("CONFIRMED");
+                break;
+              case "Cancelled":
+                setStatusFilter("CANCELLED");
+                break;
+              case "Completed":
+                setStatusFilter("COMPLETED");
+                break;
+              case "No-Show":
+                setStatusFilter("NO_SHOW");
+                break;
+            }
+          }}
+        />
       </div>
       <div className="bg-foreground rounded-3xl p-5 mt-4">
         <Table>
           <TableHeader>
             <TableRow className="border-b-0">
               {[
-                "Room Number",
-                "Room Type",
-                "Availability",
-                "Price",
+                "Visitor Name",
+                "Visitor ID",
+                "Email",
+                "Phone Number",
+                "Facility",
+                "Status",
+                "Fee",
+
                 "Actions",
               ].map((header) => (
                 <TableHead
@@ -213,27 +174,24 @@ export default function BookingReservation() {
             ) : (
               items?.map((item) => (
                 <TableRow
-                  onClick={() =>
-                    router.push("/apps-tools/inventory/item?id=" + item.id)
-                  }
                   className="border-b-0 cursor-pointer hover:bg-neutral"
                   key={item.id}
                 >
-                  <TableCell>{item.roomNumber}</TableCell>
-                  <TableCell>{item.roomType}</TableCell>
+                  <TableCell>{item.visitorName}</TableCell>
+                  <TableCell>{item.visitorName}</TableCell>
+                  <TableCell>{item.visitorEmail}</TableCell>
+                  <TableCell>{item.visitorPhone}</TableCell>
+                  <TableCell>{item.facilityId}</TableCell>
                   <TableCell className="w-[140px]">
                     <div
                       className={`${
-                        statusColors[item.availability as Availability] ||
-                        statusColors["Available"]
+                        statusColors[item.status] || statusColors["Pending"]
                       } w-[80px] flex items-center justify-center py-1 rounded-lg`}
                     >
-                      <p className="font-semibold text-xs">
-                        {item.availability}
-                      </p>
+                      <p className="font-semibold text-xs">{item.status}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{formatAmount(item.price)}</TableCell>
+                  <TableCell>{formatAmount(item.feeId)}</TableCell>
 
                   <TableCell>
                     <DropdownMenu>
@@ -247,36 +205,15 @@ export default function BookingReservation() {
                             label: "Edit Item",
                             onClick: () => {},
                           },
-                          {
-                            icon: CheckmarkCircle02Icon,
-                            label: "Mark as Available",
-                            onClick: () => {},
-                          },
-                          {
-                            icon: LocationUser02Icon,
-                            label: "Mark as Occupied",
-                            onClick: () => {},
-                          },
-                          {
-                            icon: HourglassIcon,
-                            label: "Mark as Unavailable",
-                            onClick: () => {},
-                          },
-                          {
-                            icon: CancelCircleHalfDotIcon,
-                            label: "Mark as Blocked",
-                            onClick: () => {},
-                          },
-                          {
-                            icon: CleanIcon,
-                            label: "Mark as Under Maintenance",
-                            onClick: () => {},
-                          },
+
                           {
                             icon: Delete02Icon,
                             label: "Delete Item",
                             color: "#FF5F57",
-                            onClick: () => {},
+                            onClick: () => {
+                              setSelectedItem(item);
+                              setAction("delete");
+                            },
                           },
                         ].map(({ icon, label, color, onClick }) => (
                           <DropdownMenuItem
@@ -311,23 +248,22 @@ export default function BookingReservation() {
         </Table>
       </div>
 
-      {/* Pagination Component */}
-      {/* {!isLoading && totalPages > 0 && (
+      {!isLoading && totalPages > 0 && (
         <PaginationButton
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      )} */}
+      )}
 
-      {/* <DeleteModal
+      <DeleteModal
         isOpen={action === "delete"}
-        title={selectedItem?.name || "this item"}
+        title="this appointment"
         onClose={() => setAction(null)}
         onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
         secondaryText="Cancel"
-        description="This product will be deleted permanently and cannot be recovered!"
-      />  */}
+        description="This appointment will be deleted permanently and cannot be recovered!"
+      />
     </section>
   );
 }

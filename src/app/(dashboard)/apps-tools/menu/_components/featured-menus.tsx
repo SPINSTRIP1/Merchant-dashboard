@@ -23,7 +23,9 @@ export default function FeaturedMenus({
   });
   return (
     <div>
-      <h2 className="font-bold text-primary-text text-sm">Featured Menus</h2>
+      <h2 className="font-bold text-primary-text mb-2 text-sm">
+        Featured Menus
+      </h2>
       <div className="flex gap-4">
         {isLoading ? (
           <div className="flex gap-4 mb-5 w-full">

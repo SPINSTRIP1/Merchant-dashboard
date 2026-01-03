@@ -16,4 +16,6 @@ export type ActionType =
   | "reactivate"
   | "details"
   | "duplicate"
+  | "select"
+  | "claim"
   | null;

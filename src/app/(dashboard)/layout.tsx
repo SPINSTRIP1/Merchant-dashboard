@@ -17,15 +17,14 @@ export default function DashboardLayout({
   }, []);
   return (
     <Providers>
-      <div className={"flex gap-x-2"}>
+      <div className={"flex lg:pl-64 gap-x-2"}>
         <Sidebar />
         <MobileSidebar isOpen={isOpen} toggle={toggle} />
-        <div className="w-full p-3 lg:p-0 h-full">
+
+        <MaxWidthWrapper className="flex-1 w-full h-full">
           <Navbar toggle={toggle} />
-          <MaxWidthWrapper className="flex-1 px-0 lg:px-2.5 !pt-0">
-            {children}
-          </MaxWidthWrapper>
-        </div>
+          {children}
+        </MaxWidthWrapper>
       </div>
     </Providers>
   );

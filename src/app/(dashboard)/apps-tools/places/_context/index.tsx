@@ -35,6 +35,10 @@ interface PlacesContextType {
   action: ActionType;
   setAction: React.Dispatch<React.SetStateAction<ActionType>>;
   handleReset: () => void;
+  currentStep: number;
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  handleNext: () => Promise<void>;
+  handlePrevious: () => void;
 }
 
 const PlacesContext = createContext<PlacesContextType | undefined>(undefined);
@@ -55,6 +59,7 @@ export function PlacesFormProvider({
   const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const { getValues, setValue, reset, trigger } = form;
   const queryClient = useQueryClient();
 
@@ -76,6 +81,7 @@ export function PlacesFormProvider({
   );
   const handleReset = useCallback(() => {
     reset(DEFAULT_PLACES_VALUES as Place);
+    setCurrentStep(1);
     setAction(null);
   }, [reset, setAction]);
   const submitPlace = useCallback(async () => {
@@ -201,6 +207,25 @@ export function PlacesFormProvider({
     }
   }, [getValues, queryClient, trigger, handleReset]);
 
+  const handleNext = useCallback(async () => {
+    try {
+      if (currentStep < 4) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        // Last step - submit the form
+        await submitPlace();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [currentStep, submitPlace]);
+
+  // Handle navigation to previous step
+  const handlePrevious = useCallback(() => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  }, [currentStep]);
   return (
     <PlacesContext.Provider
       value={{
@@ -218,6 +243,10 @@ export function PlacesFormProvider({
         action,
         setAction,
         handleReset,
+        currentStep,
+        setCurrentStep,
+        handleNext,
+        handlePrevious,
       }}
     >
       <FormProvider {...form}>{children}</FormProvider>

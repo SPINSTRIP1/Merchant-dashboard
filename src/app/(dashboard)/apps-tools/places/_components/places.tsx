@@ -1,6 +1,5 @@
 import ContainerWrapper from "@/components/container-wrapper";
 import React from "react";
-import { Place } from "../_schemas";
 import {
   ArrowRight02Icon,
   Globe02Icon,
@@ -18,14 +17,15 @@ import StatusBadge from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { PLACE_TYPES } from "../_constants";
 import Link from "next/link";
+import { SinglePlace } from "./claim-places-steps/find-place";
 
-interface SinglePlaceProps {
-  place: Place & { coverImage?: string };
-  onEdit?: (place: Place) => void;
-  onDelete?: (place: Place) => void;
+interface PlaceProps {
+  place: SinglePlace;
+  onEdit?: (place: SinglePlace) => void;
+  onDelete?: (place: SinglePlace) => void;
 }
 
-const SinglePlace = ({ place, onEdit, onDelete }: SinglePlaceProps) => {
+const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
   const status = place.status || "UNVERIFIED";
   const placeType = PLACE_TYPES.find(
     (type) => type.value === place.placeType
@@ -120,11 +120,16 @@ const SinglePlace = ({ place, onEdit, onDelete }: SinglePlaceProps) => {
           onClick={() =>
             onEdit?.({
               ...place,
+              // @ts-expect-error - URL strings are passed instead of File objects for editing
               environmentalSafetyPolicy:
                 place.environmentalSafetyPolicyUrl || undefined,
+              // @ts-expect-error - URL strings are passed instead of File objects for editing
               privacyPolicy: place.privacyPolicyUrl || undefined,
+              // @ts-expect-error - URL strings are passed instead of File objects for editing
               disclaimers: place.disclaimersUrl || undefined,
+              // @ts-expect-error - URL strings are passed instead of File objects for editing
               ownershipDocument: place.ownershipDocumentUrl || undefined,
+              // @ts-expect-error - URL strings are passed instead of File objects for editing
               ownershipVideo: place.ownershipVideoUrl || undefined,
             })
           }
@@ -170,7 +175,9 @@ const SinglePlace = ({ place, onEdit, onDelete }: SinglePlaceProps) => {
         </div>
 
         <button className="flex items-center w-fit bg-primary-accent p-2 rounded-3xl gap-x-2">
-          <p className="text-primary line-clamp-1">Review Compliance Results</p>
+          <p className="text-primary line-clamp-1">
+            {status == "PUBLISHED" ? "Edit Place" : "Awaiting Publishing"}
+          </p>
           <div className="p-1.5 rounded-full bg-primary">
             <HugeiconsIcon icon={ArrowRight02Icon} size={16} color={"white"} />
           </div>
@@ -188,9 +195,9 @@ export default function Places({
   onAdd,
 }: {
   title: string;
-  places: (Place & { coverImage?: string })[];
-  onEdit?: (place: Place) => void;
-  onDelete?: (place: Place) => void;
+  places: SinglePlace[];
+  onEdit?: (place: SinglePlace) => void;
+  onDelete?: (place: SinglePlace) => void;
   onAdd: () => void;
 }) {
   if (places.length === 0) {
@@ -203,7 +210,7 @@ export default function Places({
         <AddButton title="Add Place" onClick={onAdd} />
       </div>
       {places.map((place) => (
-        <SinglePlace
+        <Place
           key={place.id}
           place={place}
           onEdit={onEdit}

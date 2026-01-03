@@ -11,22 +11,41 @@ import Image from "next/image";
 import FacilityCard from "./facility-card";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 import FacilityModal from "./modals/facility-modal";
-import { Place } from "../../_schemas";
 import { PLACE_TYPES } from "../../_constants";
 import EmptyState from "@/components/empty-state";
+import { SinglePlace } from "../../_components/claim-places-steps/find-place";
+import { useQuery } from "@tanstack/react-query";
+import { Facility } from "../../_schemas";
+import { PLACES_SERVER_URL } from "@/constants";
+import api from "@/lib/api/axios-client";
+import Loader from "@/components/loader";
 
 export default function FacilityManagement({
   place,
 }: {
-  place: (Place & { coverImage?: string }) | undefined;
+  place: SinglePlace | undefined;
 }) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const placeType = PLACE_TYPES.find(
+    (type) => type.value === place?.placeType
+  )?.label;
+  const { data, isLoading } = useQuery<Facility[]>({
+    queryKey: ["place-facility", place?.id],
+    queryFn: async () => {
+      try {
+        const response = await api.get(
+          PLACES_SERVER_URL + `/places/${place?.id}/facilities`
+        );
+        return response.data.data.facilities;
+      } catch (error) {
+        console.log("Error fetching facilities:", error);
+        return [];
+      }
+    },
+  });
   if (!place) {
     return <p className="text-center text-primary-text">Place not found.</p>;
   }
-  const placeType = PLACE_TYPES.find(
-    (type) => type.value === place.placeType
-  )?.label;
   return (
     <>
       <div className="text-sm flex flex-col items-end justify-end space-y-5">
@@ -121,15 +140,7 @@ export default function FacilityManagement({
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">Amenities</h2>
               <div className="flex items-end max-w-sm justify-end flex-wrap gap-2">
-                {[
-                  "Pool",
-                  "Gym",
-                  "Sauna",
-                  "Spa",
-                  "Conference Hall",
-                  "Airport Pickup",
-                  "Restaurant & Bar",
-                ].map((item) => (
+                {place.metadata?.amenities.split(",").map((item) => (
                   <div
                     key={item}
                     className="border border-neutral-accent rounded-xl w-fit py-0.5 px-1"
@@ -177,18 +188,19 @@ export default function FacilityManagement({
           <div className="bg-[#F6E9DD]  py-3 px-3 rounded-2xl">
             <h2 className="font-bold text-lg text-primary-text">Facilities</h2>
           </div>
-          {place?.facilities && place.facilities.length > 0 ? (
+          {isLoading ? (
+            <Loader />
+          ) : data && data.length > 0 ? (
             <div className="grid grid-cols-3 gap-10 mt-5">
-              {place.facilities.map((facility, index) => (
+              {data?.map((facility, index) => (
                 <FacilityCard
                   key={index}
                   title={facility.name}
                   description={facility.description}
                   imgUrl={facility.images?.[0] || ""}
-                  maxOccupancy={12}
-                  bedSize={"King Size"}
-                  pricePerNight={12}
-                  amenities={[]}
+                  facilityType={facility.facilityCategory}
+                  accessType={facility.accessType || "N/A"}
+                  price={facility.fees?.[0]?.amount || 0}
                 />
               ))}
             </div>
@@ -204,6 +216,7 @@ export default function FacilityManagement({
       <FacilityModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        placeId={place.id!}
       />
     </>
   );
