@@ -5,7 +5,6 @@ import { Calendar02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import React, { useState } from "react";
 import { usePlacesForm } from "../../_context";
-import { cn } from "@/lib/utils";
 
 const MONTHS = [
   "January",
@@ -107,12 +106,9 @@ export default function OperatingHours() {
 
           <div className="flex gap-x-2">
             <Input
-              className={cn(
-                "w-[230px] inline-block !rounded-2xl border",
-                hour.isOpen
-                  ? "border-primary bg-primary-accent text-primary"
-                  : "border-neutral-accent bg-[#F3F3F3] text-secondary-text"
-              )}
+              className={
+                "w-[230px] inline-block !rounded-2xl border border-neutral-accent bg-[#F3F3F3] text-secondary-text"
+              }
               type="time"
               value={hour.openingTime}
               onChange={(e) => {
@@ -120,14 +116,12 @@ export default function OperatingHours() {
                 updatedSchedule[index].openingTime = e.target.value;
                 setValue("operatingHours.schedule", updatedSchedule);
               }}
+              disabled={!hour.isOpen}
             />
             <Input
-              className={cn(
-                "w-[230px] inline-block !rounded-2xl border",
-                hour.isOpen
-                  ? "border-primary bg-primary-accent text-primary"
-                  : "border-neutral-accent bg-[#F3F3F3] text-secondary-text"
-              )}
+              className={
+                "w-[230px] inline-block !rounded-2xl border border-neutral-accent bg-[#F3F3F3] text-secondary-text"
+              }
               type="time"
               value={hour.closingTime}
               onChange={(e) => {
@@ -135,6 +129,7 @@ export default function OperatingHours() {
                 updatedSchedule[index].closingTime = e.target.value;
                 setValue("operatingHours.schedule", updatedSchedule);
               }}
+              disabled={!hour.isOpen}
             />
           </div>
         </div>
