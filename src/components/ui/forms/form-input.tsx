@@ -100,7 +100,7 @@ export function FormInput<TFieldValues extends FieldValues>({
                 field.onChange(handleInputChange(e, type));
               }}
               className={cn(
-                "!rounded-2xl border border-neutral-accent",
+                "!rounded-2xl border inline-block border-neutral-accent",
                 rest.className
               )}
             />

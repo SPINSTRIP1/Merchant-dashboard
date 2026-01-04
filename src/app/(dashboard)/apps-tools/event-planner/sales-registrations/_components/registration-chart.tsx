@@ -19,6 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import EmptyState from "@/components/empty-state";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ChartLineData02Icon } from "@hugeicons/core-free-icons";
 
 ChartJS.register(
   CategoryScale,
@@ -31,13 +34,6 @@ ChartJS.register(
   Filler
 );
 
-const revenueData = [
-  10000, 20000, 30000, 40000, 30000, 20000, 10000, 4000, 10000, 3000, 50000,
-  45000,
-];
-const expenseData = [
-  5000, 8000, 15000, 25000, 18000, 12000, 8000, 3000, 6000, 22000, 12783, 3452,
-];
 const months = [
   "JAN",
   "FEB",
@@ -53,7 +49,13 @@ const months = [
   "DEC",
 ];
 
-export default function RegistrationChart() {
+export default function RegistrationChart({
+  revenueData = [],
+  expenseData = [],
+}: {
+  revenueData?: number[];
+  expenseData?: number[];
+}) {
   const data = {
     labels: months,
     datasets: [
@@ -150,13 +152,17 @@ export default function RegistrationChart() {
     },
   };
 
+  const hasData = revenueData.length > 0 || expenseData.length > 0;
+
   return (
-    <div className="mt-4">
+    <div className="mt-4 h-full">
       <div className="flex mb-7 items-center justify-between">
         <div>
           <h3 className="text-secondary-text text-sm">Total Registrations</h3>
 
-          <p className="text-primary-text font-bold">450 Registrants</p>
+          <p className="text-primary-text font-bold">
+            {hasData ? "450 Registrants" : "0 Registrants"}
+          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger>
@@ -176,19 +182,35 @@ export default function RegistrationChart() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="h-56">
-        <Line data={data} options={options} />
-      </div>
-      <div className="flex items-center mt-4 gap-x-2">
-        <div className="flex items-center gap-x-2">
-          <div className="size-6 rounded bg-primary" />
-          <p className="text-sm">Female</p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <div className="size-6 rounded bg-primary-accent" />
-          <p className="text-sm">Male</p>
-        </div>
-      </div>
+      {hasData ? (
+        <>
+          <div className="h-56">
+            <Line data={data} options={options} />
+          </div>
+          <div className="flex items-center mt-4 gap-x-2">
+            <div className="flex items-center gap-x-2">
+              <div className="size-6 rounded bg-primary" />
+              <p className="text-sm">Female</p>
+            </div>
+            <div className="flex items-center gap-x-2">
+              <div className="size-6 rounded bg-primary-accent" />
+              <p className="text-sm">Male</p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <EmptyState
+          icon={
+            <HugeiconsIcon
+              icon={ChartLineData02Icon}
+              size={32}
+              color="#6932E2"
+            />
+          }
+          title="No Registration Data"
+          description="Registration data will appear here once people start registering for your events."
+        />
+      )}
     </div>
   );
 }

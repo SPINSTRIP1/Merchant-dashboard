@@ -75,7 +75,6 @@ export default function Media() {
           {imageUploadFields.map((fieldId, index) => (
             <div key={fieldId} className="relative w-full max-w-[158px]">
               <UploadFile
-                fileName={`image-${index}`}
                 label={index === 0 ? "Thumbnail" : `Image ${index + 1}`}
                 onFileSelect={(file) => handleFileSelect(file, index)}
                 value={files[index]}

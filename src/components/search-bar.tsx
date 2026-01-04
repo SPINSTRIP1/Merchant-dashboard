@@ -16,7 +16,7 @@ export default function SearchBar({
   return (
     <div
       className={cn(
-        "bg-[#E0E0E0] h-[35px] border border-[#C8C8C8] flex-shrink-0 w-full flex items-center gap-x-1.5 px-1 rounded-3xl max-w-[220px] md:max-w-[370px]",
+        "bg-[#E0E0E0] h-[35px] border border-[#C8C8C8] flex-shrink-0 w-full flex items-center gap-x-1.5 px-1 rounded-3xl max-w-[220px] md:max-w-[340px]",
         className
       )}
     >

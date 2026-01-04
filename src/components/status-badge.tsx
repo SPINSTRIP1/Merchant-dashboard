@@ -59,7 +59,7 @@ export default function StatusBadge({
         backgroundColor: statusColors[status].bg,
         borderColor: statusColors[status].border,
       }}
-      className="flex gap-x-1 items-center p-1 border rounded-full"
+      className="flex gap-x-1 items-center  h-fit p-1 border rounded-full"
     >
       <HugeiconsIcon
         icon={statusColors[status].icon}

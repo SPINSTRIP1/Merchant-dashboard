@@ -36,6 +36,7 @@ export default function GeneralInfo() {
             <div
               key={type.value}
               onClick={() =>
+                //@ts-expect-error: ignore
                 setValue("placeType", type.value, { shouldValidate: true })
               }
               className={cn(

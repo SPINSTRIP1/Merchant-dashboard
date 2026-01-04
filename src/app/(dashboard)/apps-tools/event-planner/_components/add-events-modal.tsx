@@ -1,256 +1,409 @@
-import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import SelectDropdown from "@/components/select-dropdown";
+import { FormMultiSelect } from "@/components/ui/forms/form-multi-select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import Image from "next/image";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import SideModal from "@/app/(dashboard)/_components/side-modal";
+import { useEventsForm } from "../_context";
+import { FormInput } from "@/components/ui/forms/form-input";
+import { useCallback, useMemo } from "react";
+import { Plus } from "lucide-react";
+import { FormSelect } from "@/components/ui/forms/form-select";
+import { TicketTier } from "../_schemas";
+import { Deal } from "../../deals/_schemas";
+import { useServerPagination } from "@/hooks/use-server-pagination";
+import { DEALS_SERVER_URL, PLACES_SERVER_URL } from "@/constants";
+import { AddressAutocomplete } from "../../places/_components/address-autocomplete";
+import { SinglePlace } from "../../places/_components/claim-places-steps/find-place";
+
+// Local imports
+import {
+  MAX_IMAGES,
+  FREQUENCY_OPTIONS,
+  RECURRENCE_OPTIONS,
+  TIMEZONE_OPTIONS,
+  FEATURED_OPTIONS,
+} from "../_constants/event-modal";
+import { MediaImage } from "./media-image";
+import { ImageUploadField } from "./image-upload-field";
+import { TicketRow } from "./ticket-row";
+import { TicketInputRow } from "./ticket-input-row";
+import { useImageUpload } from "../_hooks/use-image-upload";
+import { useTicketInput } from "../_hooks/use-ticket-input";
+
+// Props type
+interface AddEventsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  action?: "edit" | "add" | null;
+}
 
 export default function AddEventsModal({
   isOpen,
   onClose,
   action = "add",
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  action?: "edit" | "add" | null;
-}) {
+}: AddEventsModalProps) {
+  const {
+    form: {
+      control,
+      watch,
+      setValue,
+      formState: { errors },
+    },
+    handleFieldChange,
+    loading,
+    submitEvent,
+  } = useEventsForm();
+
+  // Watch form values
+  const files = watch("files") || [];
+  const media = watch("images") || [];
+  const tickets = watch("ticketTiers") || [];
+  const placeId = watch("placeId") || "";
+  const frequency = watch("frequency");
+  const recurringPattern = watch("recurringPattern");
+
+  // Custom hooks
+  const {
+    imageUploadFields,
+    handleFileSelect,
+    addImageUploadField,
+    removeImageUploadField,
+    removeMediaImage,
+    resetFields,
+  } = useImageUpload(files, media, handleFieldChange);
+
+  const handleAddTicket = useCallback(
+    (newTickets: TicketTier[]) => setValue("ticketTiers", newTickets),
+    [setValue]
+  );
+
+  const { ticketInput, handleInputChange, addTicket, resetInput } =
+    useTicketInput(tickets, handleAddTicket);
+
+  // Server data
+  const { items: deals, isLoading: isDealsLoading } = useServerPagination<Deal>(
+    {
+      queryKey: "deals",
+      endpoint: `${DEALS_SERVER_URL}/deals`,
+    }
+  );
+
+  const { items: placeItems, isLoading: isPlacesLoading } =
+    useServerPagination<SinglePlace>({
+      queryKey: "places",
+      endpoint: `${PLACES_SERVER_URL}/places`,
+    });
+
+  // Memoized options
+  const dealOptions = useMemo(
+    () => deals?.map((deal) => ({ label: deal.name, value: deal.id! })) || [],
+    [deals]
+  );
+
+  const placeOptions = useMemo(
+    () =>
+      placeItems?.map((place) => ({ label: place.name, value: place.id! })) ||
+      [],
+    [placeItems]
+  );
+
+  // Handlers
+  const handleClose = useCallback(() => {
+    resetFields();
+    resetInput();
+    onClose();
+  }, [onClose, resetFields, resetInput]);
+
+  const handlePlaceChange = useCallback(
+    (value: string) => {
+      const selectedPlace = placeItems?.find((place) => place.id === value);
+      if (selectedPlace) {
+        setValue("location", selectedPlace.address || "");
+        setValue("city", selectedPlace.city || "");
+        setValue("state", selectedPlace.state || "");
+        setValue("country", selectedPlace.country || "");
+      }
+    },
+    [placeItems, setValue]
+  );
+
+  // Derived state
+  const canAddMoreImages = imageUploadFields.length < MAX_IMAGES;
+  const showLocationFields = !placeId;
+  const showRecurrencePattern = frequency === "RECURRING";
+  const showCustomRecurrence =
+    showRecurrencePattern && recurringPattern === "CUSTOM";
+  const submitButtonText =
+    action === "add"
+      ? loading
+        ? "Adding..."
+        : "Add Event"
+      : loading
+      ? "Updating..."
+      : "Update Event";
+
   return (
-    <SideModal isOpen={isOpen} onClose={onClose}>
+    <SideModal isOpen={isOpen} onClose={handleClose}>
       <div className="space-y-7 pt-16 pb-5">
-        <div className="space-y-1.5">
-          <Label>Event Name</Label>
-          <Input
-            className="!rounded-2xl border border-neutral-accent"
-            placeholder="Enter Event Name"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Event Description</Label>
-          <Textarea
-            className="rounded-2xl"
-            placeholder="Enter description"
-            rows={6}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Event Media</Label>
-          <div className="flex overflow-x-scroll gap-5 mt-4 items-center">
-            {["/events/1.jpg", "/events/2.jpg", "/events/3.jpg"].map(
-              (img, index) => (
-                <div
-                  key={index}
-                  className="min-w-[253px] h-[206px] rounded-lg overflow-hidden"
-                >
-                  <Image
-                    src={img}
-                    width={253}
-                    height={206}
-                    alt="Images"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Event Frequency</Label>
-          <MultiSelect
-            value={""}
-            options={[
-              { label: "One-Off", value: "ONE_OFF" },
-              { label: "Recurring", value: "RECURRING" },
-            ]}
-            className="lg:grid"
-            radioClassName="lg:w-full"
-            onValueChange={(value) => {
-              console.log(value);
-            }}
-          />
-        </div>
+        {/* Event Basic Info */}
+        <FormInput
+          control={control}
+          name="name"
+          label="Event Name"
+          placeholder="Enter Event Name"
+        />
+        <FormInput
+          control={control}
+          name="description"
+          label="Event Description"
+          placeholder="Enter description"
+          type="textarea"
+        />
+
+        {/* Place Selection */}
+        <FormSelect
+          label="Add a place"
+          control={control}
+          name="placeId"
+          options={placeOptions}
+          onChange={handlePlaceChange}
+          placeholder="Add a place"
+          disabled={isPlacesLoading}
+        />
+
+        {/* Contact Info */}
         <div className="grid grid-cols-2 gap-5">
-          <div className="space-y-1.5">
-            <Label>Start Date</Label>
-            <Input
-              type="date"
-              className="!rounded-2xl inline-block border border-neutral-accent"
-              placeholder="95"
+          <FormInput
+            control={control}
+            name="contactPhone"
+            label="Contact Phone"
+            placeholder="e.g. 08102345060"
+          />
+          <FormInput
+            control={control}
+            name="contactEmail"
+            label="Contact Email"
+            placeholder="e.g. johndoe@example.com"
+          />
+        </div>
+
+        {/* Location Fields (shown when no place selected) */}
+        {showLocationFields && (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+              <FormInput
+                control={control}
+                label="City"
+                name="city"
+                placeholder="City"
+              />
+              <FormInput
+                control={control}
+                label="State"
+                name="state"
+                placeholder="State"
+              />
+              <FormInput
+                control={control}
+                label="Country"
+                name="country"
+                placeholder="Country"
+              />
+            </div>
+            <AddressAutocomplete
+              control={control}
+              name="location"
+              label="Address"
+              placeholder="Enter Street Name and Number"
             />
+          </>
+        )}
+
+        {/* Media Upload Section */}
+        <div className="space-y-3 w-full">
+          <Label>Upload Event Media</Label>
+          <div className="flex gap-4 flex-wrap mb-4">
+            {media.map((imageUrl, index) => (
+              <MediaImage
+                key={`media-${index}`}
+                imageUrl={imageUrl}
+                index={index}
+                id={watch("id") || ""}
+                onRemove={removeMediaImage}
+              />
+            ))}
+            {imageUploadFields.map((fieldId, index) => (
+              <ImageUploadField
+                key={fieldId}
+                fieldId={fieldId}
+                index={index}
+                file={files[index]}
+                canRemove={imageUploadFields.length > 1}
+                onFileSelect={handleFileSelect}
+                onRemove={removeImageUploadField}
+              />
+            ))}
           </div>
-          <div className="space-y-1.5">
-            <Label>End Date</Label>
-            <Input
-              type="date"
-              className="!rounded-2xl inline-block border border-neutral-accent"
-              placeholder="95"
-            />
+          {errors.files && (
+            <p className="text-sm text-red-600">
+              {errors.files.message as string}
+            </p>
+          )}
+          <div className="flex items-center justify-center flex-col pt-2">
+            <p className="text-sm text-gray-600">
+              Click to upload or drag and drop images
+            </p>
+            <span className="text-[9px] font-semibold text-gray-500">
+              JPG, JPEG, PNG, WEBP formats supported (Max 10MB per image)
+            </span>
           </div>
+          {canAddMoreImages && (
+            <div className="flex justify-center mt-4">
+              <Button
+                type="button"
+                onClick={addImageUploadField}
+                variant="secondary"
+                className="md:w-auto"
+              >
+                <Plus className="mr-2" size={18} />
+                Add Another Image
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Event Frequency */}
+        <FormMultiSelect
+          control={control}
+          name="frequency"
+          label="Event Frequency"
+          options={FREQUENCY_OPTIONS}
+          className="lg:grid"
+          radioClassName="lg:w-full"
+        />
+        {showRecurrencePattern && (
+          <FormMultiSelect
+            control={control}
+            name="recurringPattern"
+            label="Recurrence Pattern"
+            options={RECURRENCE_OPTIONS}
+            radioClassName="lg:max-w-[140px]"
+          />
+        )}
+        {showCustomRecurrence && (
+          <FormInput
+            control={control}
+            name="customRecurrenceDays"
+            label="Custom Recurrence (Days)"
+            placeholder="Enter number of days"
+            type="number"
+          />
+        )}
+
+        {/* Date and Time */}
+        <div className="grid grid-cols-2 gap-5">
+          <FormInput
+            control={control}
+            type="date"
+            name="startDate"
+            label="Start Date"
+          />
+          <FormInput
+            control={control}
+            type="date"
+            name="endDate"
+            label="End Date"
+          />
         </div>
         <div className="grid grid-cols-3 gap-5">
-          <div className="space-y-1.5">
-            <Label>Start Time</Label>
-            <Input
-              type="time"
-              className="!rounded-2xl inline-block border border-neutral-accent"
-              placeholder="95"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>End Time</Label>
-            <Input
-              type="time"
-              className="!rounded-2xl inline-block border border-neutral-accent"
-              placeholder="95"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Timezone</Label>
-            <SelectDropdown
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="GMT +1"
-              options={[
-                "GMT -12",
-                "GMT -11",
-                "GMT -10",
-                "GMT -9",
-                "GMT -8",
-                "GMT -7",
-                "GMT -6",
-                "GMT -5",
-                "GMT -4",
-                "GMT -3",
-                "GMT -2",
-                "GMT -1",
-                "GMT +0",
-                "GMT +1",
-                "GMT +2",
-                "GMT +3",
-                "GMT +4",
-              ]}
-              value={""}
-              onValueChange={(value) => {
-                console.log(value);
-              }}
-              category="Timezone"
-            />
-          </div>
+          <FormInput
+            control={control}
+            type="time"
+            name="startTime"
+            label="Start Time"
+          />
+          <FormInput
+            control={control}
+            type="time"
+            name="endTime"
+            label="End Time"
+          />
+          <FormSelect
+            control={control}
+            name="timezone"
+            label="Timezone"
+            options={TIMEZONE_OPTIONS}
+            placeholder="Select Timezone"
+          />
         </div>
+
+        {/* Tickets Section */}
         <div>
           <Label>Tickets</Label>
-          <div className="flex items-center pt-2 gap-x-2">
-            <button className="flex-shrink-0">
-              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-            </button>
-            <Input
-              className="rounded-none border-b bg-transparent border-neutral-accent"
-              placeholder="Add Item"
-            />
-            <Input
-              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-              placeholder="N0.00"
-            />
-          </div>
-          <div className="flex items-center pt-2 gap-x-2">
-            <button className="flex-shrink-0">
-              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-            </button>
-            <Input
-              className="rounded-none border-b bg-transparent border-neutral-accent"
-              placeholder="Add Item"
-            />
-            <Input
-              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-              placeholder="N0.00"
-            />
-          </div>
-          <div className="flex items-center pt-2 gap-x-2">
-            <button className="flex-shrink-0">
-              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-            </button>
-            <Input
-              className="rounded-none border-b bg-transparent border-neutral-accent"
-              placeholder="Add Item"
-            />
-            <Input
-              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-              placeholder="N0.00"
-            />
-          </div>
-          <div className="flex items-center pt-2 gap-x-2">
-            <button className="flex-shrink-0">
-              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-            </button>
-            <Input
-              className="rounded-none border-b bg-transparent border-neutral-accent"
-              placeholder="Add Item"
-            />
-            <Input
-              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-              placeholder="N0.00"
-            />
-          </div>
+          {tickets.map((ticket, index) => (
+            <TicketRow key={`ticket-${index}`} ticket={ticket} />
+          ))}
+          <TicketInputRow
+            ticketInput={ticketInput}
+            onInputChange={handleInputChange}
+            onAdd={addTicket}
+          />
+          <p className="text-center mt-4">
+            Click on the + icon to add a new ticket tier.
+          </p>
         </div>
 
+        {/* Guest Settings */}
         <div className="grid grid-cols-2 gap-5">
-          <div className="space-y-1.5">
-            <Label>Expected Guests</Label>
-            <Input
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="1000 Guests"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Sold Out Threshold</Label>
-            <Input
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="500 Tickets"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Mark as Featured</Label>
-          <MultiSelect
-            value={""}
-            options={[
-              { label: "Yes", value: "YES" },
-              { label: "No", value: "NO" },
-            ]}
-            className="lg:grid"
-            radioClassName="lg:w-full"
-            onValueChange={(value) => {
-              console.log(value);
-            }}
+          <FormInput
+            control={control}
+            name="expectedGuests"
+            label="Expected Guests"
+            placeholder="1000 Guests"
+            type="number"
+          />
+          <FormInput
+            control={control}
+            name="soldOutThreshold"
+            label="Sold Out Threshold"
+            placeholder="500 Tickets"
+            type="number"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label>Add to Deal</Label>
 
-          <SelectDropdown
-            className="!rounded-2xl border border-neutral-accent"
-            placeholder="Add to Deal"
-            options={["Retail", "Food & Beverage", "Healthcare", "Technology"]}
-            value={""}
-            onValueChange={(value) => {
-              console.log(value);
-            }}
-            category="Dealss"
-          />
-        </div>
+        {/* Featured and Deal */}
+        <FormMultiSelect
+          control={control}
+          name="isFeatured"
+          label="Mark as Featured"
+          options={FEATURED_OPTIONS}
+          valueType="boolean"
+          className="lg:grid"
+          radioClassName="lg:w-full"
+        />
+        <FormSelect
+          label="Add to Deal"
+          control={control}
+          name="dealId"
+          options={dealOptions}
+          placeholder="Add to Deal"
+          disabled={isDealsLoading}
+        />
+
+        {/* Action Buttons */}
         <div className="flex mt-6 gap-x-3 items-center">
           <Button
-            variant={"secondary"}
+            variant="secondary"
             className="w-full h-[51px] py-3"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </Button>
-          <Button className="w-full h-[51px] py-3" onClick={onClose}>
-            {action === "add" ? "Add Event" : "Update"}
+          <Button
+            disabled={loading}
+            className="w-full h-[51px] py-3"
+            onClick={submitEvent}
+          >
+            {submitButtonText}
           </Button>
         </div>
       </div>

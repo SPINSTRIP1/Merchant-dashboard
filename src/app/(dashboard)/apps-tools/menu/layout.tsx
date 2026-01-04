@@ -1,7 +1,7 @@
 "use client";
 import { MenuFormProvider } from "./_context";
 
-export default function InventoryLayout({
+export default function MenuLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

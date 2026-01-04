@@ -12,6 +12,7 @@ import { GoogleSheetIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import React, { useState } from "react";
 import PaginationButton from "@/components/pagination-button";
+import EmptyState from "@/components/empty-state";
 
 interface Ticket {
   name: string;
@@ -20,57 +21,7 @@ interface Ticket {
   ticket: string;
   date: string;
 }
-const items: Ticket[] = [
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "VIP",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phoneNumber: "+1234567890",
-    ticket: "Premium",
-    date: "21 August, 2025",
-  },
-];
+const items: Ticket[] = [];
 
 export default function RegistrationTable() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,14 +45,20 @@ export default function RegistrationTable() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <div className="flex items-center gap-x-2">
-          <Dropdown header="" options={["All", "Some"]} placeholder="All" />
-          <Dropdown header="" options={["All", "Some"]} placeholder="Sort by" />
+        <div className="flex items-center justify-between md:justify-start gap-x-2">
+          <div className="flex items-center gap-x-2">
+            <Dropdown header="" options={["All", "Some"]} placeholder="All" />
+            <Dropdown
+              header=""
+              options={["All", "Some"]}
+              placeholder="Sort by"
+            />
+          </div>
+          <button className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4">
+            <HugeiconsIcon icon={GoogleSheetIcon} size={24} color="#FFFFFF" />
+            <p className="font-normal">Export Sheet</p>
+          </button>
         </div>
-        <button className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4">
-          <HugeiconsIcon icon={GoogleSheetIcon} size={24} color="#FFFFFF" />
-          <p className="font-normal">Export Sheet</p>
-        </button>
       </div>
       <div className="bg-foreground rounded-3xl p-5 mt-8">
         <Table>
@@ -125,19 +82,35 @@ export default function RegistrationTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems.map((item, index) => (
-              <TableRow
-                className="border-b-0 cursor-pointer hover:bg-neutral"
-                key={index}
-              >
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.email}</TableCell>
-                <TableCell>{item.phoneNumber}</TableCell>
-                <TableCell>{item.ticket}</TableCell>
-
-                <TableCell>{item.date}</TableCell>
+            {currentItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="py-0">
+                  <EmptyState
+                    // icon={<Package className="h-16 w-16 text-primary" />}
+                    title="No Tickets Sold Yet"
+                    description={
+                      searchQuery
+                        ? "No items match your search criteria. Try adjusting your filters."
+                        : "Tickets will appear here once people start registering for your events."
+                    }
+                  />
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              currentItems.map((item, index) => (
+                <TableRow
+                  className="border-b-0 cursor-pointer hover:bg-neutral"
+                  key={index}
+                >
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.email}</TableCell>
+                  <TableCell>{item.phoneNumber}</TableCell>
+                  <TableCell>{item.ticket}</TableCell>
+
+                  <TableCell>{item.date}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

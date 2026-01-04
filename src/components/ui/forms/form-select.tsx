@@ -28,6 +28,7 @@ interface FormSelectProps<TFieldValues extends FieldValues> {
   category?: string;
   disabled?: boolean;
   className?: string;
+  onChange?: (value: string) => void;
 }
 
 export function FormSelect<TFieldValues extends FieldValues>({
@@ -39,6 +40,7 @@ export function FormSelect<TFieldValues extends FieldValues>({
   category,
   disabled,
   className,
+  onChange,
 }: FormSelectProps<TFieldValues>) {
   const normalizeOption = (option: OptionType) => {
     if (typeof option === "string") {
@@ -56,7 +58,10 @@ export function FormSelect<TFieldValues extends FieldValues>({
           <Label>{label}</Label>
           <Select
             value={field.value}
-            onValueChange={field.onChange}
+            onValueChange={(value) => {
+              field.onChange(value);
+              onChange?.(value);
+            }}
             disabled={disabled}
           >
             <FormControl>
