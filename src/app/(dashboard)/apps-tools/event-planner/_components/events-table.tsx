@@ -29,6 +29,7 @@ import toast from "react-hot-toast";
 import { useDebounce } from "../../places/_hooks/use-debounce";
 import { DEFAULT_EVENT_VALUES } from "../_constants";
 import StatusBadge from "@/components/status-badge";
+import ImpressionsStack from "./impressions-stack";
 
 export default function EventsTable() {
   const {
@@ -202,51 +203,7 @@ export default function EventsTable() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-x-2">
-                <div className="flex items-center">
-                  <div className="border-2 rounded-full overflow-hidden border-white">
-                    <Image
-                      src={"/avatars/1.jpg"}
-                      alt={event.name}
-                      width={40}
-                      height={40}
-                      className="w-5 h-5 object-cover"
-                    />
-                  </div>
-                  <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                    <Image
-                      src={"/avatars/2.jpg"}
-                      alt={event.name}
-                      width={40}
-                      height={40}
-                      className="w-5 h-5 object-cover"
-                    />
-                  </div>
-                  <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                    <Image
-                      src={"/avatars/3.jpg"}
-                      alt={event.name}
-                      width={40}
-                      height={40}
-                      className="w-5 h-5 object-cover"
-                    />
-                  </div>
-                  <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                    <Image
-                      src={"/avatars/4.jpg"}
-                      alt={event.name}
-                      width={40}
-                      height={40}
-                      className="w-5 h-5 object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="bg-background-light rounded-3xl px-1.5 py-1">
-                  <p className="text-[10px] text-secondary-text uppercase">
-                    +24k others
-                  </p>
-                </div>
-              </div>
+              <ImpressionsStack impressions={event.totalImpressions ?? 0} />
               <div className="flex justify-between w-full">
                 <div className="flex items-center gap-x-2">
                   <button
