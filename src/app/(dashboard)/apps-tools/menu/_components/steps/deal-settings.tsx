@@ -3,7 +3,7 @@ import SelectDropdown from "@/components/select-dropdown";
 import { Label } from "@/components/ui/label";
 import React from "react";
 import { useMenuForm } from "../../_context";
-import { DEALS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { Deal } from "../../../deals/_schemas";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ export default function DealSettings() {
     queryKey: ["deals-subscription-status"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/subscriptions");
+        const response = await api.get(SERVER_URL + "/deals/subscriptions");
         return response.data.data as { subscribed: boolean };
       } catch (error) {
         console.log("Error fetching subscription status:", error);
@@ -35,7 +35,7 @@ export default function DealSettings() {
   });
   const { items, isLoading } = useServerPagination<Deal>({
     queryKey: "deals",
-    endpoint: `${DEALS_SERVER_URL}/deals`,
+    endpoint: `${SERVER_URL}/deals`,
   });
   const options =
     items?.map((deal) => ({ label: deal.name, value: deal.id! })) || [];

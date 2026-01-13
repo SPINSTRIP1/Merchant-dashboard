@@ -6,7 +6,7 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import api from "@/lib/api/axios-client";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 
 export default function UploadImages() {
   const {
@@ -46,7 +46,7 @@ export default function UploadImages() {
       const currentMedia = [...media];
       currentMedia.splice(index, 1);
       handleFieldChange("media", currentMedia);
-      await api.delete(INVENTORY_SERVER_URL + `/products/${id}/images`, {
+      await api.delete(SERVER_URL + `/inventory/products/${id}/images`, {
         data: { urls: [media[index]] },
       });
     } catch (error) {

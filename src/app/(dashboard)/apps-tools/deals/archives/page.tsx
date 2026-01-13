@@ -12,7 +12,7 @@ import DeleteModal from "../_components/modals/delete-modal";
 import ReactivateModal from "./_components/reactivate-modal";
 import { useDealsForm } from "../_context";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { DEALS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { Deal } from "../_schemas";
 import { formatDateDisplay } from "@/utils";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
@@ -38,7 +38,7 @@ export default function Archives() {
   const { items, currentPage, totalPages, isLoading, handlePageChange } =
     useServerPagination<Deal>({
       queryKey: "deals",
-      endpoint: `${DEALS_SERVER_URL}/deals`,
+      endpoint: `${SERVER_URL}/deals`,
       searchQuery: debouncedSearch,
       filters: {
         status: "PAUSED",
@@ -48,14 +48,14 @@ export default function Archives() {
   // Optimistic delete hook
   const { deleteItem } = useOptimisticDelete<Deal & { id: string }>({
     queryKey: ["deals", currentPage],
-    deleteEndpoint: `${DEALS_SERVER_URL}/deals`,
+    deleteEndpoint: `${SERVER_URL}/deals`,
     successMessage: "Item deleted successfully",
     errorMessage: "Failed to delete item",
   });
   const queryClient = useQueryClient();
   const handleReactivate = async (id: string) => {
     try {
-      await api.patch(`${DEALS_SERVER_URL}/deals/${id}/status`, {
+      await api.patch(`${SERVER_URL}/deals/${id}/status`, {
         status: "ACTIVE",
       });
       toast.success("Item reactivated successfully");

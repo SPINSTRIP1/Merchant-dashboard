@@ -10,7 +10,7 @@ import TicketSalesChart from "./_components/ticket-sales-chart";
 import { Event } from "../_schemas";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api/axios-client";
-import { EVENTS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useSearchParams } from "next/navigation";
 import Loader from "@/components/loader";
 import { extractTimeFromDateTime } from "../_utils";
@@ -23,7 +23,7 @@ export default function SalesAndRegistration() {
     queryKey: ["single-event", id],
     queryFn: async () => {
       try {
-        const response = await api.get(EVENTS_SERVER_URL + `/events/${id}`);
+        const response = await api.get(SERVER_URL + `/events/${id}`);
         return response.data.data;
       } catch (error) {
         console.log("Error fetching products:", error);

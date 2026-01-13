@@ -1,4 +1,4 @@
-import { COMPLIANCE_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { ComplianceStatus } from "@/types";
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +9,7 @@ export function useComplianceStatus() {
       queryKey: ["compliance-status"],
       queryFn: async () => {
         try {
-          const response = await api.get(
-            COMPLIANCE_SERVER_URL + "/kyc/merchant/status"
-          );
+          const response = await api.get(SERVER_URL + "/kyc/merchant/status");
           return response.data.data.status as ComplianceStatus;
         } catch (error) {
           console.log("Error fetching compliance status:", error);

@@ -79,7 +79,7 @@ export default function RoomInventory() {
   //   const { items, currentPage, totalPages, isLoading, handlePageChange } =
   //     useServerPagination({
   //       queryKey: "inventory-products",
-  //       endpoint: `${''}/products`,
+  //       endpoint: `${''}/inventory/products`,
   //     //   searchQuery: debouncedSearch,
   //     //   filters: {
   //     //     stockStatus: statusFilter,
@@ -90,7 +90,7 @@ export default function RoomInventory() {
   // Optimistic delete hook
   //   const { deleteItem } = useOptimisticDelete<InventoryProduct>({
   //     queryKey: ["inventory-products", currentPage],
-  //     deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
+  //     deleteEndpoint: `${SERVER_URL}/inventory/products`,
   //     successMessage: "Item deleted successfully",
   //     errorMessage: "Failed to delete item",
   //   });
@@ -100,7 +100,7 @@ export default function RoomInventory() {
   //     newStatus: "ACTIVE" | "INACTIVE"
   //   ) => {
   //     try {
-  //       await api.patch(`${INVENTORY_SERVER_URL}/products/${id}`, {
+  //       await api.patch(`${SERVER_URL}/inventory/products/${id}`, {
   //         status: newStatus,
   //       });
   //       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });

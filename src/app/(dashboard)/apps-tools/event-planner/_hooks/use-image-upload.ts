@@ -1,4 +1,4 @@
-import { EVENTS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { useCallback, useState } from "react";
 
@@ -38,7 +38,7 @@ export const useImageUpload = (
       const currentMedia = [...media];
       currentMedia.splice(index, 1);
       handleFieldChange("images", currentMedia);
-      await api.delete(`${EVENTS_SERVER_URL}/events/${id}/media`, {
+      await api.delete(`${SERVER_URL}/events/${id}/media`, {
         data: { urls: [media[index]] },
       });
     },

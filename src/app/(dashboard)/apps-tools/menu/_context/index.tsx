@@ -18,7 +18,7 @@ import {
   addMenuSteps,
 } from "../_constants";
 import api from "@/lib/api/axios-client";
-import { MENUS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
@@ -129,10 +129,10 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
       if (isUpdating) {
         const { id, ...updateData } = payload;
         res = await api.patch(
-          MENUS_SERVER_URL + "/menu-items/" + id,
+          SERVER_URL + "/menu/menu-items/" + id,
           updateData
         );
-      } else res = await api.post(MENUS_SERVER_URL + "/menu-items", payload);
+      } else res = await api.post(SERVER_URL + "/menu/menu-items", payload);
       const { data, status, message } = res.data as {
         data: Menu;
         status: string;
@@ -144,7 +144,7 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
             const formData = new FormData();
             files.forEach((file) => formData.append("files", file));
             await api.post(
-              MENUS_SERVER_URL + `/menu-items/${data.id}/images`,
+              SERVER_URL + `/menu/menu-items/${data.id}/images`,
               formData,
               {
                 headers: {

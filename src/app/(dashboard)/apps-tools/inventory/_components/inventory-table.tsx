@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import InventoryModal from "./modals/inventory-modal";
 import PaginationButton from "@/components/pagination-button";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { InventoryProduct, StockStatus } from "../_schemas";
 import { formatAmount, formatISODate } from "@/utils";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
@@ -76,7 +76,7 @@ export default function InventoryTable() {
   const { items, currentPage, totalPages, isLoading, handlePageChange } =
     useServerPagination<InventoryProduct>({
       queryKey: "inventory-products",
-      endpoint: `${INVENTORY_SERVER_URL}/products`,
+      endpoint: `${SERVER_URL}/inventory/products`,
       searchQuery: debouncedSearch,
       filters: {
         stockStatus: statusFilter,
@@ -87,14 +87,14 @@ export default function InventoryTable() {
   // Optimistic delete hook
   const { deleteItem } = useOptimisticDelete<InventoryProduct>({
     queryKey: ["inventory-products", currentPage],
-    deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
+    deleteEndpoint: `${SERVER_URL}/inventory/products`,
     successMessage: "Item deleted successfully",
     errorMessage: "Failed to delete item",
   });
 
   const handleDuplicate = async (id: string) => {
     try {
-      await api.post(`${INVENTORY_SERVER_URL}/products/${id}/duplicate`);
+      await api.post(`${SERVER_URL}/inventory/products/${id}/duplicate`);
       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
     } catch (error) {
       console.log(error);
@@ -107,7 +107,7 @@ export default function InventoryTable() {
     newStatus: "ACTIVE" | "INACTIVE"
   ) => {
     try {
-      await api.patch(`${INVENTORY_SERVER_URL}/products/${id}`, {
+      await api.patch(`${SERVER_URL}/inventory/products/${id}`, {
         status: newStatus,
       });
       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });

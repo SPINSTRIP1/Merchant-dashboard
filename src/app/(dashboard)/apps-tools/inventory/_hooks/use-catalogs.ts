@@ -1,4 +1,4 @@
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -30,7 +30,7 @@ export function useCatalogs(): UseCatalogsReturn {
     queryKey: ["inventory-catalogs"],
     queryFn: async () => {
       try {
-        const response = await api.get(INVENTORY_SERVER_URL + "/catalogs");
+        const response = await api.get(SERVER_URL + "/inventory/catalogs");
         return response.data.data;
       } catch (error) {
         console.log("Error fetching compliance status:", error);

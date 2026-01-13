@@ -9,47 +9,40 @@ import { cn } from "@/lib/utils";
 import { Loader2Icon, MapPinIcon } from "lucide-react";
 import { SERVER_URL } from "@/constants";
 import { useQuery } from "@tanstack/react-query";
-import { useDebounce } from "../_hooks/use-debounce";
+import { useDebounce } from "../../places/_hooks/use-debounce";
+import { SinglePlace } from "../../places/_components/claim-places-steps/find-place";
 
-interface AddressSuggestion {
-  place_id: string;
-  name: string;
-  location: {
-    lat: number;
-    lng: number;
-  };
-  formatted_address: string;
-}
-
-interface AddressAutocompleteProps<T extends FieldValues> {
+interface PlaceAutocompleteProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T>;
   label?: string;
   placeholder?: string;
-  onSelect?: (suggestion: AddressSuggestion) => void;
+  onSelect?: (place: SinglePlace) => void;
 }
 
-// Fetch function for address suggestions
-const fetchAddressSuggestions = async (
+// Fetch function for place suggestions
+const fetchPlaceSuggestions = async (
   searchQuery: string
-): Promise<AddressSuggestion[]> => {
-  const response = await api.get<{ data: AddressSuggestion[] }>(
-    SERVER_URL + `/places/google-search`,
+): Promise<SinglePlace[]> => {
+  const response = await api.get<{ data: { data: SinglePlace[] } }>(
+    SERVER_URL + `/places/public`,
     {
-      params: { address: searchQuery },
+      params: { search: searchQuery },
     }
   );
-  return response.data.data || [];
+  console.log(response.data.data.data);
+  return response.data.data.data || [];
 };
 
-export function AddressAutocomplete<T extends FieldValues>({
+export function PlaceAutocomplete<T extends FieldValues>({
   control,
   name,
-  label = "Address",
-  placeholder = "Enter Street Name and Number",
+  label = "Add a place",
+  placeholder = "Search for a place",
   onSelect,
-}: AddressAutocompleteProps<T>) {
+}: PlaceAutocompleteProps<T>) {
   const [query, setQuery] = useState("");
+  const [displayValue, setDisplayValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [hasSelected, setHasSelected] = useState(false);
@@ -66,37 +59,35 @@ export function AddressAutocomplete<T extends FieldValues>({
     control,
   });
 
-  // TanStack Query for address suggestions
+  // TanStack Query for place suggestions
   const {
     data: suggestions = [],
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["address-suggestions", debouncedQuery],
-    queryFn: () => fetchAddressSuggestions(debouncedQuery),
-    enabled: debouncedQuery.length >= 3 && !hasSelected,
+    queryKey: ["place-suggestions", debouncedQuery],
+    queryFn: () => fetchPlaceSuggestions(debouncedQuery),
+    enabled: debouncedQuery.length >= 2 && !hasSelected,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // Open dropdown when suggestions are available
-  //   useEffect(() => {
-  //     if (suggestions.length > 0 && debouncedQuery.length >= 3 && !hasSelected) {
-  //       setIsOpen(true);
-  //     }
-  //   }, [suggestions, debouncedQuery, hasSelected]);
-
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    field.onChange(value);
+    setDisplayValue(value);
     setSelectedIndex(-1);
     setHasSelected(false); // Reset selection flag when user types
 
-    if (value.length < 3) {
+    // Clear the field value when typing (only set it on selection)
+    if (field.value) {
+      field.onChange("");
+    }
+
+    if (value.length < 2) {
       setIsOpen(false);
       return;
     }
@@ -104,15 +95,16 @@ export function AddressAutocomplete<T extends FieldValues>({
   };
 
   // Handle suggestion selection
-  const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
+  const handleSelectSuggestion = (place: SinglePlace) => {
     setHasSelected(true); // Mark as selected to prevent refetch
-    field.onChange(suggestion.formatted_address);
-    setQuery(suggestion.formatted_address);
+    field.onChange(place.id); // Set the place ID in the form
+    setDisplayValue(place.name); // Show the place name in the input
+    setQuery(""); // Clear search query
     setIsOpen(false);
     setSelectedIndex(-1);
 
     if (onSelect) {
-      onSelect(suggestion);
+      onSelect(place);
     }
   };
 
@@ -160,12 +152,12 @@ export function AddressAutocomplete<T extends FieldValues>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Sync query with field value on mount
+  // Open dropdown when suggestions are available and query is valid
   useEffect(() => {
-    if (field.value && !query) {
-      setQuery(field.value);
+    if (suggestions.length > 0 && debouncedQuery.length >= 2 && !hasSelected) {
+      setIsOpen(true);
     }
-  }, [field.value, query]);
+  }, [suggestions, debouncedQuery, hasSelected]);
 
   const showLoading = isLoading || isFetching;
 
@@ -176,11 +168,11 @@ export function AddressAutocomplete<T extends FieldValues>({
         <Input
           ref={inputRef}
           id={name}
-          value={query}
+          value={displayValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (suggestions.length > 0) setIsOpen(true);
+            if (suggestions.length > 0 && query.length >= 2) setIsOpen(true);
           }}
           placeholder={placeholder}
           className={cn(
@@ -206,10 +198,10 @@ export function AddressAutocomplete<T extends FieldValues>({
       {/* Suggestions dropdown */}
       {isOpen && suggestions.length > 0 && (
         <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-          {suggestions.map((suggestion, index) => (
+          {suggestions.map((place, index) => (
             <li
-              key={suggestion.place_id}
-              onClick={() => handleSelectSuggestion(suggestion)}
+              key={place.id}
+              onClick={() => handleSelectSuggestion(place)}
               className={cn(
                 "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors",
                 index === selectedIndex ? "bg-gray-100" : "hover:bg-gray-50",
@@ -217,9 +209,16 @@ export function AddressAutocomplete<T extends FieldValues>({
               )}
             >
               <MapPinIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span className="text-sm text-gray-700 truncate">
-                {suggestion.formatted_address}
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {place.name}
+                </span>
+                {place.address && (
+                  <span className="text-xs text-gray-500 truncate">
+                    {place.address}
+                  </span>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -227,13 +226,11 @@ export function AddressAutocomplete<T extends FieldValues>({
 
       {/* No results message */}
       {isOpen &&
-        query.length >= 3 &&
+        query.length >= 2 &&
         !showLoading &&
         suggestions.length === 0 && (
           <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
-            <p className="text-sm text-gray-500 text-center">
-              No addresses found
-            </p>
+            <p className="text-sm text-gray-500 text-center">No places found</p>
           </div>
         )}
     </div>

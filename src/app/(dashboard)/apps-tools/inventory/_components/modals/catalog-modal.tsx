@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { catalogSchema, type Catalog } from "../../_schemas";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios-client";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import SideModal from "@/app/(dashboard)/_components/side-modal";
 
 export default function CatalogModal({
@@ -75,7 +75,7 @@ export default function CatalogModal({
       try {
         const payload = getValues();
         delete payload.industry;
-        await api.post(INVENTORY_SERVER_URL + "/catalogs", payload);
+        await api.post(SERVER_URL + "/inventory/catalogs", payload);
         toast.success("Catalog created successfully!");
         handleClose();
         return;

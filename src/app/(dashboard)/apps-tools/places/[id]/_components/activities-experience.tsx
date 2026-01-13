@@ -6,7 +6,9 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { Event } from "../../../event-planner/_components/events-table";
+import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
+import { Event } from "../../../event-planner/_schemas";
+import { formatDateDisplay } from "@/utils";
 
 export default function ActivitiesExperience({
   title,
@@ -26,24 +28,15 @@ export default function ActivitiesExperience({
           >
             <div className="w-full h-[206px]">
               <Image
-                src={event.imgUrl}
-                alt={event.title}
+                src={event.images?.[0] || ""}
+                alt={event.name}
                 width={400}
                 height={600}
                 className="w-full h-full object-cover rounded-2xl"
               />
             </div>
-            <h2 className="text-sm lg:text-base font-bold">{event.title}</h2>
-            <div className="flex items-center gap-x-2">
-              <Image
-                src={event.imgUrl}
-                alt={event.title}
-                width={40}
-                height={40}
-                className="w-5 h-5 object-cover rounded-full"
-              />
-              <p className="text-sm">{event.tagline}</p>
-            </div>
+            <h2 className="text-sm lg:text-base font-bold">{event.name}</h2>
+
             <div className="flex items-center gap-x-2">
               <div className="flex items-center gap-x-2">
                 <HugeiconsIcon
@@ -51,7 +44,9 @@ export default function ActivitiesExperience({
                   size={24}
                   color="#6F6D6D"
                 />
-                <p className="text-sm">{event.location}</p>
+                <p className="text-sm">
+                  {event.city}, {event.state}
+                </p>
               </div>
               <div className="flex items-center gap-x-2">
                 <HugeiconsIcon
@@ -59,52 +54,10 @@ export default function ActivitiesExperience({
                   size={24}
                   color="#6F6D6D"
                 />
-                <p className="text-sm">{event.date}</p>
+                {formatDateDisplay(event.startDate)}
               </div>
             </div>
-            <div className="flex items-center">
-              <div className="border-2 rounded-full overflow-hidden border-white">
-                <Image
-                  src={"/avatars/1.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/2.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/3.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              {/* <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                          <Image
-                            src={"/avatars/4.jpg"}
-                            alt={"avatar"}
-                            width={40}
-                            height={40}
-                            className="w-5 h-5 object-cover"
-                          />
-                        </div> */}
-              <div className="bg-background-light rounded-3xl px-1.5 py-1">
-                <p className="text-[10px] text-secondary-text uppercase">
-                  +10 others
-                </p>
-              </div>
-            </div>
+            <ImpressionsStack impressions={event.totalImpressions ?? 0} />
             <div className="flex justify-between w-full">
               <button className="rounded-2xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2">
                 <HugeiconsIcon icon={Edit02Icon} size={16} color="#FFFFFF" />

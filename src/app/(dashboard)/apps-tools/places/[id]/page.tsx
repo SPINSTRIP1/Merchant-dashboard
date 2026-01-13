@@ -16,7 +16,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import FacilityManagement from "./_components/facility-management";
 import BookingReservation from "./_components/booking-reservation";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useParams, useRouter } from "next/navigation";
 import Loader from "@/components/loader";
 import { ChevronLeft } from "lucide-react";
@@ -35,7 +35,7 @@ export default function Page() {
     queryKey: ["single-place", id],
     queryFn: async () => {
       try {
-        const response = await api.get(PLACES_SERVER_URL + `/places/${id}`);
+        const response = await api.get(SERVER_URL + `/places/${id}`);
         return response.data.data;
       } catch (error) {
         console.log("Error fetching products:", error);

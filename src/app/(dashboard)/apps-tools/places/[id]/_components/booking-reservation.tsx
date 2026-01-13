@@ -22,7 +22,7 @@ import React, { useState } from "react";
 import { formatAmount } from "@/utils";
 import EmptyState from "@/components/empty-state";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useDebounce } from "../../_hooks/use-debounce";
 import PaginationButton from "@/components/pagination-button";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
@@ -65,7 +65,7 @@ export default function BookingReservation() {
   const { items, currentPage, totalPages, isLoading, handlePageChange } =
     useServerPagination<Booking>({
       queryKey: ["places-bookings", id || ""],
-      endpoint: `${PLACES_SERVER_URL}/places/${id}/appointments`,
+      endpoint: `${SERVER_URL}/places/${id}/appointments`,
       enabled: !!id,
       searchQuery: debouncedSearch,
       filters: {
@@ -75,7 +75,7 @@ export default function BookingReservation() {
 
   const { deleteItem } = useOptimisticDelete<Booking>({
     queryKey: ["places-bookings", currentPage],
-    deleteEndpoint: `${PLACES_SERVER_URL}/places/appointments`,
+    deleteEndpoint: `${SERVER_URL}/places/appointments`,
     successMessage: "Item deleted successfully",
     errorMessage: "Failed to delete item",
   });

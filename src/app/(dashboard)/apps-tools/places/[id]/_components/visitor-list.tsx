@@ -13,7 +13,7 @@ import EmptyState from "@/components/empty-state";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 import { GoogleSheetIcon } from "@hugeicons/core-free-icons";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import PaginationButton from "@/components/pagination-button";
 import { useDebounce } from "../../_hooks/use-debounce";
 
@@ -42,7 +42,7 @@ export default function VisitorList() {
   const { items, currentPage, totalPages, isLoading, handlePageChange } =
     useServerPagination<Visitor>({
       queryKey: ["places-visitors", id || ""],
-      endpoint: `${PLACES_SERVER_URL}/places/${id}/visitors`,
+      endpoint: `${SERVER_URL}/places/${id}/visitors`,
       enabled: !!id,
       searchQuery: debouncedSearch,
       // filters: {

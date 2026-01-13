@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Campaign, campaignSchema } from "../../_schemas";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios-client";
-import { DEALS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 
 export default function SubscribeModal({
   isOpen,
@@ -50,7 +50,7 @@ export default function SubscribeModal({
     setLoading(true);
     try {
       const payload = getValues();
-      await api.post(DEALS_SERVER_URL + "/campaigns", payload);
+      await api.post(SERVER_URL + "/deals/campaigns", payload);
       toast.success("Campaign created successfully!");
       onClose();
       reset();

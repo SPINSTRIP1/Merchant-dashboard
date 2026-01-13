@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import React from "react";
 import { useInventoryForm } from "../../_context";
 import { useQuery } from "@tanstack/react-query";
-import { DEALS_SERVER_URL, MENUS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { X } from "lucide-react";
 import { Deal } from "../../../deals/_schemas";
@@ -27,7 +27,7 @@ export default function Visibility() {
     queryKey: ["deals"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/deals");
+        const response = await api.get(SERVER_URL + "/deals");
         return response.data.data.data;
       } catch (error) {
         console.log("Error fetching deals:", error);
@@ -37,13 +37,13 @@ export default function Visibility() {
   });
   const { items: menus } = useServerPagination<Menu>({
     queryKey: MENU_QUERY_KEY,
-    endpoint: `${MENUS_SERVER_URL}/menu-items`,
+    endpoint: `${SERVER_URL}/menu/menu-items`,
   });
   const { data: subscriptionStatus } = useQuery({
     queryKey: ["deals-subscription-status"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/subscriptions");
+        const response = await api.get(SERVER_URL + "/deals/subscriptions");
         return response.data.data as { subscribed: boolean };
       } catch (error) {
         console.log("Error fetching subscription status:", error);

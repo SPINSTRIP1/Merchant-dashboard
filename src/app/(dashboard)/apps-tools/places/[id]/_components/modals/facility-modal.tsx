@@ -14,7 +14,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import React from "react";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api/axios-client";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -101,10 +101,7 @@ export default function FacilityModal({
     setLoading(true);
     try {
       const { files, ...formData } = getValues();
-      const res = await api.post(
-        PLACES_SERVER_URL + `/places/facilities`,
-        formData
-      );
+      const res = await api.post(SERVER_URL + `/places/facilities`, formData);
       console.log(res);
       const { status, data } = res.data as {
         status: string;
@@ -120,7 +117,7 @@ export default function FacilityModal({
           });
 
           await api.post(
-            PLACES_SERVER_URL + `/places/facilities/${data.id}/images`,
+            SERVER_URL + `/places/facilities/${data.id}/images`,
             formData,
             {
               headers: {

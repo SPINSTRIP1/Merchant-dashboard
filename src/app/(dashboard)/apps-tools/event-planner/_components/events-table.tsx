@@ -13,7 +13,7 @@ import DetailsModal from "./details-modal";
 import AddEventsModal from "./add-events-modal";
 import { useEventsForm } from "../_context";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { EVENTS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { Event } from "../_schemas";
 import Loader from "@/components/loader";
 import EmptyState from "@/components/empty-state";
@@ -46,7 +46,7 @@ export default function EventsTable() {
   const debouncedSearch = useDebounce(searchQuery, 500);
   const { items, isLoading, refetch } = useServerPagination<Event>({
     queryKey: "events",
-    endpoint: `${EVENTS_SERVER_URL}/events`,
+    endpoint: `${SERVER_URL}/events`,
     searchQuery: debouncedSearch,
     filters: {
       status: statusFilter,
@@ -55,7 +55,7 @@ export default function EventsTable() {
   });
   // const { deleteItem } = useOptimisticDelete<Event & { id: string }>({
   //   queryKey: ["events"],
-  //   deleteEndpoint: `${EVENTS_SERVER_URL}/events`,
+  //   deleteEndpoint: `${SERVER_URL}/events`,
   //   successMessage: "Event deleted successfully",
   //   errorMessage: "Failed to delete event",
   // });
@@ -65,7 +65,7 @@ export default function EventsTable() {
     newStatus: "ACTIVE" | "INACTIVE"
   ) => {
     try {
-      await api.patch(`${EVENTS_SERVER_URL}/events/${id}`, {
+      await api.patch(`${SERVER_URL}/events/${id}`, {
         status: newStatus,
       });
       await refetch();
@@ -77,7 +77,7 @@ export default function EventsTable() {
     }
   };
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  console.log(items);
+
   return (
     <section>
       <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">

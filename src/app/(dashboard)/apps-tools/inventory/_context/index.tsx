@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DEFAULT_INVENTORY_VALUES, addInventorySteps } from "../_constants";
 import api from "@/lib/api/axios-client";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { ActionType } from "@/app/(dashboard)/_types";
 
@@ -98,10 +98,10 @@ export function InventoryFormProvider({
       if (isUpdating) {
         const { id, ...updateData } = formData;
         res = await api.patch(
-          INVENTORY_SERVER_URL + "/products/" + id,
+          SERVER_URL + "/inventory/products/" + id,
           updateData
         );
-      } else res = await api.post(INVENTORY_SERVER_URL + "/products", formData);
+      } else res = await api.post(SERVER_URL + "/inventory/products", formData);
       const { data, status, message } = res.data as {
         data: InventoryProduct;
         status: string;
@@ -113,7 +113,7 @@ export function InventoryFormProvider({
             const formData = new FormData();
             files.forEach((file) => formData.append("files", file));
             await api.post(
-              INVENTORY_SERVER_URL + `/products/${data.id}/images`,
+              SERVER_URL + `/inventory/products/${data.id}/images`,
               formData,
               {
                 headers: {

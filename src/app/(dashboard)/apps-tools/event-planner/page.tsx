@@ -8,7 +8,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import EventsTable from "./_components/events-table";
 import { useQuery } from "@tanstack/react-query";
-import { EVENTS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { toast } from "react-hot-toast";
 
@@ -25,7 +25,7 @@ export default function EventPlanner() {
     queryKey: ["events-stats"],
     queryFn: async () => {
       try {
-        const response = await api.get(EVENTS_SERVER_URL + "/events/stats");
+        const response = await api.get(SERVER_URL + "/events/stats");
         return response.data.data as EventStatsResponse;
       } catch (error) {
         console.log("Error fetching compliance status:", error);

@@ -108,6 +108,7 @@ export const placeSchema = z.object({
       ),
     })
     .optional(),
+  views: z.number().optional(),
   metadata: z
     .object({
       amenities: z.string(),

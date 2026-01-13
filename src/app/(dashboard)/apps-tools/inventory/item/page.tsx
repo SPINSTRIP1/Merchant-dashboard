@@ -24,7 +24,7 @@ import InventoryModal from "../_components/modals/inventory-modal";
 import DeleteModal from "../../deals/_components/modals/delete-modal";
 import DuplicateModal from "../../deals/_components/modals/delete-modal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { InventoryProduct } from "../_schemas";
 import Loader from "@/components/loader";
@@ -40,7 +40,7 @@ export default function InventoryItem() {
   const queryClient = useQueryClient();
   const { deleteItem } = useOptimisticDelete<InventoryProduct>({
     queryKey: ["inventory-products"],
-    deleteEndpoint: `${INVENTORY_SERVER_URL}/products`,
+    deleteEndpoint: `${SERVER_URL}/inventory/products`,
     successMessage: "Item deleted successfully",
     errorMessage: "Failed to delete item",
     onSuccess: () => router.back(),
@@ -48,7 +48,7 @@ export default function InventoryItem() {
 
   const handleDuplicate = async (id: string) => {
     try {
-      await api.post(`${INVENTORY_SERVER_URL}/products/${id}/duplicate`);
+      await api.post(`${SERVER_URL}/inventory/products/${id}/duplicate`);
       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
     } catch (error) {
       console.log(error);
@@ -65,7 +65,7 @@ export default function InventoryItem() {
     queryFn: async () => {
       try {
         const response = await api.get(
-          INVENTORY_SERVER_URL + "/products/" + itemId
+          SERVER_URL + "/inventory/products/" + itemId
         );
         return response.data.data as InventoryProduct;
       } catch (error) {

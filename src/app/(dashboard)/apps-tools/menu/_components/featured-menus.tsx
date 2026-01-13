@@ -2,7 +2,7 @@ import { useServerPagination } from "@/hooks/use-server-pagination";
 import React from "react";
 import { Menu } from "../_schemas";
 import { MENU_QUERY_KEY } from "../_constants";
-import { MENUS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import EmptyState from "@/components/empty-state";
 import { Star } from "lucide-react";
 import ItemCard from "@/app/(dashboard)/_components/item-card";
@@ -16,7 +16,7 @@ export default function FeaturedMenus({
 }) {
   const { items, isLoading } = useServerPagination<Menu>({
     queryKey: MENU_QUERY_KEY,
-    endpoint: `${MENUS_SERVER_URL}/menu-items`,
+    endpoint: `${SERVER_URL}/menu/menu-items`,
     filters: {
       isFeatured: true,
     },

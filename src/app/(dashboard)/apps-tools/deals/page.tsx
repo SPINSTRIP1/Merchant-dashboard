@@ -9,7 +9,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import DealsTable from "./_components/deals-table";
 import { useQuery } from "@tanstack/react-query";
-import { DEALS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export default function Deals() {
     queryKey: ["deals-subscription-status"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/subscriptions");
+        const response = await api.get(SERVER_URL + "/deals/subscriptions");
         return response.data.data as { subscribed: boolean };
       } catch (error) {
         console.log("Error fetching subscription status:", error);
@@ -45,7 +45,7 @@ export default function Deals() {
     queryKey: ["deals-stats"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/deals/stats");
+        const response = await api.get(SERVER_URL + "/deals/stats");
         return response.data.data;
       } catch (error) {
         console.log("Error fetching compliance status:", error);
@@ -64,7 +64,7 @@ export default function Deals() {
   async function handleSubscribeClick() {
     setLoading(true);
     try {
-      await api.patch(DEALS_SERVER_URL + "/subscriptions/activate");
+      await api.patch(SERVER_URL + "/deals/subscriptions/activate");
       // console.log("Subscription activated:", res.data);
       setShowModal(true);
     } catch (error) {
@@ -115,7 +115,7 @@ export default function Deals() {
   if (isLoading) return <Loader />;
   return (
     <div>
-      {subscriptionStatus?.subscribed ? (
+      {subscriptionStatus?.subscribed || data?.active ? (
         <div>
           <div className="flex flex-wrap mb-5 gap-4">
             {stats.map((stat) => (

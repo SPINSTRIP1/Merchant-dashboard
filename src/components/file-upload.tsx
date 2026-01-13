@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
-import { COMPLIANCE_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 
 export type FileUploadType = "image" | "file";
 
@@ -128,7 +128,7 @@ export default function FileUpload({
         formData.append(fileName, file);
 
         const response = await api.post(
-          `${COMPLIANCE_SERVER_URL}/kyc/upload/merchant`,
+          `${SERVER_URL}/kyc/upload/merchant`,
           formData,
           {
             headers: {

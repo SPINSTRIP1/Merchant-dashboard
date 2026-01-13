@@ -13,10 +13,11 @@ import { getPlaceType } from "../../_utils";
 import { Button } from "@/components/ui/button";
 import { usePlacesForm } from "../../_context";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useDebounce } from "../../_hooks/use-debounce";
 import Loader from "@/components/loader";
 import EmptyState from "@/components/empty-state";
+import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
 
 export interface SinglePlace extends Omit<Place, "coverImage"> {
   coverImage: string;
@@ -35,7 +36,7 @@ export default function FindPlace() {
   const { setCurrentStep } = usePlacesForm();
   const { items, isLoading } = useServerPagination<SinglePlace>({
     queryKey: "unclaimed-places",
-    endpoint: `${PLACES_SERVER_URL}/places/unclaimed`,
+    endpoint: `${SERVER_URL}/places/unclaimed`,
     searchQuery: debouncedSearchQuery,
   });
 
@@ -110,49 +111,8 @@ export default function FindPlace() {
                 <p className="text-sm">{place.website || "N/A"}</p>
               </div>
 
-              <div className="flex items-center">
-                <div className="border-2 rounded-full overflow-hidden border-white">
-                  <Image
-                    src={"/avatars/1.jpg"}
-                    alt={"avatar"}
-                    width={40}
-                    height={40}
-                    className="w-5 h-5 object-cover"
-                  />
-                </div>
-                <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                  <Image
-                    src={"/avatars/2.jpg"}
-                    alt={"avatar"}
-                    width={40}
-                    height={40}
-                    className="w-5 h-5 object-cover"
-                  />
-                </div>
-                <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                  <Image
-                    src={"/avatars/3.jpg"}
-                    alt={"avatar"}
-                    width={40}
-                    height={40}
-                    className="w-5 h-5 object-cover"
-                  />
-                </div>
-                {/* <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/4.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div> */}
-                <div className="bg-background-light rounded-3xl px-1.5 py-1">
-                  <p className="text-[10px] text-secondary-text uppercase">
-                    +10 others
-                  </p>
-                </div>
-              </div>
+              <ImpressionsStack impressions={place.views ?? 0} />
+
               <Button
                 onClick={() => setCurrentStep(2)}
                 size={"lg"}

@@ -10,9 +10,10 @@ import { FormSelect } from "@/components/ui/forms/form-select";
 import { TicketTier } from "../_schemas";
 import { Deal } from "../../deals/_schemas";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { DEALS_SERVER_URL, PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { AddressAutocomplete } from "../../places/_components/address-autocomplete";
 import { SinglePlace } from "../../places/_components/claim-places-steps/find-place";
+import { PlaceAutocomplete } from "./place-autocomplete";
 
 // Local imports
 import {
@@ -83,27 +84,14 @@ export default function AddEventsModal({
   const { items: deals, isLoading: isDealsLoading } = useServerPagination<Deal>(
     {
       queryKey: "deals",
-      endpoint: `${DEALS_SERVER_URL}/deals`,
+      endpoint: `${SERVER_URL}/deals`,
     }
   );
-
-  const { items: placeItems, isLoading: isPlacesLoading } =
-    useServerPagination<SinglePlace>({
-      queryKey: "places",
-      endpoint: `${PLACES_SERVER_URL}/places`,
-    });
 
   // Memoized options
   const dealOptions = useMemo(
     () => deals?.map((deal) => ({ label: deal.name, value: deal.id! })) || [],
     [deals]
-  );
-
-  const placeOptions = useMemo(
-    () =>
-      placeItems?.map((place) => ({ label: place.name, value: place.id! })) ||
-      [],
-    [placeItems]
   );
 
   // Handlers
@@ -113,17 +101,16 @@ export default function AddEventsModal({
     onClose();
   }, [onClose, resetFields, resetInput]);
 
-  const handlePlaceChange = useCallback(
-    (value: string) => {
-      const selectedPlace = placeItems?.find((place) => place.id === value);
-      if (selectedPlace) {
-        setValue("location", selectedPlace.address || "");
-        setValue("city", selectedPlace.city || "");
-        setValue("state", selectedPlace.state || "");
-        setValue("country", selectedPlace.country || "");
+  const handlePlaceSelect = useCallback(
+    (place: SinglePlace) => {
+      if (place) {
+        setValue("location", place.address || "");
+        setValue("city", place.city || "");
+        setValue("state", place.state || "");
+        setValue("country", place.country || "");
       }
     },
-    [placeItems, setValue]
+    [setValue]
   );
 
   // Derived state
@@ -160,14 +147,12 @@ export default function AddEventsModal({
         />
 
         {/* Place Selection */}
-        <FormSelect
-          label="Add a place"
+        <PlaceAutocomplete
           control={control}
           name="placeId"
-          options={placeOptions}
-          onChange={handlePlaceChange}
-          placeholder="Add a place"
-          disabled={isPlacesLoading}
+          label="Add a place"
+          placeholder="Search for a place"
+          onSelect={handlePlaceSelect}
         />
 
         {/* Contact Info */}

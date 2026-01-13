@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { PLACE_TYPES } from "../_constants";
 import Link from "next/link";
 import { SinglePlace } from "./claim-places-steps/find-place";
+import ImpressionsStack from "../../event-planner/_components/impressions-stack";
 
 interface PlaceProps {
   place: SinglePlace;
@@ -71,49 +72,7 @@ const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
           <p className="text-sm">{place.website || "N/A"}</p>
         </div>
 
-        <div className="flex items-center">
-          <div className="border-2 rounded-full overflow-hidden border-white">
-            <Image
-              src={"/avatars/1.jpg"}
-              alt={"avatar"}
-              width={40}
-              height={40}
-              className="w-5 h-5 object-cover"
-            />
-          </div>
-          <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-            <Image
-              src={"/avatars/2.jpg"}
-              alt={"avatar"}
-              width={40}
-              height={40}
-              className="w-5 h-5 object-cover"
-            />
-          </div>
-          <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-            <Image
-              src={"/avatars/3.jpg"}
-              alt={"avatar"}
-              width={40}
-              height={40}
-              className="w-5 h-5 object-cover"
-            />
-          </div>
-          {/* <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/4.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div> */}
-          <div className="bg-background-light rounded-3xl px-1.5 py-1">
-            <p className="text-[10px] text-secondary-text uppercase">
-              +10 others
-            </p>
-          </div>
-        </div>
+        <ImpressionsStack impressions={place.views ?? 0} />
       </div>
       <div className="flex justify-between pt-3 w-full">
         <button

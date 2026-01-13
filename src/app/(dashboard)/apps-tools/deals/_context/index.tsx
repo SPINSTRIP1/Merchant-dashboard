@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DEFAULT_DEALS_VALUES } from "../_constants";
 import api from "@/lib/api/axios-client";
-import { DEALS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
@@ -103,8 +103,8 @@ export function DealsFormProvider({ children }: { children: React.ReactNode }) {
       let res;
       if (isUpdating) {
         const { id, ...updateData } = formData;
-        res = await api.patch(DEALS_SERVER_URL + "/deals/" + id, updateData);
-      } else res = await api.post(DEALS_SERVER_URL + "/deals", formData);
+        res = await api.patch(SERVER_URL + "/deals/" + id, updateData);
+      } else res = await api.post(SERVER_URL + "/deals", formData);
       const { status, message } = res.data as {
         status: string;
         message?: string;

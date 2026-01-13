@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DEFAULT_EVENT_VALUES } from "../_constants";
 import api from "@/lib/api/axios-client";
-import { EVENTS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
@@ -65,7 +65,7 @@ export function EventsFormProvider({
 
   const { refetch } = useServerPagination<Event>({
     queryKey: "events",
-    endpoint: `${EVENTS_SERVER_URL}/events`,
+    endpoint: `${SERVER_URL}/events`,
     searchQuery: debouncedSearch,
     filters: {
       status: statusFilter,
@@ -136,8 +136,8 @@ export function EventsFormProvider({
       let res;
       if (isUpdating) {
         const { id, ...updateData } = payload;
-        res = await api.patch(EVENTS_SERVER_URL + "/events/" + id, updateData);
-      } else res = await api.post(EVENTS_SERVER_URL + "/events", payload);
+        res = await api.patch(SERVER_URL + "/events/" + id, updateData);
+      } else res = await api.post(SERVER_URL + "/events", payload);
       const { data, status, message } = res.data as {
         data: Event;
         status: string;
@@ -149,15 +149,11 @@ export function EventsFormProvider({
             const formData = new FormData();
             formData.append("mediaType", "images");
             files.forEach((file) => formData.append("files", file));
-            await api.post(
-              EVENTS_SERVER_URL + `/events/${data.id}/media`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                },
-              }
-            );
+            await api.post(SERVER_URL + `/events/${data.id}/media`, formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            });
           } catch (error) {
             console.log("Error uploading files:", error);
             toast.error(

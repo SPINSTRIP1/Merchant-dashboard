@@ -4,7 +4,7 @@ import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import { useDealsForm } from "../../_context";
-import { DEALS_SERVER_URL, INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { InventoryProduct } from "../../../inventory/_schemas";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ export default function DealsModal({
     queryKey: ["inventory-products"],
     queryFn: async () => {
       try {
-        const response = await api.get(INVENTORY_SERVER_URL + "/products");
+        const response = await api.get(SERVER_URL + "/inventory/products");
         return response.data.data.data || [];
       } catch (error) {
         console.log("Error fetching products:", error);
@@ -47,7 +47,7 @@ export default function DealsModal({
     queryKey: ["campaigns"],
     queryFn: async () => {
       try {
-        const response = await api.get(DEALS_SERVER_URL + "/campaigns");
+        const response = await api.get(SERVER_URL + "/deals/campaigns");
         return response.data.data.data;
       } catch (error) {
         console.log("Error fetching campaigns:", error);

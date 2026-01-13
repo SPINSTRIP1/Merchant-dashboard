@@ -16,9 +16,10 @@ import EmptyState from "@/components/empty-state";
 import { SinglePlace } from "../../_components/claim-places-steps/find-place";
 import { useQuery } from "@tanstack/react-query";
 import { Facility } from "../../_schemas";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import Loader from "@/components/loader";
+import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
 
 export default function FacilityManagement({
   place,
@@ -34,7 +35,7 @@ export default function FacilityManagement({
     queryFn: async () => {
       try {
         const response = await api.get(
-          PLACES_SERVER_URL + `/places/${place?.id}/facilities`
+          SERVER_URL + `/places/${place?.id}/facilities`
         );
         return response.data.data.facilities;
       } catch (error) {
@@ -81,49 +82,7 @@ export default function FacilityManagement({
               <p className="text-sm">{place.website || "N/A"}</p>
             </div>
 
-            <div className="flex items-center">
-              <div className="border-2 rounded-full overflow-hidden border-white">
-                <Image
-                  src={"/avatars/1.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/2.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/3.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div>
-              {/* <div className="border-2 rounded-full -ml-1 overflow-hidden border-white">
-                <Image
-                  src={"/avatars/4.jpg"}
-                  alt={"avatar"}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-cover"
-                />
-              </div> */}
-              <div className="bg-background-light rounded-3xl px-1.5 py-1">
-                <p className="text-[10px] text-secondary-text uppercase">
-                  +10 others
-                </p>
-              </div>
-            </div>
+            <ImpressionsStack impressions={place.views ?? 0} />
           </div>
           <div className="flex justify-between my-4 w-full">
             <button className="rounded-2xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2">

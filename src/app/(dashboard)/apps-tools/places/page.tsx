@@ -1,6 +1,6 @@
 "use client";
 
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import PlacesModal from "./_components/modals/create-places-modal";
 import Image from "next/image";
@@ -19,13 +19,13 @@ import { SinglePlace } from "./_components/claim-places-steps/find-place";
 export default function PlacesPage() {
   const { items, isLoading } = useServerPagination<SinglePlace>({
     queryKey: "places",
-    endpoint: `${PLACES_SERVER_URL}/places`,
+    endpoint: `${SERVER_URL}/places`,
   });
   const { action, setAction, form, handleReset } = usePlacesForm();
   const [selectedPlace, setSelectedPlace] = useState<SinglePlace | null>(null);
   const { deleteItem } = useOptimisticDelete<SinglePlace & { id: string }>({
     queryKey: ["places"],
-    deleteEndpoint: `${PLACES_SERVER_URL}/places`,
+    deleteEndpoint: `${SERVER_URL}/places`,
     successMessage: "Place deleted successfully",
     errorMessage: "Failed to delete place",
   });

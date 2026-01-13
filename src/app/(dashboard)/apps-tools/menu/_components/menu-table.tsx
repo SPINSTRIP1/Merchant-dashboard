@@ -26,7 +26,7 @@ import { EllipsisVertical, UtensilsCrossed } from "lucide-react";
 import React, { useState } from "react";
 import MenuModal from "./modals/menu-modal";
 import PaginationButton from "@/components/pagination-button";
-import { MENUS_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { Menu } from "../_schemas";
 import { formatAmount } from "@/utils";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
@@ -66,7 +66,7 @@ export default function MenuTable() {
   const { items, currentPage, totalPages, isLoading, handlePageChange } =
     useServerPagination<Menu>({
       queryKey: MENU_QUERY_KEY,
-      endpoint: `${MENUS_SERVER_URL}/menu-items`,
+      endpoint: `${SERVER_URL}/menu/menu-items`,
       searchQuery: debouncedSearch,
       filters: {
         status: statusFilter,
@@ -77,14 +77,14 @@ export default function MenuTable() {
   // Optimistic delete hook
   const { deleteItem } = useOptimisticDelete<Menu & { id: string }>({
     queryKey: [MENU_QUERY_KEY, currentPage],
-    deleteEndpoint: `${MENUS_SERVER_URL}/menu-items`,
+    deleteEndpoint: `${SERVER_URL}/menu/menu-items`,
     successMessage: "Item deleted successfully",
     errorMessage: "Failed to delete item",
   });
 
   const handleDuplicate = async (id: string) => {
     try {
-      await api.post(`${MENUS_SERVER_URL}/menu-items/${id}/duplicate`);
+      await api.post(`${SERVER_URL}/menu/menu-items/${id}/duplicate`);
       queryClient.invalidateQueries({ queryKey: ["menus"] });
     } catch (error) {
       console.log(error);
@@ -94,7 +94,7 @@ export default function MenuTable() {
 
   const handleStatusChange = async (id: string) => {
     try {
-      await api.patch(`${MENUS_SERVER_URL}/menu-items/${id}/toggle-hidden`);
+      await api.patch(`${SERVER_URL}/menu/menu-items/${id}/toggle-hidden`);
       queryClient.invalidateQueries({ queryKey: ["menus"] });
       toast.success("Visibility updated successfully");
     } catch (error) {
@@ -127,7 +127,7 @@ export default function MenuTable() {
     );
 
     try {
-      await api.patch(`${MENUS_SERVER_URL}/menu-items/${menuId}`, {
+      await api.patch(`${SERVER_URL}/menu/menu-items/${menuId}`, {
         status: newStatus,
       });
       toast.success("Status updated successfully");

@@ -153,10 +153,4 @@ export const months = [
   "December",
 ];
 
-export const SERVER_URL = "https://spinstrip-auth.fly.dev";
-export const COMPLIANCE_SERVER_URL = "https://spinstrip-compliance.fly.dev";
-export const INVENTORY_SERVER_URL = "https://spinstrip-inventory.fly.dev";
-export const DEALS_SERVER_URL = "https://spinstrip-deals.fly.dev";
-export const MENUS_SERVER_URL = "https://spinstrip-menu.fly.dev";
-export const PLACES_SERVER_URL = "https://spinstrip-places.fly.dev";
-export const EVENTS_SERVER_URL = "https://spinstrip-events.fly.dev";
+export const SERVER_URL = "https://spinstrip-merchant-gateway.fly.dev/api/v1";

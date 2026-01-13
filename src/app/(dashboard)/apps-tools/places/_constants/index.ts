@@ -81,14 +81,14 @@ export const DEFAULT_PLACES_VALUES: Partial<Place> = {
       {
         day: "Saturday",
         isOpen: false,
-        openingTime: "",
-        closingTime: "",
+        openingTime: "08:00",
+        closingTime: "18:00",
       },
       {
         day: "Sunday",
         isOpen: false,
-        openingTime: "",
-        closingTime: "",
+        openingTime: "08:00",
+        closingTime: "18:00",
       },
     ],
     holidays: [],

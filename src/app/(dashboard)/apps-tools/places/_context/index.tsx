@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DEFAULT_PLACES_VALUES } from "../_constants";
 import api from "@/lib/api/axios-client";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
@@ -117,7 +117,7 @@ export function PlacesFormProvider({
       let res;
       if (isUpdating) {
         const { id, ...updateData } = formData;
-        res = await api.patch(PLACES_SERVER_URL + "/places/" + id, {
+        res = await api.patch(SERVER_URL + "/places/" + id, {
           name: updateData.name,
           description: updateData.description,
           address: updateData.address,
@@ -132,7 +132,7 @@ export function PlacesFormProvider({
           phoneNumbers: updateData.phoneNumbers,
           website: updateData.website,
         });
-      } else res = await api.post(PLACES_SERVER_URL + "/places", formData);
+      } else res = await api.post(SERVER_URL + "/places", formData);
       const { status, message, data } = res.data as {
         status: string;
         message?: string;
@@ -165,15 +165,11 @@ export function PlacesFormProvider({
           }
           if ([...formData.entries()].length > 0) {
             console.log("yup");
-            await api.post(
-              PLACES_SERVER_URL + `/places/${data.id}/media`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                },
-              }
-            );
+            await api.post(SERVER_URL + `/places/${data.id}/media`, formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            });
           }
         } catch (error) {
           console.log("Error uploading files:", error);

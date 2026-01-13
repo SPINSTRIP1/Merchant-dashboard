@@ -10,7 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import InventoryTable from "./_components/inventory-table";
 import WarningBar from "./_components/warning-bar";
 import { useQuery } from "@tanstack/react-query";
-import { INVENTORY_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
 import { InventoryStatsResponse } from "./_types";
@@ -30,7 +30,7 @@ export default function Inventory() {
     queryFn: async () => {
       try {
         const response = await api.get(
-          INVENTORY_SERVER_URL + "/products/stats"
+          SERVER_URL + "/inventory/products/stats"
         );
         return response.data.data as InventoryStatsResponse;
       } catch (error) {

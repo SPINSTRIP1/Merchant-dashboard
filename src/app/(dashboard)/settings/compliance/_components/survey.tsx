@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { MultiSelect } from "../../_components/multi-select";
 import { useQuery } from "@tanstack/react-query";
-import { COMPLIANCE_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { FALLBACK_BUSINESS_CATEGORIES } from "../../_constants";
 import { useComplianceForm } from "../_context";
@@ -16,9 +16,7 @@ export default function Survey() {
     queryKey: ["business-categories"],
     queryFn: async () => {
       try {
-        const response = await api.get(
-          COMPLIANCE_SERVER_URL + "/kyc/business/categories"
-        );
+        const response = await api.get(SERVER_URL + "/kyc/business/categories");
         return response.data.data.categories;
       } catch (error) {
         console.log("Error fetching compliance status:", error);

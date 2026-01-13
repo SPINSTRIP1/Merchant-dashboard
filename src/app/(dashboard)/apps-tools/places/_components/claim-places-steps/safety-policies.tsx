@@ -3,7 +3,7 @@ import React, { useCallback } from "react";
 import { usePlacesForm } from "../../_context";
 import { UploadFile } from "../upload-file";
 import api from "@/lib/api/axios-client";
-import { PLACES_SERVER_URL } from "@/constants";
+import { SERVER_URL } from "@/constants";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -45,7 +45,7 @@ export default function SafetyPolicies() {
         formData.append("ownershipVideo", ownershipVideo);
       }
 
-      await api.post(PLACES_SERVER_URL + `/places/${id}/claim`, formData, {
+      await api.post(SERVER_URL + `/places/${id}/claim`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
