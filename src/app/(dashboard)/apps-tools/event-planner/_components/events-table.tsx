@@ -3,7 +3,6 @@ import SearchBar from "@/components/search-bar";
 import {
   Calendar03Icon,
   Chart03Icon,
-  Delete02Icon,
   Edit02Icon,
   Location01Icon,
 } from "@hugeicons/core-free-icons";
@@ -30,6 +29,7 @@ import { useDebounce } from "../../places/_hooks/use-debounce";
 import { DEFAULT_EVENT_VALUES } from "../_constants";
 import StatusBadge from "@/components/status-badge";
 import ImpressionsStack from "./impressions-stack";
+import { X } from "lucide-react";
 
 export default function EventsTable() {
   const {
@@ -273,12 +273,8 @@ export default function EventsTable() {
                     }}
                     className="rounded-2xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
                   >
-                    <HugeiconsIcon
-                      icon={Delete02Icon}
-                      color="#FF383C"
-                      size={16}
-                    />
-                    <p className="font-normal text-sm">Delete</p>
+                    <X size={16} className="text-[#FF383C]" color="#FF383C" />
+                    <p className="font-normal text-sm">Cancel</p>
                   </button>
                 )}
               </div>
