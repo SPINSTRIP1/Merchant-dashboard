@@ -24,10 +24,10 @@ import ActivitiesExperience from "./_components/activities-experience";
 import EmptyState from "@/components/empty-state";
 import VisitorList from "./_components/visitor-list";
 import Reviews from "./_components/reviews";
-import { Event } from "../../event-planner/_components/events-table";
 import api from "@/lib/api/axios-client";
 import { useQuery } from "@tanstack/react-query";
 import { SinglePlace } from "../_components/claim-places-steps/find-place";
+import { Event } from "../../event-planner/_schemas";
 
 export default function Page() {
   const { id } = useParams();
@@ -106,7 +106,7 @@ export default function Page() {
   ] as const;
 
   const [selectedOption, setSelectedOption] = useState<string>(
-    "Facility Management"
+    "Facility Management",
   );
   const events: Event[] = [];
 
@@ -222,7 +222,7 @@ export default function Page() {
               "px-4 border-b font-bold cursor-pointer",
               selectedOption === feature
                 ? "border-primary-text text-primary-text "
-                : "text-neutral-accent border-neutral-accent"
+                : "text-neutral-accent border-neutral-accent",
             )}
           >
             {feature}

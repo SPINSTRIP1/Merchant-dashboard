@@ -106,7 +106,7 @@ export function FormUploadImage<T extends FieldValues>({
     return acceptedFormats
       .map(
         (format) =>
-          FILE_TYPE_MAP[format.toUpperCase()] || `.${format.toLowerCase()}`
+          FILE_TYPE_MAP[format.toUpperCase()] || `.${format.toLowerCase()}`,
       )
       .join(",");
   }, [type, acceptedFormats]);
@@ -115,7 +115,7 @@ export function FormUploadImage<T extends FieldValues>({
 
   const acceptedFormatsUpperCase = useMemo(
     () => acceptedFormats.map((f) => f.toUpperCase()),
-    [acceptedFormats]
+    [acceptedFormats],
   );
 
   const validateFile = useCallback(
@@ -127,13 +127,13 @@ export function FormUploadImage<T extends FieldValues>({
       const fileExtension = file.name.split(".").pop()?.toUpperCase();
       if (fileExtension && !acceptedFormatsUpperCase.includes(fileExtension)) {
         return `File type not supported. Accepted formats: ${acceptedFormats.join(
-          ", "
+          ", ",
         )}`;
       }
 
       return null;
     },
-    [maxSizeBytes, maxSizeInMB, acceptedFormatsUpperCase, acceptedFormats]
+    [maxSizeBytes, maxSizeInMB, acceptedFormatsUpperCase, acceptedFormats],
   );
 
   const handleFileSelect = useCallback(
@@ -158,7 +158,7 @@ export function FormUploadImage<T extends FieldValues>({
         reader.readAsDataURL(file);
       }
     },
-    [validateFile, field, type]
+    [validateFile, field, type],
   );
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -181,7 +181,7 @@ export function FormUploadImage<T extends FieldValues>({
         handleFileSelect(file);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const handleClick = useCallback(() => {
@@ -195,7 +195,7 @@ export function FormUploadImage<T extends FieldValues>({
         handleFileSelect(file);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const removeFile = useCallback(() => {
@@ -210,7 +210,7 @@ export function FormUploadImage<T extends FieldValues>({
   // Memoized icon selection
   const iconComponent = useMemo(
     () => (type === "image" ? ImageAdd01Icon : DocumentAttachmentIcon),
-    [type]
+    [type],
   );
 
   // Memoized file size display
@@ -233,7 +233,7 @@ export function FormUploadImage<T extends FieldValues>({
           isDragOver && "border-primary bg-primary-accent/20",
           displayError && "border-red-500 bg-red-50",
           hasValue && !displayError && "border-green-500 bg-green-50",
-          className
+          className,
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -314,7 +314,8 @@ export function FormUploadImage<T extends FieldValues>({
         <div className="flex items-center justify-center flex-col pt-2">
           <p className="text-sm text-secondary-text">{description}</p>
           <span className="text-[9px] font-semibold text-gray-500">
-            {acceptedFormats.join(", ")} formats supported
+            {acceptedFormats.join(", ")} formats supported (Max: {maxSizeInMB}
+            MB)
           </span>
         </div>
       )}

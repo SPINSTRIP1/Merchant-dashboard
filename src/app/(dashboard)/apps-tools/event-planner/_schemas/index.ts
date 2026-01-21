@@ -49,6 +49,7 @@ export const eventSchema = z.object({
   totalTransactions: z.number().optional(),
   ticketSalesBreakdown: z.array(z.string()).optional(),
   dropOffRate: z.number().optional(),
+  tagline: z.string().optional(),
   // coverImageUrl: z.string().optional(),
 });
 

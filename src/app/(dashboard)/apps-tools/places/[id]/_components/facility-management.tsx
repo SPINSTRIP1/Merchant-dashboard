@@ -109,16 +109,7 @@ export default function FacilityManagement({
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between my-2 w-full">
-              <h2 className="font-bold mb-1 text-primary-text">Visibility</h2>
-              <p>Public</p>
-            </div>
-            <div className="flex items-center justify-between my-2 w-full">
-              <h2 className="font-bold mb-1 text-primary-text">
-                Check out time
-              </h2>
-              <p>12 noon daily</p>
-            </div>{" "}
+
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">
                 Opening hours (regular + special days)

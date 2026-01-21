@@ -43,7 +43,7 @@ export default function GeneralInfo() {
                 "flex items-center cursor-pointer gap-x-1  rounded-full px-1 py-0.5 border ",
                 placeType === type.value
                   ? "bg-primary-accent border-primary text-primary"
-                  : "bg-foreground border-neutral-accent text-neutral-accent"
+                  : "bg-foreground border-neutral-accent text-neutral-accent",
               )}
             >
               <HugeiconsIcon
@@ -114,7 +114,7 @@ export default function GeneralInfo() {
         label="Contact Email"
         placeholder="Add Contact Email"
         type="email"
-        description="Click on the + icon or press Enter to add an email."
+        description="Press Enter to add more emails"
       />
 
       <FormArrayInput
@@ -123,7 +123,7 @@ export default function GeneralInfo() {
         label="Contact Phone Numbers"
         placeholder="Add Phone Number"
         type="tel"
-        description="Click on the + icon or press Enter to add a phone number."
+        description="Press Enter to add more phone numbers"
       />
       <FormInput
         control={control}

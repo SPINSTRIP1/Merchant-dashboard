@@ -143,21 +143,21 @@ export default function FacilityModal({
     } finally {
       setLoading(false);
     }
-  }, [getValues, queryClient, handleClose]);
+  }, [getValues, queryClient]);
   return (
     <SideModal isOpen={isOpen} onClose={handleClose}>
       <div className="space-y-7 pt-14 pb-5">
         <FormInput
           control={control}
-          label="Facility Type"
-          name="facilityCategory"
-          placeholder="Enter Facility Type"
-        />
-        <FormInput
-          control={control}
           label="Name of Facility"
           name="name"
           placeholder="Enter Name of Facility"
+        />
+        <FormInput
+          control={control}
+          label="Facility Type"
+          name="facilityCategory"
+          placeholder="Enter Facility Type"
         />
 
         <FormInput
@@ -342,21 +342,23 @@ export default function FacilityModal({
                 }}
               />
             </div>
-            <div className="grid grid-cols-[1fr_202px] gap-4">
-              <FormInput
-                control={control}
-                label="Create Gate"
-                name="fees.0.name"
-                placeholder="Enter gate name"
-              />
-              <FormInput
-                control={control}
-                label="Gate Fee"
-                name="fees.0.amount"
-                placeholder="N0.00"
-                type="number"
-              />
-            </div>
+            {isGated && (
+              <div className="grid grid-cols-[1fr_202px] gap-4">
+                <FormInput
+                  control={control}
+                  label="Create Gate"
+                  name="fees.0.name"
+                  placeholder="Enter gate name"
+                />
+                <FormInput
+                  control={control}
+                  label="Gate Fee"
+                  name="fees.0.amount"
+                  placeholder="N0.00"
+                  type="number"
+                />
+              </div>
+            )}
           </>
         ) : null}
         <div className="flex justify-center mt-6 gap-x-3 items-center">

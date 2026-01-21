@@ -2,9 +2,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
-import { Control, FieldValues, Path } from "react-hook-form";
+import { Control, FieldValues, Path, useWatch } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -23,6 +23,24 @@ interface FormArrayInputProps<TFieldValues extends FieldValues> {
   buttonClassName?: string;
 }
 
+// Store refs for all FormArrayInput instances to flush on navigation
+const pendingInputRefs: Set<() => void> = new Set();
+
+// Call this before navigation to flush all pending inputs
+export function flushPendingArrayInputs() {
+  pendingInputRefs.forEach((flush) => flush());
+}
+
+// Register a custom pending input flush function
+export function registerPendingInput(flushFn: () => void) {
+  pendingInputRefs.add(flushFn);
+}
+
+// Unregister a custom pending input flush function
+export function unregisterPendingInput(flushFn: () => void) {
+  pendingInputRefs.delete(flushFn);
+}
+
 export function FormArrayInput<TFieldValues extends FieldValues>({
   control,
   name,
@@ -34,6 +52,27 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
   buttonClassName,
 }: FormArrayInputProps<TFieldValues>) {
   const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fieldRef = useRef<{
+    onChange: (value: string[]) => void;
+    value: string[];
+  }>();
+
+  // Register flush function for this instance
+  const flushInput = useCallback(() => {
+    if (inputValue.trim() && fieldRef.current) {
+      const items = fieldRef.current.value || [];
+      fieldRef.current.onChange([...items, inputValue.trim()]);
+      setInputValue("");
+    }
+  }, [inputValue]);
+
+  useEffect(() => {
+    pendingInputRefs.add(flushInput);
+    return () => {
+      pendingInputRefs.delete(flushInput);
+    };
+  }, [flushInput]);
 
   return (
     <FormField
@@ -41,6 +80,9 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => {
         const items = (field.value as string[]) || [];
+
+        // Keep ref updated for flush function
+        fieldRef.current = { onChange: field.onChange, value: items };
 
         const addItem = () => {
           if (inputValue.trim()) {
@@ -53,6 +95,16 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
           const updatedList = [...items];
           updatedList.splice(index, 1);
           field.onChange(updatedList);
+        };
+
+        const handleBlur = () => {
+          // Small delay to allow click on add button to register first
+          setTimeout(() => {
+            if (inputValue.trim()) {
+              field.onChange([...items, inputValue.trim()]);
+              setInputValue("");
+            }
+          }, 150);
         };
 
         return (
@@ -85,11 +137,13 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
                     />
                   </button>
                   <Input
+                    ref={inputRef}
                     type={type}
                     className="rounded-none border-b bg-transparent border-neutral-accent"
                     placeholder={placeholder}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    onBlur={handleBlur}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();

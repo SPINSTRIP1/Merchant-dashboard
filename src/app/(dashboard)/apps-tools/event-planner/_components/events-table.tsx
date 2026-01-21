@@ -300,8 +300,9 @@ export default function EventsTable() {
         isOpen={action === "delete"}
         onClose={() => setAction(null)}
         title={selectedEvent?.name || ""}
-        description="This event will be deleted permanently and cannot be recovered"
-        secondaryText="Cancel"
+        description="Are you sure you want to cancel this event?"
+        primaryText="Cancel"
+        secondaryText="Back"
         onDeleteConfirm={() =>
           handleStatusChange(selectedEvent?.id || "", "INACTIVE")
         }

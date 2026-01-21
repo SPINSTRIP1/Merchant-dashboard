@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
 import { ActionType } from "@/app/(dashboard)/_types";
+import { flushPendingArrayInputs } from "@/components/ui/forms/form-array-input";
 
 interface PlacesContextType {
   form: ReturnType<typeof useForm<Place>>;
@@ -77,7 +78,7 @@ export function PlacesFormProvider({
         shouldValidate: true,
       });
     },
-    [setValue]
+    [setValue],
   );
   const handleReset = useCallback(() => {
     reset(DEFAULT_PLACES_VALUES as Place);
@@ -148,7 +149,7 @@ export function PlacesFormProvider({
           if (environmentalSafetyPolicy instanceof File) {
             formData.append(
               "environmentalSafetyPolicy",
-              environmentalSafetyPolicy
+              environmentalSafetyPolicy,
             );
           }
           if (privacyPolicy instanceof File) {
@@ -176,12 +177,12 @@ export function PlacesFormProvider({
           toast.error(
             `Place ${
               isUpdating ? "updated" : "created"
-            } but failed to upload cover image and files. Please try again.`
+            } but failed to upload cover image and files. Please try again.`,
           );
         }
       }
       toast.success(
-        message || `Place ${isUpdating ? "updated" : "created"} successfully!`
+        message || `Place ${isUpdating ? "updated" : "created"} successfully!`,
       );
       queryClient.invalidateQueries({ queryKey: ["places"] });
       handleReset();
@@ -195,7 +196,7 @@ export function PlacesFormProvider({
           err ||
             `Failed to ${
               isUpdating ? "update" : "create"
-            } Place. Please try again.`
+            } Place. Please try again.`,
         );
       }
     } finally {
@@ -204,6 +205,9 @@ export function PlacesFormProvider({
   }, [getValues, queryClient, trigger, handleReset]);
 
   const handleNext = useCallback(async () => {
+    // Flush any pending array inputs before navigation
+    flushPendingArrayInputs();
+
     try {
       if (currentStep < 4) {
         setCurrentStep(currentStep + 1);

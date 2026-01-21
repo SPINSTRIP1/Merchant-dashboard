@@ -32,7 +32,7 @@ type AppWithStatus = {
 export default function Apps() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedApp, setSelectedApp] = React.useState<AppWithStatus | null>(
-    null
+    null,
   );
 
   // Redux state and actions
@@ -109,10 +109,6 @@ export default function Apps() {
           filteredApps.map((app: AppWithStatus, index: number) => (
             <div
               key={app.name}
-              onClick={() => {
-                setSelectedApp(app);
-                setIsModalOpen(true);
-              }}
               className={`p-4 cursor-pointer rounded-xl ${
                 index % 2 === 0
                   ? "lg:justify-self-start"
@@ -154,9 +150,20 @@ export default function Apps() {
                 <p className="text-sm text-secondary-text line-clamp-3">
                   {app.description}
                 </p>
-                <p className="text-base text-primary-text font-bold">
-                  {app.amount ? `N${app.amount}/month` : "Free"}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-base text-primary-text font-bold">
+                    {app.amount ? `N${app.amount}/month` : "Free"}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedApp(app);
+                      setIsModalOpen(true);
+                    }}
+                    className="text-sm text-primary underline"
+                  >
+                    Read More
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -203,7 +210,7 @@ export default function Apps() {
               onCheckedChange={() => {
                 if (selectedApp?.name) {
                   setSelectedApp((prev) =>
-                    prev ? { ...prev, isActive: !prev.isActive } : prev
+                    prev ? { ...prev, isActive: !prev.isActive } : prev,
                   );
                   toggleAppState(selectedApp.name);
                 }

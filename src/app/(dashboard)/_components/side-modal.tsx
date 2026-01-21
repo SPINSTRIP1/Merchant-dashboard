@@ -43,7 +43,7 @@ export default function SideModal({
       }`}
     >
       <div
-        className={`bg-foreground relative rounded-l-3xl p-3 lg:p-4 shadow-xl max-w-[92vw] lg:max-w-[732px] w-full h-screen overflow-y-auto scrollbar-hide transition-transform duration-300 ease-in-out ${
+        className={`bg-foreground relative rounded-l-3xl p-3 lg:p-4 shadow-xl max-w-[92vw] lg:max-w-[732px] w-full h-screen overflow-y-auto transition-transform duration-300 ease-in-out ${
           isAnimating ? "translate-x-0" : "translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}
