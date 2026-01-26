@@ -1,45 +1,50 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Event, eventSchema } from "../_schemas";
+import React, { useCallback, useMemo, useContext, createContext } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { Event, eventSchema } from "../_schemas";
 import { DEFAULT_EVENT_VALUES } from "../_constants";
+import {
+  createFormContext,
+  BaseFormContextType,
+} from "@/lib/create-form-context";
 import api from "@/lib/api/axios-client";
 import { SERVER_URL } from "@/constants";
-import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
-import { ActionType } from "@/app/(dashboard)/_types";
 import { mergeDateTime } from "../_utils";
 import { useServerPagination } from "@/hooks/use-server-pagination";
+import { flushPendingArrayInputs } from "@/components/ui/forms/form-array-input";
+import { flushPendingTicketInputs } from "../_hooks/use-ticket-input";
 
-interface EventsContextType {
-  form: ReturnType<typeof useForm<Event>>;
-  loading: boolean;
-  handleFieldChange: (fieldName: string, value: unknown) => void;
+// ============================================================================
+// Extended Context Type (for events-specific properties)
+// ============================================================================
+
+interface EventsContextType extends BaseFormContextType<Event> {
   submitEvent: () => Promise<void>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  debouncedSearch: string;
-  statusFilter: string;
-  setStatusFilter: React.Dispatch<React.SetStateAction<string>>;
-  sortBy: string;
-  setSortBy: React.Dispatch<React.SetStateAction<string>>;
-  action: ActionType;
-  setAction: React.Dispatch<React.SetStateAction<ActionType>>;
   handleReset: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }
+
+// ============================================================================
+// Create Base Context Using Factory
+// ============================================================================
+
+const { Provider: BaseEventsProvider, useFormContext: useBaseEventsForm } =
+  createFormContext<Event>({
+    name: "Events",
+    schema: eventSchema,
+    defaultValues: DEFAULT_EVENT_VALUES as Event,
+    steps: ["Event Details"], // Single step since events doesn't use multi-step
+    queryKeys: ["events", "events-stats"],
+  });
+
+// ============================================================================
+// Extended Provider (with events-specific submit logic)
+// ============================================================================
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
@@ -48,21 +53,28 @@ export function EventsFormProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const form = useForm<Event>({
-    resolver: zodResolver(eventSchema),
-    mode: "onChange",
-    defaultValues: DEFAULT_EVENT_VALUES as Event,
-  });
-  const [action, setAction] = useState<ActionType>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const { getValues, setValue, reset, trigger } = form;
+  return (
+    <BaseEventsProvider>
+      <EventsExtendedProvider>{children}</EventsExtendedProvider>
+    </BaseEventsProvider>
+  );
+}
+
+function EventsExtendedProvider({ children }: { children: React.ReactNode }) {
+  const baseContext = useBaseEventsForm();
+  const {
+    form,
+    setLoading,
+    resetForm,
+    setAction,
+    debouncedSearch,
+    statusFilter,
+    sortBy,
+    action,
+  } = baseContext;
   const queryClient = useQueryClient();
 
+  // Use server pagination for events list
   const { refetch } = useServerPagination<Event>({
     queryKey: "events",
     endpoint: `${SERVER_URL}/events`,
@@ -73,35 +85,25 @@ export function EventsFormProvider({
     },
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-  // Function to trigger validation on field change
-  const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      setValue(fieldName as keyof Event, value as never, {
-        shouldValidate: true,
-      });
-    },
-    [setValue]
-  );
+  // Reset handler that also resets to step 1
   const handleReset = useCallback(() => {
-    reset(DEFAULT_EVENT_VALUES as Event);
-    setCurrentStep(1);
+    resetForm();
+    baseContext.setCurrentStep(1);
     setAction(null);
-  }, [reset, setAction]);
+  }, [resetForm, baseContext, setAction]);
 
+  // Submit Event data (events-specific logic with validation)
   const submitEvent = useCallback(async () => {
-    const isValid = await trigger([
+    // Flush any pending array inputs before submitting
+    flushPendingArrayInputs();
+    // Flush any pending ticket inputs before submitting
+    flushPendingTicketInputs();
+
+    const isValid = await form.trigger([
       "name",
       "contactEmail",
       "contactPhone",
       "description",
-      "files",
       "startDate",
       "endDate",
       "startTime",
@@ -115,56 +117,79 @@ export function EventsFormProvider({
       toast.error("Please check all form fields and try again.");
       return;
     }
-    const { files, startTime, endTime, ...rest } = getValues();
+
+    const mediaUploaded = await form.trigger("files");
+    if (action === "add" && !mediaUploaded) {
+      toast.error("Please upload at least one image for the event.");
+      return;
+    }
+
+    const { files, startTime, endTime, ...rest } = form.getValues();
     if (!rest.placeId) {
-      const isFilled = await trigger(["location", "city", "state", "country"]);
+      const isFilled = await form.trigger([
+        "location",
+        "city",
+        "state",
+        "country",
+      ]);
       if (!isFilled) {
         toast.error("Please provide a location for the event.");
         return;
       }
     }
+
     const payload = {
       ...rest,
+      dealId: rest.dealId === "None" ? undefined : rest.dealId,
       startDate: mergeDateTime(rest.startDate, startTime),
       endDate: mergeDateTime(rest.endDate, endTime),
       images: undefined, // Remove images from payload as they are handled separately
     };
+
     setLoading(true);
     try {
-      // delete payload.images;
       const isUpdating = Boolean(payload.id);
       let res;
       if (isUpdating) {
         const { id, ...updateData } = payload;
         res = await api.patch(SERVER_URL + "/events/" + id, updateData);
-      } else res = await api.post(SERVER_URL + "/events", payload);
+      } else {
+        res = await api.post(SERVER_URL + "/events", payload);
+      }
+
       const { data, status, message } = res.data as {
         data: Event;
         status: string;
         message?: string;
       };
+
       if (status === "success") {
         if (files?.length) {
           try {
-            const formData = new FormData();
-            formData.append("mediaType", "images");
-            files.forEach((file) => formData.append("files", file));
-            await api.post(SERVER_URL + `/events/${data.id}/media`, formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
+            const formDataObj = new FormData();
+            formDataObj.append("mediaType", "images");
+            files.forEach((file) => formDataObj.append("files", file));
+            await api.post(
+              SERVER_URL + `/events/${data.id}/media`,
+              formDataObj,
+              {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
               },
-            });
+            );
           } catch (error) {
             console.log("Error uploading files:", error);
             toast.error(
               `Event ${
                 isUpdating ? "updated" : "created"
-              } but failed to upload images. Please try again.`
+              } but failed to upload images. Please try again.`,
             );
           }
         }
         toast.success(
-          message || `Event ${isUpdating ? "updated" : "created"} successfully!`
+          message ||
+            `Event ${isUpdating ? "updated" : "created"} successfully!`,
         );
         handleReset();
         await refetch();
@@ -181,35 +206,29 @@ export function EventsFormProvider({
     } finally {
       setLoading(false);
     }
-  }, [getValues, handleReset, queryClient, trigger, refetch]);
+  }, [form, setLoading, handleReset, queryClient, refetch]);
+
+  const extendedContext = useMemo<EventsContextType>(
+    () => ({
+      ...baseContext,
+      submitEvent,
+      handleReset,
+    }),
+    [baseContext, submitEvent, handleReset],
+  );
 
   return (
-    <EventsContext.Provider
-      value={{
-        form,
-        loading,
-        handleFieldChange,
-        submitEvent,
-        searchQuery,
-        setSearchQuery,
-        debouncedSearch,
-        statusFilter,
-        setStatusFilter,
-        sortBy,
-        setSortBy,
-        action,
-        setAction,
-        handleReset,
-        currentStep,
-        setCurrentStep,
-      }}
-    >
-      <FormProvider {...form}>{children}</FormProvider>
+    <EventsContext.Provider value={extendedContext}>
+      {children}
     </EventsContext.Provider>
   );
 }
 
-export function useEventsForm() {
+// ============================================================================
+// Hook Export (maintains backward compatibility)
+// ============================================================================
+
+export function useEventsForm(): EventsContextType {
   const context = useContext(EventsContext);
   if (context === undefined) {
     throw new Error("useEventsForm must be used within an EventsFormProvider");

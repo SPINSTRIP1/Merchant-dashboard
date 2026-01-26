@@ -8,7 +8,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronLeft, ChevronRight, Archive } from "lucide-react";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import DeleteModal from "../_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
 import ReactivateModal from "./_components/reactivate-modal";
 import { useDealsForm } from "../_context";
 import { useServerPagination } from "@/hooks/use-server-pagination";

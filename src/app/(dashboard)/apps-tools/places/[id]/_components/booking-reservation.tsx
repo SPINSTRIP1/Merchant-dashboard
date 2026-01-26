@@ -23,10 +23,10 @@ import { formatAmount } from "@/utils";
 import EmptyState from "@/components/empty-state";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
-import { useDebounce } from "../../_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import PaginationButton from "@/components/pagination-button";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import DeleteModal from "./modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
 
 type Status = "Pending" | "Confirmed" | "Cancelled" | "Completed" | "No-Show";
 

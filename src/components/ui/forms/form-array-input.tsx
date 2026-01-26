@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
-import { Control, FieldValues, Path, useWatch } from "react-hook-form";
+import { Control, FieldValues, Path } from "react-hook-form";
 import {
   FormField,
   FormItem,

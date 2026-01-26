@@ -22,7 +22,7 @@ export default function DeleteModal({
   primaryText = "Delete",
   secondaryText = "Deactivate Instead",
   onDeleteConfirm,
-  description = "This deal will be deleted permanently and cannot be recovered",
+  description = "This item will be deleted permanently and cannot be recovered",
   headTitle,
   successMessage,
   onDeactivateConfirm,
@@ -74,32 +74,6 @@ export default function DeleteModal({
             </div>
           </div>
         );
-      // case 2:
-      //   return (
-      //     <div className="flex flex-col gap-y-2 items-center justify-center">
-      //       <Success icon={LockPasswordIcon} />
-      //       <h2 className="text-lg font-bold text-primary-text">
-      //         Enter Password
-      //       </h2>
-
-      //       <div className="mt-4 w-full">
-      //         <div className="space-y-1.5 px-4">
-      //           <Label>Password</Label>
-      //           <Input
-      //             type="password"
-      //             className="!rounded-2xl border border-neutral-accent"
-      //             placeholder="Password"
-      //           />
-      //         </div>
-      //         <Button
-      //           className="w-full h-[51px] mt-5 py-3"
-      //           onClick={() => setCurrentStep(3)}
-      //         >
-      //           Confirm
-      //         </Button>
-      //       </div>
-      //     </div>
-      //   );
 
       default:
         return (

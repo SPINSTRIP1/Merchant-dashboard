@@ -14,7 +14,7 @@ import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
 import { InventoryStatsResponse } from "./_types";
-import { useCatalogs } from "./_hooks/use-catalogs";
+import { useCatalogs } from "@/hooks/use-catalogs";
 import Loader from "@/components/loader";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export default function Inventory() {
     queryFn: async () => {
       try {
         const response = await api.get(
-          SERVER_URL + "/inventory/products/stats"
+          SERVER_URL + "/inventory/products/stats",
         );
         return response.data.data as InventoryStatsResponse;
       } catch (error) {

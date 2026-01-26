@@ -30,6 +30,7 @@ export default function LoginPage() {
       return;
     }
     const res = await login(formData);
+    console.log(res.user);
     if (res.success) {
       toast.success("Login successful!");
       router.push("/settings/compliance");
@@ -37,7 +38,7 @@ export default function LoginPage() {
       toast.error(res?.error || "Invalid credentials. Please try again.");
       if (
         res.error?.includes(
-          "Email not verified. Please verify your email before logging in"
+          "Email not verified. Please verify your email before logging in",
         )
       ) {
         router.push("/otp-verification");

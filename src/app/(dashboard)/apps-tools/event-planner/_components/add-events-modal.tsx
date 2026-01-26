@@ -74,7 +74,7 @@ export default function AddEventsModal({
 
   const handleAddTicket = useCallback(
     (newTickets: TicketTier[]) => setValue("ticketTiers", newTickets),
-    [setValue]
+    [setValue],
   );
 
   const { ticketInput, handleInputChange, addTicket, resetInput } =
@@ -85,13 +85,13 @@ export default function AddEventsModal({
     {
       queryKey: "deals",
       endpoint: `${SERVER_URL}/deals`,
-    }
+    },
   );
 
   // Memoized options
   const dealOptions = useMemo(
     () => deals?.map((deal) => ({ label: deal.name, value: deal.id! })) || [],
-    [deals]
+    [deals],
   );
 
   // Handlers
@@ -108,14 +108,14 @@ export default function AddEventsModal({
         setValue("city", place.city || "");
         setValue("state", place.state || "");
         setValue("country", place.country || "");
+        setValue("placeId", place.id || "None");
       }
     },
-    [setValue]
+    [setValue],
   );
 
   // Derived state
   const canAddMoreImages = imageUploadFields.length < MAX_IMAGES;
-  const showLocationFields = !placeId;
   const showRecurrencePattern = frequency === "RECURRING";
   const showCustomRecurrence =
     showRecurrencePattern && recurringPattern === "CUSTOM";
@@ -125,8 +125,8 @@ export default function AddEventsModal({
         ? "Adding..."
         : "Add Event"
       : loading
-      ? "Updating..."
-      : "Update Event";
+        ? "Updating..."
+        : "Update Event";
 
   return (
     <SideModal isOpen={isOpen} onClose={handleClose}>
@@ -172,7 +172,7 @@ export default function AddEventsModal({
         </div>
 
         {/* Location Fields (shown when no place selected) */}
-        {showLocationFields && (
+        {!placeId && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               <FormInput
@@ -369,7 +369,7 @@ export default function AddEventsModal({
           label="Add to Deal"
           control={control}
           name="dealId"
-          options={dealOptions}
+          options={[{ label: "None", value: "None" }, ...dealOptions]}
           placeholder="Add to Deal"
           disabled={isDealsLoading}
         />

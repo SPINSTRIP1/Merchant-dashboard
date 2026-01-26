@@ -14,7 +14,7 @@ import type { AuthTokens, UserData } from "@/store/slices/authSlice";
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-  // baseURL: SERVER_URL,
+  baseURL: SERVER_URL,
   timeout: 100000,
   headers: {
     "Content-Type": "application/json",
@@ -45,7 +45,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle token refresh and errors
@@ -69,7 +69,7 @@ api.interceptors.response.use(
             `${SERVER_URL}/auth/refresh-token`,
             {
               refreshToken: refreshToken,
-            }
+            },
           );
 
           const {
@@ -122,7 +122,7 @@ api.interceptors.response.use(
     // }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Export the configured axios instance

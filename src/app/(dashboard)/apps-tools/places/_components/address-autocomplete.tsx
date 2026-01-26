@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Loader2Icon, MapPinIcon } from "lucide-react";
 import { SERVER_URL } from "@/constants";
 import { useQuery } from "@tanstack/react-query";
-import { useDebounce } from "../_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface AddressSuggestion {
   place_id: string;
@@ -31,13 +31,13 @@ interface AddressAutocompleteProps<T extends FieldValues> {
 
 // Fetch function for address suggestions
 const fetchAddressSuggestions = async (
-  searchQuery: string
+  searchQuery: string,
 ): Promise<AddressSuggestion[]> => {
   const response = await api.get<{ data: AddressSuggestion[] }>(
     SERVER_URL + `/places/google-search`,
     {
       params: { address: searchQuery },
-    }
+    },
   );
   return response.data.data || [];
 };
@@ -124,7 +124,7 @@ export function AddressAutocomplete<T extends FieldValues>({
       case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
+          prev < suggestions.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -185,7 +185,7 @@ export function AddressAutocomplete<T extends FieldValues>({
           placeholder={placeholder}
           className={cn(
             "pr-10 !rounded-2xl border border-neutral-accent",
-            error && "border-red-500 focus-visible:ring-red-500"
+            error && "border-red-500 focus-visible:ring-red-500",
           )}
           autoComplete="off"
         />
@@ -213,7 +213,7 @@ export function AddressAutocomplete<T extends FieldValues>({
               className={cn(
                 "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors",
                 index === selectedIndex ? "bg-gray-100" : "hover:bg-gray-50",
-                index !== suggestions.length - 1 && "border-b border-gray-100"
+                index !== suggestions.length - 1 && "border-b border-gray-100",
               )}
             >
               <MapPinIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />

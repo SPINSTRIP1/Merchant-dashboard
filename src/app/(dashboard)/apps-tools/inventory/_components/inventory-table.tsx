@@ -33,8 +33,8 @@ import { SERVER_URL } from "@/constants";
 import { InventoryProduct, StockStatus } from "../_schemas";
 import { formatAmount, formatISODate } from "@/utils";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import DeleteModal from "../../deals/_components/modals/delete-modal";
-import DuplicateModal from "../../deals/_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
+import DuplicateModal from "@/components/modals/delete-modal";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { useInventoryForm } from "../_context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,7 +52,7 @@ export const statusColors: Record<StockStatus, string> = {
 
 export default function InventoryTable() {
   const [selectedItem, setSelectedItem] = useState<InventoryProduct | null>(
-    null
+    null,
   );
   const {
     form,
@@ -104,7 +104,7 @@ export default function InventoryTable() {
 
   const handleStatusChange = async (
     id: string,
-    newStatus: "ACTIVE" | "INACTIVE"
+    newStatus: "ACTIVE" | "INACTIVE",
   ) => {
     try {
       await api.patch(`${SERVER_URL}/inventory/products/${id}`, {
@@ -274,8 +274,8 @@ export default function InventoryTable() {
                         {item.inventory.stockStatus === "IN_STOCK"
                           ? "In Stock"
                           : item.inventory.stockStatus === "LOW_STOCK"
-                          ? "Low Stock"
-                          : "Out of Stock"}
+                            ? "Low Stock"
+                            : "Out of Stock"}
                       </p>
                     </div>
                   </TableCell>
@@ -360,7 +360,9 @@ export default function InventoryTable() {
                               e.stopPropagation();
                               handleStatusChange(
                                 item.id,
-                                item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+                                item.status === "ACTIVE"
+                                  ? "INACTIVE"
+                                  : "ACTIVE",
                               );
                             },
                           },

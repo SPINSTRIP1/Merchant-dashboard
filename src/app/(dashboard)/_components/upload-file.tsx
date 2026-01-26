@@ -56,9 +56,17 @@ export default function UploadFile({
   const [error, setError] = useState<string>("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Track if user just selected a file locally to prevent sync effect from clearing it
+  const isLocalSelection = useRef(false);
 
   // Sync with external value prop
   React.useEffect(() => {
+    // Don't clear local state if user just selected a file
+    if (isLocalSelection.current) {
+      isLocalSelection.current = false;
+      return;
+    }
+
     if (value && value !== selectedFile) {
       setSelectedFile(value);
       setError("");
@@ -71,12 +79,12 @@ export default function UploadFile({
         };
         reader.readAsDataURL(value);
       }
-    } else if (!value && selectedFile) {
-      // Clear if value is null/undefined
+    } else if (!value && selectedFile && !imagePreview) {
+      // Only clear if there's no preview (meaning it wasn't just selected)
       setSelectedFile(null);
       setImagePreview(null);
     }
-  }, [value, type, selectedFile]);
+  }, [value, type]);
 
   // Memoized computations
   const acceptString = useMemo(() => {
@@ -85,7 +93,7 @@ export default function UploadFile({
     return acceptedFormats
       .map(
         (format) =>
-          FILE_TYPE_MAP[format.toUpperCase()] || `.${format.toLowerCase()}`
+          FILE_TYPE_MAP[format.toUpperCase()] || `.${format.toLowerCase()}`,
       )
       .join(",");
   }, [type, acceptedFormats]);
@@ -94,7 +102,7 @@ export default function UploadFile({
 
   const acceptedFormatsUpperCase = useMemo(
     () => acceptedFormats.map((f) => f.toUpperCase()),
-    [acceptedFormats]
+    [acceptedFormats],
   );
 
   const validateFile = useCallback(
@@ -106,13 +114,13 @@ export default function UploadFile({
       const fileExtension = file.name.split(".").pop()?.toUpperCase();
       if (fileExtension && !acceptedFormatsUpperCase.includes(fileExtension)) {
         return `File type not supported. Accepted formats: ${acceptedFormats.join(
-          ", "
+          ", ",
         )}`;
       }
 
       return null;
     },
-    [maxSizeBytes, maxSizeInMB, acceptedFormatsUpperCase, acceptedFormats]
+    [maxSizeBytes, maxSizeInMB, acceptedFormatsUpperCase, acceptedFormats],
   );
 
   const handleFileSelect = useCallback(
@@ -125,6 +133,9 @@ export default function UploadFile({
         onFileSelect?.(null);
         return;
       }
+
+      // Mark that this is a local selection to prevent sync effect from clearing it
+      isLocalSelection.current = true;
 
       setError("");
       setSelectedFile(file);
@@ -139,7 +150,7 @@ export default function UploadFile({
         reader.readAsDataURL(file);
       }
     },
-    [validateFile, onFileSelect, type]
+    [validateFile, onFileSelect, type],
   );
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -162,7 +173,7 @@ export default function UploadFile({
         handleFileSelect(file);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const handleClick = useCallback(() => {
@@ -176,7 +187,7 @@ export default function UploadFile({
         handleFileSelect(file);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const removeFile = useCallback(() => {
@@ -192,7 +203,7 @@ export default function UploadFile({
   // Memoized icon selection
   const iconComponent = useMemo(
     () => (type === "image" ? ImageAdd01Icon : DocumentAttachmentIcon),
-    [type]
+    [type],
   );
 
   // Memoized file size display
@@ -209,7 +220,7 @@ export default function UploadFile({
           isDragOver && "border-primary bg-primary-accent/20",
           error && "border-red-500 bg-red-50",
           selectedFile && "border-green-500 bg-green-50",
-          className
+          className,
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -274,7 +285,7 @@ export default function UploadFile({
               <p
                 className={cn(
                   "text-sm",
-                  error ? "text-red-500" : "text-gray-700"
+                  error ? "text-red-500" : "text-gray-700",
                 )}
               >
                 {error}

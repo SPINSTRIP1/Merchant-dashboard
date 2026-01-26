@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { usePlacesForm } from "./_context";
 import Loader from "@/components/loader";
 import Places from "./_components/places";
-import DeleteModal from "../deals/_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
 import { useCallback, useState } from "react";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import { DEFAULT_PLACES_VALUES } from "./_constants";
@@ -31,7 +31,7 @@ export default function PlacesPage() {
   });
   const pendingPlaces = items?.filter((place) => place.status !== "PUBLISHED");
   const publishedPlaces = items?.filter(
-    (place) => place.status === "PUBLISHED"
+    (place) => place.status === "PUBLISHED",
   );
   const onAdd = useCallback(() => {
     form.reset(DEFAULT_PLACES_VALUES);
@@ -43,7 +43,7 @@ export default function PlacesPage() {
       form.reset(place);
       setAction("edit");
     },
-    [form, setAction]
+    [form, setAction],
   );
 
   const onDelete = useCallback(
@@ -51,7 +51,7 @@ export default function PlacesPage() {
       setSelectedPlace(place);
       setAction("delete");
     },
-    [setAction]
+    [setAction],
   );
 
   if (isLoading) return <Loader />;

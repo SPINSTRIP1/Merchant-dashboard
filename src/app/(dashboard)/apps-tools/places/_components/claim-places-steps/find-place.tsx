@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { usePlacesForm } from "../../_context";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
-import { useDebounce } from "../../_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import Loader from "@/components/loader";
 import EmptyState from "@/components/empty-state";
 import ImpressionsStack from "../../../event-planner/_components/impressions-stack";

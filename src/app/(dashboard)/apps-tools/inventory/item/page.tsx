@@ -21,8 +21,8 @@ import { useState } from "react";
 import InventoryChart from "./_components/inventory-chart";
 import InventoryItemTable from "./_components/table";
 import InventoryModal from "../_components/modals/inventory-modal";
-import DeleteModal from "../../deals/_components/modals/delete-modal";
-import DuplicateModal from "../../deals/_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
+import DuplicateModal from "@/components/modals/delete-modal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
@@ -65,7 +65,7 @@ export default function InventoryItem() {
     queryFn: async () => {
       try {
         const response = await api.get(
-          SERVER_URL + "/inventory/products/" + itemId
+          SERVER_URL + "/inventory/products/" + itemId,
         );
         return response.data.data as InventoryProduct;
       } catch (error) {
@@ -140,8 +140,8 @@ export default function InventoryItem() {
               {data?.inventory.stockStatus === "IN_STOCK"
                 ? "In Stock"
                 : data?.inventory.stockStatus === "LOW_STOCK"
-                ? "Low Stock"
-                : "Out of Stock"}
+                  ? "Low Stock"
+                  : "Out of Stock"}
             </p>
           </div>
         </div>
@@ -321,10 +321,10 @@ export default function InventoryItem() {
                     `${capitalizeFirstLetter(key)} (${
                       data.variant
                         ? capitalizeFirstLetter(
-                            data.variant[key as keyof typeof data.variant]
+                            data.variant[key as keyof typeof data.variant],
                           )
                         : ""
-                    })`
+                    })`,
                 )
                 .join(", ")}
             </p>
@@ -418,7 +418,7 @@ export default function InventoryItem() {
                   <p>{log.action}</p>
                   <p>{log.date}</p>
                 </div>
-              )
+              ),
             )}
         </ContainerWrapper>
       </div>

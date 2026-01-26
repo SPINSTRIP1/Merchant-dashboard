@@ -1,46 +1,51 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Place, placeSchema } from "../_schemas";
+import React, { useCallback, useMemo, useContext, createContext } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { Place, placeSchema } from "../_schemas";
 import { DEFAULT_PLACES_VALUES } from "../_constants";
+import {
+  createFormContext,
+  BaseFormContextType,
+} from "@/lib/create-form-context";
 import api from "@/lib/api/axios-client";
 import { SERVER_URL } from "@/constants";
-import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
-import { ActionType } from "@/app/(dashboard)/_types";
 import { flushPendingArrayInputs } from "@/components/ui/forms/form-array-input";
+import { uploadNamedFiles } from "@/lib/upload-files";
 
-interface PlacesContextType {
-  form: ReturnType<typeof useForm<Place>>;
-  loading: boolean;
-  handleFieldChange: (fieldName: string, value: unknown) => void;
+// Steps for places form
+const PLACES_STEPS = ["Basic Info", "Location", "Operating Hours", "Documents"];
+
+// ============================================================================
+// Extended Context Type (for places-specific properties)
+// ============================================================================
+
+interface PlacesContextType extends BaseFormContextType<Place> {
   submitPlace: () => Promise<void>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  debouncedSearch: string;
-  statusFilter: string;
-  setStatusFilter: React.Dispatch<React.SetStateAction<string>>;
-  sortBy: string;
-  setSortBy: React.Dispatch<React.SetStateAction<string>>;
-  action: ActionType;
-  setAction: React.Dispatch<React.SetStateAction<ActionType>>;
   handleReset: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  handleNext: () => Promise<void>;
-  handlePrevious: () => void;
 }
+
+// ============================================================================
+// Create Base Context Using Factory
+// ============================================================================
+
+const { Provider: BasePlacesProvider, useFormContext: useBasePlacesForm } =
+  createFormContext<Place>({
+    name: "Places",
+    schema: placeSchema,
+    defaultValues: DEFAULT_PLACES_VALUES as Place,
+    steps: PLACES_STEPS,
+    queryKeys: ["places"],
+  });
+
+// ============================================================================
+// Extended Provider (with places-specific submit logic)
+// ============================================================================
 
 const PlacesContext = createContext<PlacesContextType | undefined>(undefined);
 
@@ -49,42 +54,26 @@ export function PlacesFormProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const form = useForm<Place>({
-    resolver: zodResolver(placeSchema),
-    mode: "onChange",
-    defaultValues: DEFAULT_PLACES_VALUES as Place,
-  });
-  const [action, setAction] = useState<ActionType>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const { getValues, setValue, reset, trigger } = form;
+  return (
+    <BasePlacesProvider>
+      <PlacesExtendedProvider>{children}</PlacesExtendedProvider>
+    </BasePlacesProvider>
+  );
+}
+
+function PlacesExtendedProvider({ children }: { children: React.ReactNode }) {
+  const baseContext = useBasePlacesForm();
+  const { form, setLoading, resetForm, setAction } = baseContext;
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-  // Function to trigger validation on field change
-  const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      setValue(fieldName as keyof Place, value as never, {
-        shouldValidate: true,
-      });
-    },
-    [setValue],
-  );
+  // Reset handler that also resets to step 1
   const handleReset = useCallback(() => {
-    reset(DEFAULT_PLACES_VALUES as Place);
-    setCurrentStep(1);
+    resetForm();
+    baseContext.setCurrentStep(1);
     setAction(null);
-  }, [reset, setAction]);
+  }, [resetForm, baseContext, setAction]);
+
+  // Submit Place data (places-specific logic with file uploads)
   const submitPlace = useCallback(async () => {
     const {
       environmentalSafetyPolicy,
@@ -94,8 +83,9 @@ export function PlacesFormProvider({
       ownershipVideo,
       coverImage,
       ...formData
-    } = getValues();
-    const isValid = await trigger([
+    } = form.getValues();
+
+    const isValid = await form.trigger([
       "name",
       "description",
       "placeType",
@@ -105,7 +95,6 @@ export function PlacesFormProvider({
       "country",
       "emails",
       "phoneNumbers",
-      // "coverImage",
     ]);
     if (!isValid) {
       toast.error("Please check all form fields and try again.");
@@ -133,53 +122,30 @@ export function PlacesFormProvider({
           phoneNumbers: updateData.phoneNumbers,
           website: updateData.website,
         });
-      } else res = await api.post(SERVER_URL + "/places", formData);
+      } else {
+        res = await api.post(SERVER_URL + "/places", formData);
+      }
+
       const { status, message, data } = res.data as {
         status: string;
         message?: string;
         data: Place;
       };
-      if (status === "success") {
-        try {
-          const formData = new FormData();
 
-          if (coverImage instanceof File) {
-            formData.append("coverImage", coverImage);
-          }
-          if (environmentalSafetyPolicy instanceof File) {
-            formData.append(
-              "environmentalSafetyPolicy",
-              environmentalSafetyPolicy,
-            );
-          }
-          if (privacyPolicy instanceof File) {
-            formData.append("privacyPolicy", privacyPolicy);
-          }
-          if (disclaimers instanceof File) {
-            formData.append("disclaimers", disclaimers);
-          }
-          if (ownershipDocument instanceof File) {
-            formData.append("ownershipDocument", ownershipDocument);
-          }
-          if (ownershipVideo instanceof File) {
-            formData.append("ownershipVideo", ownershipVideo);
-          }
-          if ([...formData.entries()].length > 0) {
-            console.log("yup");
-            await api.post(SERVER_URL + `/places/${data.id}/media`, formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            });
-          }
-        } catch (error) {
-          console.log("Error uploading files:", error);
-          toast.error(
-            `Place ${
-              isUpdating ? "updated" : "created"
-            } but failed to upload cover image and files. Please try again.`,
-          );
-        }
+      if (status === "success") {
+        await uploadNamedFiles({
+          files: {
+            coverImage,
+            environmentalSafetyPolicy,
+            privacyPolicy,
+            disclaimers,
+            ownershipDocument,
+            ownershipVideo,
+          },
+          endpoint: `${SERVER_URL}/places/${data.id}/media`,
+          entityName: "Place",
+          isUpdating,
+        });
       }
       toast.success(
         message || `Place ${isUpdating ? "updated" : "created"} successfully!`,
@@ -202,62 +168,52 @@ export function PlacesFormProvider({
     } finally {
       setLoading(false);
     }
-  }, [getValues, queryClient, trigger, handleReset]);
+  }, [form, setLoading, queryClient, handleReset]);
 
+  // Override handleNext to use submitPlace on last step
   const handleNext = useCallback(async () => {
+    const { currentStep, steps, setCurrentStep } = baseContext;
+
     // Flush any pending array inputs before navigation
     flushPendingArrayInputs();
 
     try {
-      if (currentStep < 4) {
+      if (currentStep < steps.length) {
         setCurrentStep(currentStep + 1);
       } else {
         // Last step - submit the form
         await submitPlace();
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error in places handleNext:", error);
     }
-  }, [currentStep, submitPlace]);
+  }, [baseContext, submitPlace]);
 
-  // Handle navigation to previous step
-  const handlePrevious = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  }, [currentStep]);
+  const extendedContext = useMemo<PlacesContextType>(
+    () => ({
+      ...baseContext,
+      handleNext,
+      submitPlace,
+      handleReset,
+    }),
+    [baseContext, handleNext, submitPlace, handleReset],
+  );
+
   return (
-    <PlacesContext.Provider
-      value={{
-        form,
-        loading,
-        handleFieldChange,
-        submitPlace,
-        searchQuery,
-        setSearchQuery,
-        debouncedSearch,
-        statusFilter,
-        setStatusFilter,
-        sortBy,
-        setSortBy,
-        action,
-        setAction,
-        handleReset,
-        currentStep,
-        setCurrentStep,
-        handleNext,
-        handlePrevious,
-      }}
-    >
-      <FormProvider {...form}>{children}</FormProvider>
+    <PlacesContext.Provider value={extendedContext}>
+      {children}
     </PlacesContext.Provider>
   );
 }
 
-export function usePlacesForm() {
+// ============================================================================
+// Hook Export (maintains backward compatibility)
+// ============================================================================
+
+export function usePlacesForm(): PlacesContextType {
   const context = useContext(PlacesContext);
   if (context === undefined) {
-    throw new Error("usePlacesForm must be used within an PlacesFormProvider");
+    throw new Error("usePlacesForm must be used within a PlacesFormProvider");
   }
   return context;
 }

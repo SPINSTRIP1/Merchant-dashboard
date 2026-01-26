@@ -16,7 +16,7 @@ import PerformingDeals from "./perfoming-deals";
 import Link from "next/link";
 import DealsModal from "./modals/deals-modal";
 import SuccessModal from "./modals/success-modal";
-import DeleteModal from "./modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
 import DeactivateModal from "./modals/deactivate-modal";
 import InsightsModal from "./modals/insights-modal";
 import { useDealsForm } from "../_context";

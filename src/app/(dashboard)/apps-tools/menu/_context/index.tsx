@@ -1,127 +1,75 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Menu, menuSchema } from "../_schemas";
+import React, { useCallback, useMemo, useContext, createContext } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { Menu, menuSchema } from "../_schemas";
 import {
   DEFAULT_MENU_VALUES,
   MENU_QUERY_KEY,
   addMenuSteps,
 } from "../_constants";
+import {
+  createFormContext,
+  BaseFormContextType,
+} from "@/lib/create-form-context";
 import api from "@/lib/api/axios-client";
 import { SERVER_URL } from "@/constants";
-import { useQueryClient } from "@tanstack/react-query";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { AxiosError } from "axios";
-import { ActionType } from "@/app/(dashboard)/_types";
+import { flushPendingArrayInputs } from "@/components/ui/forms/form-array-input";
+import { uploadFiles } from "@/lib/upload-files";
 
-interface MenuContextType {
-  form: ReturnType<typeof useForm<Menu>>;
-  handleNext: () => Promise<void>;
-  handlePrevious: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  steps: string[];
-  loading: boolean;
-  handleFieldChange: (fieldName: string, value: unknown) => void;
-  resetForm: () => void;
+// ============================================================================
+// Extended Context Type (for menu-specific properties)
+// ============================================================================
+
+interface MenuContextType extends BaseFormContextType<Menu> {
   submitMenu: () => Promise<void>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  debouncedSearch: string;
-  statusFilter: string;
-  setStatusFilter: React.Dispatch<React.SetStateAction<string>>;
-  sortBy: string;
-  setSortBy: React.Dispatch<React.SetStateAction<string>>;
-  action: ActionType;
-  setAction: React.Dispatch<React.SetStateAction<ActionType>>;
   saveFormToLocalStorage: () => void;
   handleCreateDeals: () => void;
 }
 
+// ============================================================================
+// Create Base Context Using Factory
+// ============================================================================
+
+const { Provider: BaseMenuProvider, useFormContext: useBaseMenuForm } =
+  createFormContext<Menu>({
+    name: "Menu",
+    schema: menuSchema,
+    defaultValues: DEFAULT_MENU_VALUES as Menu,
+    steps: addMenuSteps,
+    queryKeys: [MENU_QUERY_KEY],
+    localStorageKey: "menuForm",
+  });
+
+// ============================================================================
+// Extended Provider (with menu-specific submit logic)
+// ============================================================================
+
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
 export function MenuFormProvider({ children }: { children: React.ReactNode }) {
-  const form = useForm<Menu>({
-    resolver: zodResolver(menuSchema),
-    mode: "onChange",
-    defaultValues: DEFAULT_MENU_VALUES as Menu,
-  });
-  const [action, setAction] = useState<ActionType>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { getValues, setValue, reset } = form;
+  return (
+    <BaseMenuProvider>
+      <MenuExtendedProvider>{children}</MenuExtendedProvider>
+    </BaseMenuProvider>
+  );
+}
+
+function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
+  const baseContext = useBaseMenuForm();
+  const { form, setLoading, resetForm, setAction, currentStep } = baseContext;
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Restore form data from localStorage on mount
-  useEffect(() => {
-    const savedFormData = localStorage.getItem("menuFormDraft");
-    const savedStep = localStorage.getItem("menuFormStep");
-
-    if (savedFormData && savedStep) {
-      try {
-        const parsedData = JSON.parse(savedFormData);
-        // Use setTimeout to ensure state updates happen after initial render
-        setTimeout(() => {
-          reset(parsedData);
-          setCurrentStep(parseInt(savedStep));
-          setAction("add");
-          setTimeout(() => {
-            toast.success("Restored your previous menu draft");
-          }, 100);
-        }, 300);
-      } catch (error) {
-        console.log("Error restoring form data:", error);
-        localStorage.removeItem("menuFormDraft");
-        localStorage.removeItem("menuFormStep");
-      }
-    }
-  }, [reset]);
-  // Function to trigger validation on field change
-  const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      setValue(fieldName as keyof Menu, value as never, {
-        shouldValidate: true,
-      });
-    },
-    [setValue]
-  );
-
-  // Reset form to default values
-  const resetForm = useCallback(() => {
-    reset(DEFAULT_MENU_VALUES as Menu);
-    setCurrentStep(1);
-    // Clear localStorage
-    localStorage.removeItem("menuFormDraft");
-    localStorage.removeItem("menuFormStep");
-  }, [reset]);
-
-  // Submit Menu data
+  // Submit Menu data (menu-specific logic)
   const submitMenu = useCallback(async () => {
     setLoading(true);
     try {
-      const values = getValues();
+      const values = form.getValues();
       const { files, ...payload } = values;
       delete payload.images;
       const isUpdating = Boolean(payload.id);
@@ -130,39 +78,29 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
         const { id, ...updateData } = payload;
         res = await api.patch(
           SERVER_URL + "/menu/menu-items/" + id,
-          updateData
+          updateData,
         );
-      } else res = await api.post(SERVER_URL + "/menu/menu-items", payload);
+      } else {
+        res = await api.post(SERVER_URL + "/menu/menu-items", payload);
+      }
+
       const { data, status, message } = res.data as {
         data: Menu;
         status: string;
         message?: string;
       };
+
       if (status === "success") {
         if (files?.length) {
-          try {
-            const formData = new FormData();
-            files.forEach((file) => formData.append("files", file));
-            await api.post(
-              SERVER_URL + `/menu/menu-items/${data.id}/images`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                },
-              }
-            );
-          } catch (error) {
-            console.log("Error uploading files:", error);
-            toast.error(
-              `Menu ${
-                isUpdating ? "updated" : "created"
-              } but failed to upload images. Please try again.`
-            );
-          }
+          await uploadFiles({
+            files,
+            endpoint: `${SERVER_URL}/menu/menu-items/${data.id}/images`,
+            entityName: "Menu",
+            isUpdating,
+          });
         }
         toast.success(
-          message || `Menu ${isUpdating ? "updated" : "created"} successfully!`
+          message || `Menu ${isUpdating ? "updated" : "created"} successfully!`,
         );
         resetForm();
         setAction(null);
@@ -179,78 +117,73 @@ export function MenuFormProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [getValues, resetForm, queryClient]);
+  }, [form, setLoading, resetForm, setAction, queryClient]);
 
-  // Handle navigation to next step
+  // Override handleNext to use submitMenu on last step and flush array inputs
   const handleNext = useCallback(async () => {
+    const { currentStep, steps, setCurrentStep } = baseContext;
+
+    // Flush any pending array inputs before navigation
+    flushPendingArrayInputs();
+
     try {
-      if (currentStep < addMenuSteps.length) {
+      if (currentStep < steps.length) {
         setCurrentStep(currentStep + 1);
       } else {
         // Last step - submit the form
         await submitMenu();
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error in menu handleNext:", error);
     }
-  }, [currentStep, submitMenu]);
-
-  // Handle navigation to previous step
-  const handlePrevious = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  }, [currentStep]);
+  }, [baseContext, submitMenu]);
 
   // Save form data to localStorage
   const saveFormToLocalStorage = useCallback(() => {
-    const formData = getValues();
+    const formData = form.getValues();
     localStorage.setItem("menuFormDraft", JSON.stringify(formData));
     localStorage.setItem("menuFormStep", currentStep.toString());
-  }, [getValues, currentStep]);
+  }, [form, currentStep]);
 
   // Handle Create Deals button - save form and navigate
   const handleCreateDeals = useCallback(() => {
     saveFormToLocalStorage();
     toast.success("Menu draft saved! You can continue after creating a deal.");
     setAction(null);
-  }, [saveFormToLocalStorage]);
+  }, [saveFormToLocalStorage, setAction]);
+
+  const extendedContext = useMemo<MenuContextType>(
+    () => ({
+      ...baseContext,
+      handleNext,
+      submitMenu,
+      saveFormToLocalStorage,
+      handleCreateDeals,
+    }),
+    [
+      baseContext,
+      handleNext,
+      submitMenu,
+      saveFormToLocalStorage,
+      handleCreateDeals,
+    ],
+  );
 
   return (
-    <MenuContext.Provider
-      value={{
-        form,
-        handleNext,
-        handlePrevious,
-        currentStep,
-        setCurrentStep,
-        steps: addMenuSteps,
-        loading,
-        handleFieldChange,
-        resetForm,
-        submitMenu,
-        searchQuery,
-        setSearchQuery,
-        debouncedSearch,
-        statusFilter,
-        setStatusFilter,
-        sortBy,
-        setSortBy,
-        action,
-        setAction,
-        saveFormToLocalStorage,
-        handleCreateDeals,
-      }}
-    >
-      <FormProvider {...form}>{children}</FormProvider>
+    <MenuContext.Provider value={extendedContext}>
+      {children}
     </MenuContext.Provider>
   );
 }
 
-export function useMenuForm() {
+// ============================================================================
+// Hook Export (maintains backward compatibility)
+// ============================================================================
+
+export function useMenuForm(): MenuContextType {
   const context = useContext(MenuContext);
   if (context === undefined) {
-    throw new Error("useMenuForm must be used within an MenuFormProvider");
+    throw new Error("useMenuForm must be used within a MenuFormProvider");
   }
   return context;
 }

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Loader2Icon, MapPinIcon } from "lucide-react";
 import { SERVER_URL } from "@/constants";
 import { useQuery } from "@tanstack/react-query";
-import { useDebounce } from "../../places/_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { SinglePlace } from "../../places/_components/claim-places-steps/find-place";
 
 interface PlaceAutocompleteProps<T extends FieldValues> {
@@ -22,13 +22,13 @@ interface PlaceAutocompleteProps<T extends FieldValues> {
 
 // Fetch function for place suggestions
 const fetchPlaceSuggestions = async (
-  searchQuery: string
+  searchQuery: string,
 ): Promise<SinglePlace[]> => {
   const response = await api.get<{ data: { data: SinglePlace[] } }>(
     SERVER_URL + `/places/public`,
     {
       params: { search: searchQuery },
-    }
+    },
   );
   console.log(response.data.data.data);
   return response.data.data.data || [];
@@ -116,7 +116,7 @@ export function PlaceAutocomplete<T extends FieldValues>({
       case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
+          prev < suggestions.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -177,7 +177,7 @@ export function PlaceAutocomplete<T extends FieldValues>({
           placeholder={placeholder}
           className={cn(
             "pr-10 !rounded-2xl border border-neutral-accent",
-            error && "border-red-500 focus-visible:ring-red-500"
+            error && "border-red-500 focus-visible:ring-red-500",
           )}
           autoComplete="off"
         />
@@ -205,7 +205,7 @@ export function PlaceAutocomplete<T extends FieldValues>({
               className={cn(
                 "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors",
                 index === selectedIndex ? "bg-gray-100" : "hover:bg-gray-50",
-                index !== suggestions.length - 1 && "border-b border-gray-100"
+                index !== suggestions.length - 1 && "border-b border-gray-100",
               )}
             >
               <MapPinIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />

@@ -15,7 +15,7 @@ import { GoogleSheetIcon } from "@hugeicons/core-free-icons";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
 import PaginationButton from "@/components/pagination-button";
-import { useDebounce } from "../../_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type Availability = "Available" | "Blocked" | "Occupied" | "Maintenance";
 
@@ -124,7 +124,7 @@ export default function VisitorList() {
                   >
                     {header}
                   </TableHead>
-                )
+                ),
               )}
             </TableRow>
           </TableHeader>

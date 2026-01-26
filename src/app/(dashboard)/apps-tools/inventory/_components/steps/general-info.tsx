@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import React from "react";
-import { useCatalogs } from "../../_hooks/use-catalogs";
+import { useCatalogs } from "@/hooks/use-catalogs";
 import { useInventoryForm } from "../../_context";
 import SelectDropdown from "@/components/select-dropdown";
 import { Info, Plus, X } from "lucide-react";
@@ -42,7 +42,7 @@ export default function GeneralInfo() {
   const removeTag = (tagToRemove: string) => {
     setValue(
       "tags",
-      tags.filter((tag) => tag !== tagToRemove)
+      tags.filter((tag) => tag !== tagToRemove),
     );
   };
 

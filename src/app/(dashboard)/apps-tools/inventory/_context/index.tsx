@@ -1,47 +1,50 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { InventoryProduct, inventoryProductSchema } from "../_schemas";
+import React, { useCallback, useMemo, useContext, createContext } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { InventoryProduct, inventoryProductSchema } from "../_schemas";
 import { DEFAULT_INVENTORY_VALUES, addInventorySteps } from "../_constants";
+import {
+  createFormContext,
+  BaseFormContextType,
+} from "@/lib/create-form-context";
 import api from "@/lib/api/axios-client";
 import { SERVER_URL } from "@/constants";
-import { useQueryClient } from "@tanstack/react-query";
-import { ActionType } from "@/app/(dashboard)/_types";
+import { flushPendingArrayInputs } from "@/components/ui/forms/form-array-input";
+import { uploadFiles } from "@/lib/upload-files";
 
-interface InventoryContextType {
-  form: ReturnType<typeof useForm<InventoryProduct>>;
-  handleNext: () => Promise<void>;
-  handlePrevious: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  steps: string[];
-  loading: boolean;
-  handleFieldChange: (fieldName: string, value: unknown) => void;
-  resetForm: () => void;
+// ============================================================================
+// Extended Context Type (for inventory-specific properties)
+// ============================================================================
+
+interface InventoryContextType extends BaseFormContextType<InventoryProduct> {
   submitProduct: () => Promise<void>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  debouncedSearch: string;
-  statusFilter: string;
-  setStatusFilter: React.Dispatch<React.SetStateAction<string>>;
-  sortBy: string;
-  setSortBy: React.Dispatch<React.SetStateAction<string>>;
-  action: ActionType;
-  setAction: React.Dispatch<React.SetStateAction<ActionType>>;
 }
 
+// ============================================================================
+// Create Base Context Using Factory
+// ============================================================================
+
+const {
+  Provider: BaseInventoryProvider,
+  useFormContext: useBaseInventoryForm,
+} = createFormContext<InventoryProduct>({
+  name: "Inventory",
+  schema: inventoryProductSchema,
+  defaultValues: DEFAULT_INVENTORY_VALUES as InventoryProduct,
+  steps: addInventorySteps,
+  queryKeys: ["inventory-products", "inventory-stats"],
+});
+
+// ============================================================================
+// Extended Provider (with inventory-specific submit logic)
+// ============================================================================
+
 const InventoryContext = createContext<InventoryContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function InventoryFormProvider({
@@ -49,49 +52,27 @@ export function InventoryFormProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const form = useForm<InventoryProduct>({
-    resolver: zodResolver(inventoryProductSchema),
-    mode: "onChange",
-    defaultValues: DEFAULT_INVENTORY_VALUES as InventoryProduct,
-  });
-  const [action, setAction] = useState<ActionType>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { getValues, setValue, reset } = form;
+  return (
+    <BaseInventoryProvider>
+      <InventoryExtendedProvider>{children}</InventoryExtendedProvider>
+    </BaseInventoryProvider>
+  );
+}
+
+function InventoryExtendedProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const baseContext = useBaseInventoryForm();
+  const { form, setLoading, resetForm, setAction } = baseContext;
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-  // Function to trigger validation on field change
-  const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      setValue(fieldName as keyof InventoryProduct, value as never, {
-        shouldValidate: true,
-      });
-    },
-    [setValue]
-  );
-
-  // Reset form to default values
-  const resetForm = useCallback(() => {
-    reset(DEFAULT_INVENTORY_VALUES as InventoryProduct);
-    setCurrentStep(1);
-  }, [reset]);
-
-  // Submit product data
+  // Submit product data (inventory-specific logic)
   const submitProduct = useCallback(async () => {
     setLoading(true);
     try {
-      const { files, ...formData } = getValues();
+      const { files, ...formData } = form.getValues();
       delete formData.media;
       const isUpdating = Boolean(formData.id);
       let res;
@@ -99,40 +80,30 @@ export function InventoryFormProvider({
         const { id, ...updateData } = formData;
         res = await api.patch(
           SERVER_URL + "/inventory/products/" + id,
-          updateData
+          updateData,
         );
-      } else res = await api.post(SERVER_URL + "/inventory/products", formData);
+      } else {
+        res = await api.post(SERVER_URL + "/inventory/products", formData);
+      }
+
       const { data, status, message } = res.data as {
         data: InventoryProduct;
         status: string;
         message?: string;
       };
+
       if (status === "success") {
         if (files?.length) {
-          try {
-            const formData = new FormData();
-            files.forEach((file) => formData.append("files", file));
-            await api.post(
-              SERVER_URL + `/inventory/products/${data.id}/images`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                },
-              }
-            );
-          } catch (error) {
-            console.log("Error uploading files:", error);
-            toast.error(
-              `Product ${
-                isUpdating ? "updated" : "created"
-              } but failed to upload images. Please try again.`
-            );
-          }
+          await uploadFiles({
+            files,
+            endpoint: `${SERVER_URL}/inventory/products/${data.id}/images`,
+            entityName: "Product",
+            isUpdating,
+          });
         }
         toast.success(
           message ||
-            `Product ${isUpdating ? "updated" : "created"} successfully!`
+            `Product ${isUpdating ? "updated" : "created"} successfully!`,
         );
         resetForm();
         setAction(null);
@@ -149,63 +120,52 @@ export function InventoryFormProvider({
     } finally {
       setLoading(false);
     }
-  }, [getValues, resetForm, queryClient]);
+  }, [form, setLoading, resetForm, setAction, queryClient]);
 
-  // Handle navigation to next step
+  // Override handleNext to use submitProduct on last step and flush array inputs
   const handleNext = useCallback(async () => {
+    const { currentStep, steps, setCurrentStep } = baseContext;
+
+    // Flush any pending array inputs before navigation
+    flushPendingArrayInputs();
+
     try {
-      if (currentStep < addInventorySteps.length) {
+      if (currentStep < steps.length) {
         setCurrentStep(currentStep + 1);
       } else {
         // Last step - submit the form
         await submitProduct();
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error in inventory handleNext:", error);
     }
-  }, [currentStep, submitProduct]);
+  }, [baseContext, submitProduct]);
 
-  // Handle navigation to previous step
-  const handlePrevious = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  }, [currentStep]);
+  const extendedContext = useMemo<InventoryContextType>(
+    () => ({
+      ...baseContext,
+      handleNext,
+      submitProduct,
+    }),
+    [baseContext, handleNext, submitProduct],
+  );
 
   return (
-    <InventoryContext.Provider
-      value={{
-        form,
-        handleNext,
-        handlePrevious,
-        currentStep,
-        setCurrentStep,
-        steps: addInventorySteps,
-        loading,
-        handleFieldChange,
-        resetForm,
-        submitProduct,
-        searchQuery,
-        setSearchQuery,
-        debouncedSearch,
-        statusFilter,
-        setStatusFilter,
-        sortBy,
-        setSortBy,
-        action,
-        setAction,
-      }}
-    >
+    <InventoryContext.Provider value={extendedContext}>
       {children}
     </InventoryContext.Provider>
   );
 }
 
-export function useInventoryForm() {
+// ============================================================================
+// Hook Export (maintains backward compatibility)
+// ============================================================================
+
+export function useInventoryForm(): InventoryContextType {
   const context = useContext(InventoryContext);
   if (context === undefined) {
     throw new Error(
-      "useInventoryForm must be used within an InventoryFormProvider"
+      "useInventoryForm must be used within an InventoryFormProvider",
     );
   }
   return context;

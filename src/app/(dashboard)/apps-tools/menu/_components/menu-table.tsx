@@ -30,8 +30,8 @@ import { SERVER_URL } from "@/constants";
 import { Menu } from "../_schemas";
 import { formatAmount } from "@/utils";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import DeleteModal from "../../deals/_components/modals/delete-modal";
-import DuplicateModal from "../../deals/_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
+import DuplicateModal from "@/components/modals/delete-modal";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { useMenuForm } from "../_context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -120,10 +120,10 @@ export default function MenuTable() {
         return {
           ...oldData,
           data: oldData.data.map((item: Menu) =>
-            item.id === menuId ? { ...item, status: newStatus } : item
+            item.id === menuId ? { ...item, status: newStatus } : item,
           ),
         };
-      }
+      },
     );
 
     try {
@@ -202,7 +202,7 @@ export default function MenuTable() {
                 placeholder="All Categories"
                 onSelect={(value) =>
                   setSortBy(
-                    value === "All Categories" ? "" : value.toUpperCase()
+                    value === "All Categories" ? "" : value.toUpperCase(),
                   )
                 }
               />

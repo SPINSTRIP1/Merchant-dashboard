@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import ContainerWrapper from "@/components/container-wrapper";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-s;
 import CheckOutModal from "./_components/modals/checkout";
 import { Event } from "@/app/(dashboard)/apps-tools/event-planner/_schemas";
 import { useState } from "react";

@@ -7,7 +7,6 @@ import {
   Location01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
 import DetailsModal from "./details-modal";
 import AddEventsModal from "./add-events-modal";
 import { useEventsForm } from "../_context";
@@ -18,14 +17,14 @@ import Loader from "@/components/loader";
 import EmptyState from "@/components/empty-state";
 import AddButton from "@/app/(dashboard)/_components/add-button";
 // import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import DeleteModal from "../../deals/_components/modals/delete-modal";
+import DeleteModal from "@/components/modals/delete-modal";
 import { useState } from "react";
 import { formatDateDisplay, formatDateForInput } from "@/utils";
 import { extractTimeFromDateTime } from "../_utils";
 import api from "@/lib/api/axios-client";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useDebounce } from "../../places/_hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { DEFAULT_EVENT_VALUES } from "../_constants";
 import StatusBadge from "@/components/status-badge";
 import ImpressionsStack from "./impressions-stack";
@@ -62,7 +61,7 @@ export default function EventsTable() {
   const queryClient = useQueryClient();
   const handleStatusChange = async (
     id: string,
-    newStatus: "ACTIVE" | "INACTIVE"
+    newStatus: "ACTIVE" | "INACTIVE",
   ) => {
     try {
       await api.patch(`${SERVER_URL}/events/${id}`, {
@@ -162,10 +161,10 @@ export default function EventsTable() {
               className="mt-5 flex flex-col gap-y-2 min-w-[348px] max-w-[348px] w-full"
             >
               <div className="w-full h-[206px]">
-                <Image
+                <img
                   src={event?.images?.[0] || ""}
                   alt={event.name}
-                  width={400}
+                  width={800}
                   height={600}
                   className="w-full h-full object-cover rounded-2xl"
                 />
@@ -294,6 +293,7 @@ export default function EventsTable() {
       />
       <AddEventsModal
         isOpen={action === "add" || action === "edit"}
+        action={action}
         onClose={() => setAction(null)}
       />
       <DeleteModal
