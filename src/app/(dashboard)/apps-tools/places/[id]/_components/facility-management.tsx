@@ -20,6 +20,7 @@ import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import Loader from "@/components/loader";
 import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
+import { getOperatingHoursDisplay } from "../../_utils";
 
 export default function FacilityManagement({
   place,
@@ -28,14 +29,14 @@ export default function FacilityManagement({
 }) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const placeType = PLACE_TYPES.find(
-    (type) => type.value === place?.placeType
+    (type) => type.value === place?.placeType,
   )?.label;
   const { data, isLoading } = useQuery<Facility[]>({
     queryKey: ["place-facility", place?.id],
     queryFn: async () => {
       try {
         const response = await api.get(
-          SERVER_URL + `/places/${place?.id}/facilities`
+          SERVER_URL + `/places/${place?.id}/facilities`,
         );
         return response.data.data.facilities;
       } catch (error) {
@@ -75,7 +76,10 @@ export default function FacilityManagement({
             </div>
             <div className="flex items-center gap-x-2">
               <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-              <p className="text-sm">Open 24 hours daily</p>
+              <p className="text-sm">
+                {" "}
+                {getOperatingHoursDisplay(place.operatingHours)}
+              </p>
             </div>
             <div className="flex items-center gap-x-2">
               <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
@@ -112,12 +116,6 @@ export default function FacilityManagement({
 
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">
-                Opening hours (regular + special days)
-              </h2>
-              <p>24 Hours</p>
-            </div>
-            <div className="flex items-center justify-between my-2 w-full">
-              <h2 className="font-bold mb-1 text-primary-text">
                 Contact Phone
               </h2>
               <p>{place?.phoneNumbers?.[0] || "N/A"}</p>
@@ -131,6 +129,12 @@ export default function FacilityManagement({
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">Location</h2>
               <p>{place?.address || "N/A"}</p>
+            </div>
+            <div className="flex items-center justify-between my-2 w-full">
+              <h2 className="font-bold mb-1 text-primary-text">
+                Opening hours (regular + special days)
+              </h2>
+              <p>{getOperatingHoursDisplay(place.operatingHours)}</p>
             </div>
           </div>
         </ContainerWrapper>

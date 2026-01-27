@@ -3,7 +3,6 @@
 import { useState } from "react";
 import SideModal from "@/app/(dashboard)/_components/side-modal";
 import Image from "next/image";
-import { Event } from "@/app/(dashboard)/apps-tools/event-planner/_schemas";
 import {
   Globe02Icon,
   Location01Icon,
@@ -18,14 +17,16 @@ import z from "zod";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { PublicPlace } from "../../page";
+import { getOperatingHoursDisplay } from "@/app/(dashboard)/apps-tools/places/_utils";
 
 // Props type
 interface AddEventsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  place: Event;
+  place: PublicPlace;
 }
 
 const registerSchema = z
@@ -59,6 +60,12 @@ export default function CheckOutModal({
     to: undefined,
   });
 
+  // Calculate number of nights
+  const numberOfNights =
+    dateRange?.from && dateRange?.to
+      ? differenceInDays(dateRange.to, dateRange.from)
+      : 0;
+
   const [currentStep, setCurrentStep] = useState<number>(1);
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -79,7 +86,7 @@ export default function CheckOutModal({
         <div className="space-y-7 pt-14 pb-5">
           <div className="w-full h-[180px]">
             <Image
-              src={place?.images?.[0] || ""}
+              src={place?.coverImage || ""}
               alt={place.name}
               width={1200}
               height={560}
@@ -105,38 +112,25 @@ export default function CheckOutModal({
                 </div>
                 <div className="flex items-center gap-x-2">
                   <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-                  <p className="text-sm">Open 24 hours daily</p>
+                  {getOperatingHoursDisplay(place.operatingHours)}
                 </div>
                 <div className="flex items-center gap-x-2">
                   <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
-                  <p className="text-sm">www.reallygreatsite.com</p>
+                  <p className="text-sm">{place.website || "N/A"}</p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center my-2 gap-x-4">
-              <div className="flex items-center gap-x-2">
-                <Image
-                  src={place?.images?.[0] || ""}
-                  alt={place.name}
-                  width={40}
-                  height={40}
-                  className="w-6 h-6 object-cover rounded-full"
-                />
-                <p className="text-lg text-primary-text">
-                  {place.tagline || ""}
-                </p>
-              </div>
-              <button className="flex items-center bg-primary gap-x-0.5 rounded-xl px-2.5 py-1.5">
-                <Image
-                  src={"/logo-mark.svg"}
-                  alt={place.name}
-                  width={40}
-                  height={40}
-                  className="w-5 h-5 object-contain"
-                />
-                <p className="text-sm text-white">Follow</p>
-              </button>
-            </div>
+
+            <button className="flex items-center my-2 bg-primary gap-x-0.5 rounded-xl px-2.5 py-1.5">
+              <Image
+                src={"/logo-mark.svg"}
+                alt={place.name}
+                width={40}
+                height={40}
+                className="w-5 h-5 object-contain"
+              />
+              <p className="text-sm text-white">Follow</p>
+            </button>
           </div>
 
           {/* Buy Ticket Section */}
@@ -183,7 +177,10 @@ export default function CheckOutModal({
                     </h3>
 
                     <div className="flex mb-1.5 font-normal justify-between">
-                      <p>5 Nights Standard Room Adults</p>
+                      <p>
+                        {numberOfNights} Night{numberOfNights !== 1 ? "s" : ""}{" "}
+                        Standard Room Adults
+                      </p>
                       <p>₦200,000</p>
                     </div>
 
@@ -214,7 +211,10 @@ export default function CheckOutModal({
               </h3>
 
               <div className="flex mb-1.5 font-normal justify-between">
-                <p>5 Nights Standard Room Adults</p>
+                <p>
+                  {numberOfNights} Night{numberOfNights !== 1 ? "s" : ""}{" "}
+                  Standard Room Adults
+                </p>
                 <p>₦200,000</p>
               </div>
 
@@ -280,8 +280,7 @@ export default function CheckOutModal({
                   }
                 />
                 <span className="text-[#000000E5] text-sm">
-                  Keep me updated on more places and news from this place
-                  organizer.
+                  Keep me updated on more places and news from this organizer.
                 </span>
               </div>
               <div className="flex gap-x-2 my-2 items-center">
@@ -295,14 +294,14 @@ export default function CheckOutModal({
                   }
                 />
                 <span className="text-[#000000E5] text-sm">
-                  Send me emails about the best events happening nearby or
+                  Send me updates about the best events happening nearby or
                   online.
                 </span>
               </div>
               <Button className="w-[190px] lg:w-[368px] mt-4" size={"lg"}>
                 Register
               </Button>
-              <div className="flex mt-6 items-center gap-x-1.5 border-t pt-3">
+              <div className="flex mt-6 items-center justify-center gap-x-1.5 border-t pt-4">
                 <p className="text-sm">Powered by</p>
                 <Image
                   src={"/logo-black.svg"}

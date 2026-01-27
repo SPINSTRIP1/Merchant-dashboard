@@ -74,6 +74,7 @@ export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const id = useSearchParams().get("id");
   const [event, setEvent] = useState<PublicEvent | null>(null);
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function EventsPage() {
 
   if (loading) return <Loader />;
   if (!event) return <p>No event found.</p>;
-  console.log(event);
+
   return (
     <section>
       <MaxWidthWrapper className="space-y-4">
@@ -199,9 +200,7 @@ export default function EventsPage() {
               <HugeiconsIcon icon={Location01Icon} size={24} color="#6F6D6D" />
               <div>
                 <p className="text-sm font-bold text-primary-text">Address</p>
-                <p className="text-sm">
-                  {event.location}, {event.city}, {event.state}, {event.country}
-                </p>
+                <p className="text-sm">{event.location}</p>
               </div>
             </div>
             <ChevronRight />
@@ -228,7 +227,7 @@ export default function EventsPage() {
           </div>
           <div className="w-full border rounded-lg overflow-hidden border-neutral-accent flex-1 h-[183px]">
             <iframe
-              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(`${event.location}, ${event.city}, ${event.state}, ${event.country}`)}`}
+              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(event.location)}`}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -238,12 +237,12 @@ export default function EventsPage() {
             />
           </div>
         </ContainerWrapper>
-        <ContainerWrapper>
+        {/* <ContainerWrapper>
           <div className="flex items-center mb-4 justify-between">
             <div className="space-y-3">
               <div>
                 <p className="text-lg font-bold text-primary-text">
-                  Afrochella Global
+                 {event.name}
                 </p>
                 <div className="flex items-center gap-x-1">
                   <div className="flex items-center gap-x-0.5">
@@ -257,7 +256,7 @@ export default function EventsPage() {
                       3
                     </span>
                   </div>
-                  <p className="text-sm">on SpinStrip (2134 reviews)</p>
+                  <p className="text-sm">on SpinStrip ({reviews.length} reviews)</p>
                 </div>
                 <p className="text-sm">Media/Entertainment Company</p>
               </div>
@@ -282,7 +281,7 @@ export default function EventsPage() {
               />
             </div>
           </div>
-        </ContainerWrapper>
+        </ContainerWrapper> */}
         <ContainerWrapper>
           <div className="flex items-center justify-between">
             <h1 className="font-bold text-primary-text">
@@ -382,9 +381,9 @@ export default function EventsPage() {
           </div>
           <div className="flex overflow-x-auto gap-x-3">
             {posts && posts.length > 0 ? (
-              posts.map((item, i) => (
+              posts.map((_, i) => (
                 <div
-                  key={item}
+                  key={i}
                   className="flex min-w-[168px] max-w-[168px] flex-col gap-y-2"
                 >
                   <Image

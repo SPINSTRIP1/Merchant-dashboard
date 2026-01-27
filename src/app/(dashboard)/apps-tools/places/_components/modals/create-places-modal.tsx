@@ -7,6 +7,7 @@ import SafetyPolicies from "../new-places-steps/safety-policies";
 import LocationVerification from "../new-places-steps/location-verification";
 import { Button } from "@/components/ui/button";
 import { ActionType } from "@/app/(dashboard)/_types";
+import { FormProvider } from "react-hook-form";
 
 export default function CreatePlacesModal({
   isOpen,
@@ -17,13 +18,8 @@ export default function CreatePlacesModal({
   onClose: () => void;
   action?: ActionType;
 }) {
-  const {
-    currentStep,
-
-    handleNext,
-    handlePrevious,
-    loading,
-  } = usePlacesForm();
+  const { currentStep, form, handleNext, handlePrevious, loading } =
+    usePlacesForm();
   const renderContent = () => {
     switch (currentStep) {
       case 1:
@@ -50,38 +46,40 @@ export default function CreatePlacesModal({
 
   return (
     <SideModal isOpen={isOpen} onClose={onClose}>
-      <div className="space-y-7 pb-10 md:pb-0">
-        <StepIndicator
-          className="mb-16 mt-10 md:mt-0 pr-5 justify-end items-end"
-          currentStep={currentStep}
-          steps={[
-            "General Info",
-            "Operating Hours",
-            "Safety & Policies",
-            "Location Verification",
-          ]}
-        />
-        {renderContent()}
-        <div className="flex gap-x-2 w-full items-center justify-center">
-          <Button
-            onClick={handlePrevious}
-            className="w-full"
-            size={"lg"}
-            variant={"secondary"}
-            disabled={currentStep === 1}
-          >
-            Previous
-          </Button>
-          <Button
-            onClick={handleNext}
-            disabled={loading}
-            className="w-full"
-            size={"lg"}
-          >
-            {getButtonLabel()}
-          </Button>
+      <FormProvider {...form}>
+        <div className="space-y-7 pb-10 md:pb-0">
+          <StepIndicator
+            className="mb-16 mt-10 md:mt-0 pr-5 justify-end items-end"
+            currentStep={currentStep}
+            steps={[
+              "General Info",
+              "Operating Hours",
+              "Safety & Policies",
+              "Location Verification",
+            ]}
+          />
+          {renderContent()}
+          <div className="flex gap-x-2 w-full items-center justify-center">
+            <Button
+              onClick={handlePrevious}
+              className="w-full"
+              size={"lg"}
+              variant={"secondary"}
+              disabled={currentStep === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              onClick={handleNext}
+              disabled={loading}
+              className="w-full"
+              size={"lg"}
+            >
+              {getButtonLabel()}
+            </Button>
+          </div>
         </div>
-      </div>
+      </FormProvider>
     </SideModal>
   );
 }

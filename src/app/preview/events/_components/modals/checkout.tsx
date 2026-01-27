@@ -424,7 +424,7 @@ export default function CheckOutModal({
                   }
                 />
                 <span className="text-[#000000E5] text-sm">
-                  Send me emails about the best events happening nearby or
+                  Send me updates about the best events happening nearby or
                   online.
                 </span>
               </div>
@@ -436,7 +436,7 @@ export default function CheckOutModal({
               >
                 {loading ? "Processing..." : "Register"}
               </Button>
-              <div className="flex mt-6 items-center gap-x-1.5 border-t pt-3">
+              <div className="flex mt-6 items-center justify-center gap-x-1.5 border-t pt-4">
                 <p className="text-sm">Powered by</p>
                 <Image
                   src={"/logo-black.svg"}

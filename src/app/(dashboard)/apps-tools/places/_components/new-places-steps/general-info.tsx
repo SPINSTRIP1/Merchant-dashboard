@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useCallback } from "react";
 import { usePlacesForm } from "../../_context";
 import { FormArrayInput } from "@/components/ui/forms/form-array-input";
 import { FormInput } from "@/components/ui/forms/form-input";
@@ -14,6 +16,22 @@ export default function GeneralInfo() {
     form: { control, setValue, watch },
   } = usePlacesForm();
   const placeType = watch("placeType");
+
+  const handlePlaceTypeSelect = useCallback(
+    (value: string) => {
+      setValue(
+        "placeType",
+        //@ts-expect-error: TS not able to infer correctly here
+        value,
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        },
+      );
+    },
+    [setValue],
+  );
+
   return (
     <div className="space-y-7 py-5">
       <FormInput
@@ -33,14 +51,12 @@ export default function GeneralInfo() {
         <Label>Type of Place</Label>
         <div className="flex gap-2 flex-wrap">
           {PLACE_TYPES.map((type) => (
-            <div
+            <button
               key={type.value}
-              onClick={() =>
-                //@ts-expect-error: ignore
-                setValue("placeType", type.value, { shouldValidate: true })
-              }
+              type="button"
+              onClick={() => handlePlaceTypeSelect(type.value)}
               className={cn(
-                "flex items-center cursor-pointer gap-x-1  rounded-full px-1 py-0.5 border ",
+                "flex items-center gap-x-1 rounded-full hover:bg-primary-accent hover:border-primary hover:text-primary px-1 py-0.5 border cursor-pointer",
                 placeType === type.value
                   ? "bg-primary-accent border-primary text-primary"
                   : "bg-foreground border-neutral-accent text-neutral-accent",
@@ -52,7 +68,7 @@ export default function GeneralInfo() {
                 color={placeType === type.value ? "#6932E2" : "#C8C8C8"}
               />
               <span className="text-sm text-inherit">{type.label}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

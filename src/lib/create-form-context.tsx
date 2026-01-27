@@ -6,7 +6,6 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useMemo,
 } from "react";
 import {
   FormProvider,
@@ -262,43 +261,27 @@ export function createFormContext<T extends FieldValues>(
       }
     }, [currentStep]);
 
-    const contextValue = useMemo<BaseFormContextType<T>>(
-      () => ({
-        form: form as UseFormReturn<T>,
-        loading,
-        setLoading,
-        searchQuery,
-        setSearchQuery,
-        debouncedSearch,
-        statusFilter,
-        setStatusFilter,
-        sortBy,
-        setSortBy,
-        action,
-        setAction,
-        currentStep,
-        setCurrentStep,
-        steps,
-        handleNext,
-        handlePrevious,
-        handleFieldChange,
-        resetForm,
-      }),
-      [
-        form,
-        loading,
-        searchQuery,
-        debouncedSearch,
-        statusFilter,
-        sortBy,
-        action,
-        currentStep,
-        handleNext,
-        handlePrevious,
-        handleFieldChange,
-        resetForm,
-      ],
-    );
+    const contextValue: BaseFormContextType<T> = {
+      form: form as UseFormReturn<T>,
+      loading,
+      setLoading,
+      searchQuery,
+      setSearchQuery,
+      debouncedSearch,
+      statusFilter,
+      setStatusFilter,
+      sortBy,
+      setSortBy,
+      action,
+      setAction,
+      currentStep,
+      setCurrentStep,
+      steps,
+      handleNext,
+      handlePrevious,
+      handleFieldChange,
+      resetForm,
+    };
 
     return (
       <FormContext.Provider value={contextValue}>

@@ -17,6 +17,7 @@ ideas into fully booked experiences. `,
     isActive: false,
     route: "/apps-tools/event-planner",
     icon: "/icons/Eventplanner.png",
+    integrated: true,
   },
   {
     name: "Menu",
@@ -61,6 +62,7 @@ nightlife explorers, coffee enthusiasts, or creative circles. Build lasting loya
   },
   {
     name: "Places",
+    integrated: true,
     description: `Get discovered by customers searching for restaurants, lounges, cafes, hotels, shops, or service-based 
 businesses. Appear in curated lists, location searches, and personalised recommendations to reach the right 
 audience. `,
@@ -109,15 +111,15 @@ customers. `,
     route: "/apps-tools/customers",
     icon: "/icons/Customers.png",
   },
-  {
-    name: "Payment Method",
-    description: `Offer customers flexible payment options, including cards, bank transfers, and digital wallets. All 
-methods integrate seamlessly with SpinStrip, ensuring secure, fast, and reliable transactions. `,
-    isActive: true,
-    default: true,
-    route: "/apps-tools/payment-method",
-    icon: "/icons/Paymentmethod.png",
-  },
+  //   {
+  //     name: "Payment Method",
+  //     description: `Offer customers flexible payment options, including cards, bank transfers, and digital wallets. All
+  // methods integrate seamlessly with SpinStrip, ensuring secure, fast, and reliable transactions. `,
+  //     isActive: true,
+  //     default: true,
+  //     route: "/apps-tools/payment-method",
+  //     icon: "/icons/Paymentmethod.png",
+  //   },
   {
     name: "Memberships",
     description: `Offer premium perks through SpinStrip’s membership system. Provide special access, priority 

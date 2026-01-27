@@ -19,6 +19,7 @@ import { PLACE_TYPES } from "../_constants";
 import Link from "next/link";
 import { SinglePlace } from "./claim-places-steps/find-place";
 import ImpressionsStack from "../../event-planner/_components/impressions-stack";
+import { getOperatingHoursDisplay } from "../_utils";
 
 interface PlaceProps {
   place: SinglePlace;
@@ -29,8 +30,9 @@ interface PlaceProps {
 const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
   const status = place.status || "UNVERIFIED";
   const placeType = PLACE_TYPES.find(
-    (type) => type.value === place.placeType
+    (type) => type.value === place.placeType,
   )?.label;
+  console.log(place);
   return (
     <div className="border-b last:border-0 last:pb-2 space-y-2 pt-3 pb-5 border-neutral-accent">
       <div className="flex items-center justify-between">
@@ -65,7 +67,9 @@ const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
         </div>
         <div className="flex items-center gap-x-2">
           <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-          <p className="text-sm">Open 24 hours daily</p>
+          <p className="text-sm">
+            {getOperatingHoursDisplay(place.operatingHours)}
+          </p>
         </div>
         <div className="flex items-center gap-x-2">
           <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
@@ -114,8 +118,8 @@ const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
               status === "PUBLISHED"
                 ? "ACTIVE"
                 : status === "UNPUBLISHED"
-                ? "PENDING"
-                : "REJECTED"
+                  ? "PENDING"
+                  : "REJECTED"
             }
             title={status === "UNPUBLISHED" ? "Review Pending" : status}
           />
@@ -127,8 +131,8 @@ const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
               status === "DRAFT"
                 ? "w-1/4"
                 : status === "UNPUBLISHED"
-                ? "w-2/4"
-                : "w-full"
+                  ? "w-2/4"
+                  : "w-full",
             )}
           />
         </div>
@@ -162,6 +166,7 @@ export default function Places({
   if (places.length === 0) {
     return null;
   }
+
   return (
     <ContainerWrapper className="space-y-3 w-full">
       <div className="flex items-center justify-between">

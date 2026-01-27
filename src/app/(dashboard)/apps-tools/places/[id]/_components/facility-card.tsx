@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { formatAmount } from "@/utils";
 import React from "react";
 
@@ -8,6 +9,7 @@ interface FacilityCardProps {
   facilityType: string;
   accessType: string;
   price: number;
+  onClick?: () => void;
 }
 
 export default function FacilityCard({
@@ -17,6 +19,7 @@ export default function FacilityCard({
   facilityType,
   accessType,
   price,
+  onClick,
 }: FacilityCardProps) {
   return (
     <div className="space-y-1.5">
@@ -42,6 +45,13 @@ export default function FacilityCard({
         <h2 className="font-bold mb-1 text-primary-text">Price</h2>
         <p>{formatAmount(price)}</p>
       </div>
+      {onClick && (
+        <div className="w-full flex items-center justify-center">
+          <Button className="w-[187px] py-5" onClick={onClick}>
+            Book
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
