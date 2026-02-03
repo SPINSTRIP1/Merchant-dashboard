@@ -1,11 +1,7 @@
 import ContainerWrapper from "@/components/container-wrapper";
 import React from "react";
 import { Globe02Icon, Time01Icon } from "@hugeicons/core-free-icons";
-import {
-  Delete02Icon,
-  Edit02Icon,
-  Location01Icon,
-} from "@hugeicons/core-free-icons";
+import { Location01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import FacilityCard from "./facility-card";
@@ -21,6 +17,7 @@ import api from "@/lib/api/axios-client";
 import Loader from "@/components/loader";
 import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
 import { getOperatingHoursDisplay } from "../../_utils";
+import OperatingHoursTable from "./operating-hours-table";
 
 export default function FacilityManagement({
   place,
@@ -88,7 +85,7 @@ export default function FacilityManagement({
 
             <ImpressionsStack impressions={place.views ?? 0} />
           </div>
-          <div className="flex justify-between my-4 w-full">
+          {/* <div className="flex justify-between my-4 w-full">
             <button className="rounded-2xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2">
               <HugeiconsIcon icon={Edit02Icon} size={16} color="#FFFFFF" />
               <p className="font-normal text-sm">Edit</p>
@@ -98,7 +95,7 @@ export default function FacilityManagement({
               <HugeiconsIcon icon={Delete02Icon} color="#FF383C" size={16} />
               <p className="font-normal text-sm">Delete</p>
             </button>
-          </div>
+          </div> */}
           <div className="text-sm mt-4 pt-4">
             <div className="flex items-center justify-between my-2 w-full">
               <h2 className="font-bold mb-1 text-primary-text">Amenities</h2>
@@ -130,11 +127,11 @@ export default function FacilityManagement({
               <h2 className="font-bold mb-1 text-primary-text">Location</h2>
               <p>{place?.address || "N/A"}</p>
             </div>
-            <div className="flex items-center justify-between my-2 w-full">
-              <h2 className="font-bold mb-1 text-primary-text">
+            <div className="flex flex-col my-2 w-full">
+              <h2 className="font-bold mb-3 text-primary-text">
                 Opening hours (regular + special days)
               </h2>
-              <p>{getOperatingHoursDisplay(place.operatingHours)}</p>
+              <OperatingHoursTable operatingHours={place.operatingHours} />
             </div>
           </div>
         </ContainerWrapper>
@@ -154,7 +151,7 @@ export default function FacilityManagement({
                   imgUrl={facility.images?.[0] || ""}
                   facilityType={facility.facilityCategory}
                   accessType={facility.accessType || "N/A"}
-                  price={facility.fees?.[0]?.amount || 0}
+                  price={facility.fees?.[0]?.amount ?? 0}
                 />
               ))}
             </div>

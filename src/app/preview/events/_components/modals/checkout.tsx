@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/forms/form-input";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import z, { set } from "zod";
+import z from "zod";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PublicEvent } from "../../page";
@@ -144,7 +144,7 @@ export default function CheckOutModal({
     },
     successMessage: "Registration successful!",
     onSuccess: (data) => {
-      console.log(data);
+      //@ts-expect-error: it'll match
       const paymentUrl = data?.payment?.data?.authorization_url;
       if (paymentUrl) {
         window.open(paymentUrl, "_blank");
@@ -159,7 +159,7 @@ export default function CheckOutModal({
       <FormProvider {...form}>
         <div className="space-y-7 pt-14 pb-5">
           <div className="w-full h-[180px]">
-            <img
+            <Image
               src={event?.images?.[0] || ""}
               alt={event.name}
               width={1200}

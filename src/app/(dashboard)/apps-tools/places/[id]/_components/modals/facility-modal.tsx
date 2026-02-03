@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
 import UploadFile from "@/app/(dashboard)/_components/upload-file";
 import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import React from "react";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api/axios-client";
@@ -36,12 +34,11 @@ export default function FacilityModal({
       facilityCategory: "",
       description: "",
       fees: [
-        // {
-        //   tierName: "",
-        //   amount: 0,
-        //   tierLevel: 1,
-        //   description: "",
-        // },
+        {
+          name: "",
+          amount: 0,
+          description: "",
+        },
       ],
       isGated: false,
       files: [],
@@ -84,13 +81,35 @@ export default function FacilityModal({
   //   currentMedia.splice(index, 1);
   //   setValue("images", currentMedia);
   // };
-  const addFees = ({ name, price }: { name: string; price: number }) => {
-    setValue("fees", [...fees, { name, amount: price, description: "" }]);
+  const updateFee = (
+    index: number,
+    field: "name" | "amount",
+    value: string | number,
+  ) => {
+    const currentFees = [...fees];
+    if (field === "name") {
+      currentFees[index] = { ...currentFees[index], name: value as string };
+    } else {
+      currentFees[index] = { ...currentFees[index], amount: value as number };
+    }
+    setValue("fees", currentFees);
   };
 
-  const [feesInput, setFeesInput] = React.useState({ name: "", price: 0 });
+  const addFee = () => {
+    setValue("fees", [...fees, { name: "", amount: 0, description: "" }]);
+  };
+
+  const removeFee = (index: number) => {
+    const currentFees = fees.filter((_, i) => i !== index);
+    // Ensure at least one empty row remains
+    if (currentFees.length === 0) {
+      setValue("fees", [{ name: "", amount: 0, description: "" }]);
+    } else {
+      setValue("fees", currentFees);
+    }
+  };
+
   const handleClose = () => {
-    setFeesInput({ name: "", price: 0 });
     setImageUploadFields([0]);
     reset();
     onClose();
@@ -102,7 +121,6 @@ export default function FacilityModal({
     try {
       const { files, ...formData } = getValues();
       const res = await api.post(SERVER_URL + `/places/facilities`, formData);
-      console.log(res);
       const { status, data } = res.data as {
         status: string;
         message?: string;
@@ -123,12 +141,12 @@ export default function FacilityModal({
               headers: {
                 "Content-Type": "multipart/form-data",
               },
-            }
+            },
           );
         } catch (error) {
           console.log("Error uploading files:", error);
           toast.error(
-            `Facility created successfully but failed to upload cover image and files. Please try again.`
+            `Facility created successfully but failed to upload cover image and files. Please try again.`,
           );
         }
       }
@@ -256,74 +274,48 @@ export default function FacilityModal({
         </div>
         {accessType === "PRICED" ? (
           <div>
-            <label htmlFor="extras" className="text-secondary-text text-sm">
+            <label htmlFor="fees" className="text-secondary-text text-sm">
               Priced Facility Price
             </label>
             {fees.map((fee, index) => (
               <div key={index} className="flex items-center pt-2 gap-x-2">
-                {/* <button
-                type="button"
-                onClick={() => addFees()}
-                className="flex-shrink-0"
-              >
-                <HugeiconsIcon
-                  icon={PlusSignIcon}
-                  size={24}
-                  color={"#6F6D6D"}
-                />
-              </button> */}
+                {fees.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFee(index)}
+                    className="flex-shrink-0"
+                  >
+                    <X size={20} color="#FF383C" />
+                  </button>
+                )}
                 <Input
                   className="rounded-none border-b bg-transparent border-neutral-accent"
                   placeholder="Add Item"
-                  defaultValue={fee.name}
+                  value={fee.name || ""}
+                  onChange={(e) => updateFee(index, "name", e.target.value)}
                 />
                 <Input
                   type="number"
                   className="!rounded-2xl max-w-[169px] border border-neutral-accent"
                   placeholder="₦0.00"
-                  defaultValue={fee.amount || ""}
+                  value={fee.amount || ""}
+                  onChange={(e) =>
+                    updateFee(index, "amount", parseFloat(e.target.value) || 0)
+                  }
                 />
               </div>
             ))}
-            <div className="flex items-center pt-2 gap-x-2">
-              <button
+            <div className="flex justify-center mt-4">
+              <Button
                 type="button"
-                onClick={() => {
-                  if (feesInput.name.trim() && feesInput.price >= 0)
-                    addFees(feesInput);
-                }}
-                className="flex-shrink-0"
+                onClick={addFee}
+                variant="secondary"
+                className="md:w-auto"
               >
-                <HugeiconsIcon
-                  icon={PlusSignIcon}
-                  size={24}
-                  color={"#6F6D6D"}
-                />
-              </button>
-              <Input
-                className="rounded-none border-b bg-transparent border-neutral-accent"
-                placeholder="Add Item"
-                value={feesInput.name}
-                onChange={(e) =>
-                  setFeesInput({ ...feesInput, name: e.target.value })
-                }
-              />
-              <Input
-                type="number"
-                className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-                placeholder="₦0.00"
-                value={feesInput.price || ""}
-                onChange={(e) =>
-                  setFeesInput({
-                    ...feesInput,
-                    price: parseFloat(e.target.value) || 0,
-                  })
-                }
-              />
+                <Plus className="mr-2" size={18} />
+                Add Fee
+              </Button>
             </div>
-            <p className="text-center mt-4">
-              Click on the + icon to add an item to the extras list.
-            </p>
           </div>
         ) : accessType === "OPEN" ? (
           <>

@@ -198,7 +198,7 @@ export default function PlacesPage() {
                     imgUrl={facility.images?.[0] || ""}
                     facilityType={facility.facilityCategory}
                     accessType={facility.accessType || "N/A"}
-                    price={facility.fees?.[0]?.amount || 0}
+                    price={facility.fees?.[0]?.amount ?? 0}
                     onClick={() => setIsModalOpen(true)}
                   />
                 ))}
