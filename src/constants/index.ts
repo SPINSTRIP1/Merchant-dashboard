@@ -156,3 +156,4 @@ export const months = [
 ];
 
 export const SERVER_URL = "https://spinstrip-merchant-gateway.fly.dev/api/v1";
+export const USER_ACCOUNT_URL = "https://spinstrip-user-account.fly.dev/api/v1";
