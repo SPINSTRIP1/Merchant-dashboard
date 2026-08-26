@@ -12,6 +12,17 @@ export const ticketTierSchema = z.object({
 
 export type TicketTier = z.infer<typeof ticketTierSchema>;
 
+// Per-tier, per-status sales aggregate returned by GET /events/{id}
+export const ticketSalesBreakdownSchema = z.object({
+  ticketTierId: z.string(),
+  ticketTierName: z.string(),
+  status: z.string(),
+  count: z.number(),
+  totalAmount: z.string(),
+});
+
+export type TicketSalesBreakdown = z.infer<typeof ticketSalesBreakdownSchema>;
+
 // Event schema
 export const eventSchema = z.object({
   id: z.string().optional(),
@@ -47,7 +58,7 @@ export const eventSchema = z.object({
   images: z.array(z.string()).optional(),
   totalImpressions: z.number().optional(),
   totalTransactions: z.number().optional(),
-  ticketSalesBreakdown: z.array(z.string()).optional(),
+  ticketSalesBreakdown: z.array(ticketSalesBreakdownSchema).optional(),
   dropOffRate: z.number().optional(),
   tagline: z.string().optional(),
   // coverImageUrl: z.string().optional(),

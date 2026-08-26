@@ -1,26 +1,15 @@
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
-import { ComplianceStatus } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useKyc } from "@/hooks/use-kyc";
 
+/**
+ * Returns only the merchant's compliance status.
+ * Derived from `useKyc` so it shares the same underlying query
+ * (react-query dedupes by key — no extra network request).
+ */
 export function useComplianceStatus() {
-  const { error, data, isLoading, refetch } = useQuery<ComplianceStatus, Error>(
-    {
-      queryKey: ["compliance-status"],
-      queryFn: async () => {
-        try {
-          const response = await api.get(SERVER_URL + "/kyc/merchant/status");
-          return response.data.data.status as ComplianceStatus;
-        } catch (error) {
-          console.log("Error fetching compliance status:", error);
-          return "UNVERIFIED" as ComplianceStatus;
-        }
-      },
-    }
-  );
+  const { status, isLoading, error, refetch } = useKyc();
 
   return {
-    data: data,
+    data: status,
     isLoading,
     error,
     refetch,

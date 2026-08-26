@@ -3,15 +3,13 @@ import SelectDropdown from "@/components/select-dropdown";
 import { Label } from "@/components/ui/label";
 import React from "react";
 import { useInventoryForm } from "../../_context";
-import { useQuery } from "@tanstack/react-query";
 import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
 import { X } from "lucide-react";
 import { Deal } from "../../../deals/_schemas";
 import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
-import toast from "react-hot-toast";
 import { Menu } from "../../../menu/_schemas";
+import { useDealSubscription } from "@/hooks/use-deals";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { MENU_QUERY_KEY } from "../../../menu/_constants";
 
@@ -23,37 +21,15 @@ export default function Visibility() {
   const isFeatured = watch("isFeatured");
   const dealIds = watch("dealIds") || [];
 
-  const { data } = useQuery<Deal[]>({
-    queryKey: ["deals"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/deals");
-        return response.data.data.data;
-      } catch (error) {
-        console.log("Error fetching deals:", error);
-        return [];
-      }
-    },
+  const { items: deals } = useServerPagination<Deal>({
+    queryKey: "deals",
+    endpoint: `${SERVER_URL}/deals`,
   });
   const { items: menus } = useServerPagination<Menu>({
     queryKey: MENU_QUERY_KEY,
     endpoint: `${SERVER_URL}/menu/menu-items`,
   });
-  const { data: subscriptionStatus } = useQuery({
-    queryKey: ["deals-subscription-status"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/deals/subscriptions");
-        return response.data.data as { subscribed: boolean };
-      } catch (error) {
-        console.log("Error fetching subscription status:", error);
-        toast.error("Failed to fetch subscription status.");
-        return {
-          subscribed: false,
-        };
-      }
-    },
-  });
+  const { subscribed } = useDealSubscription();
   const addDeal = (dealId: string) => {
     if (dealId && !dealIds.includes(dealId)) {
       setValue("dealIds", [...dealIds, dealId], {
@@ -75,13 +51,12 @@ export default function Visibility() {
   };
 
   const getDealById = (dealId: string) => {
-    return data?.find((deal: Deal) => deal.id === dealId);
+    return deals.find((deal: Deal) => deal.id === dealId);
   };
-  const options =
-    data?.map((deal) => ({
-      label: `${deal.name} (-${deal.discountPercentage}%) off`,
-      value: deal.id!,
-    })) || [];
+  const options = deals.map((deal) => ({
+    label: `${deal.name} (-${deal.discountPercentage}%) off`,
+    value: deal.id!,
+  }));
   return (
     <div className="space-y-7">
       <div className="space-y-1.5">
@@ -153,7 +128,7 @@ export default function Visibility() {
           <Link
             className="font-bold text-primary"
             href={
-              subscriptionStatus?.subscribed
+              subscribed
                 ? "/apps-tools/deals"
                 : "/apps-tools"
             }

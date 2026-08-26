@@ -4,7 +4,6 @@ import {
   Call02Icon,
   Globe02Icon,
   Location01Icon,
-  Navigation03Icon,
   StarIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -18,83 +17,18 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import CheckOutModal from "./_components/modals/checkout";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import EmptyState from "@/components/empty-state";
 import { useSearchParams } from "next/navigation";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
+import { usePublicEvent } from "@/hooks/use-events";
 import Loader from "@/components/loader";
-
-interface TicketTier {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  quantityAvailable: number;
-}
-
-export interface PublicEvent {
-  id: string;
-  name: string;
-  description: string;
-  city: string;
-  state: string;
-  country: string;
-  location: string;
-  contactEmail: string;
-  contactPhone: string;
-  startDate: string;
-  endDate: string;
-  timezone: string;
-  frequency: "ONE_OFF" | "RECURRING";
-  recurringPattern: string | null;
-  customRecurrenceDays: number | null;
-  images: string[];
-  videos: string[] | null;
-  expectedGuests: number;
-  soldOutThreshold: number;
-  status: "ACTIVE" | "INACTIVE" | "DRAFT";
-  isFeatured: boolean;
-  impressions: number;
-  totalImpressions: number;
-  totalRegistrations: number;
-  ticketTiers: TicketTier[];
-  userId: string;
-  placeId: string | null;
-  dealId: string | null;
-  formId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-}
 
 export default function EventsPage() {
   const posts: string[] = [];
   const reviews: string[] = [];
   const [isModalOpen, setIsModalOpen] = useState(false);
   const id = useSearchParams().get("id");
-  const [event, setEvent] = useState<PublicEvent | null>(null);
-
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchEvent = async () => {
-      setLoading(true);
-      try {
-        const response = await api.get(SERVER_URL + `/events/public/${id}`);
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching products:", error);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchEvent().then((data) => setEvent(data));
-    }
-  }, [id]);
+  const { event, isLoading: loading } = usePublicEvent(id);
 
   if (loading) return <Loader />;
   if (!event) return <p>No event found.</p>;

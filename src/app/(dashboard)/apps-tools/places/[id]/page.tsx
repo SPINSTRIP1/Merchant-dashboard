@@ -16,7 +16,6 @@ import Link from "next/link";
 import React, { useState } from "react";
 import FacilityManagement from "./_components/facility-management";
 import BookingReservation from "./_components/booking-reservation";
-import { SERVER_URL } from "@/constants";
 import { useParams, useRouter } from "next/navigation";
 import Loader from "@/components/loader";
 import { ChevronLeft } from "lucide-react";
@@ -24,25 +23,12 @@ import ActivitiesExperience from "./_components/activities-experience";
 import EmptyState from "@/components/empty-state";
 import VisitorList from "./_components/visitor-list";
 import Reviews from "./_components/reviews";
-import api from "@/lib/api/axios-client";
-import { useQuery } from "@tanstack/react-query";
-import { SinglePlace } from "../_components/claim-places-steps/find-place";
+import { usePlace } from "@/hooks/use-places";
 import { Event } from "../../event-planner/_schemas";
 
 export default function Page() {
   const { id } = useParams();
-  const { data: place, isLoading } = useQuery<SinglePlace>({
-    queryKey: ["single-place", id],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + `/places/${id}`);
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching products:", error);
-        return [];
-      }
-    },
-  });
+  const { place, isLoading } = usePlace(id as string);
   const router = useRouter();
   const stats = [
     {
@@ -113,7 +99,7 @@ export default function Page() {
   const renderContent = () => {
     switch (selectedOption) {
       case "Facility Management":
-        return <FacilityManagement place={place} />;
+        return <FacilityManagement place={place ?? undefined} />;
       case "Visitor Management":
         return <VisitorList />;
 

@@ -152,6 +152,12 @@ function EventsExtendedProvider({ children }: { children: React.ReactNode }) {
       let res;
       if (isUpdating) {
         const { id, ...updateData } = payload;
+        updateData.ticketTiers = updateData.ticketTiers?.map((tier) => ({
+          name: tier.name,
+          price: tier.price,
+          quantityAvailable: tier.quantityAvailable,
+          description: tier.description,
+        }));
         res = await api.patch(SERVER_URL + "/events/" + id, updateData);
       } else {
         res = await api.post(SERVER_URL + "/events", payload);

@@ -4,11 +4,8 @@ import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import { useDealsForm } from "../../_context";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
-import { InventoryProduct } from "../../../inventory/_schemas";
-import { useQuery } from "@tanstack/react-query";
-import { Campaign } from "../../_schemas";
+import { useInventoryProducts } from "@/hooks/use-inventory";
+import { useDealCampaigns } from "@/hooks/use-deals";
 import { FormInput } from "@/components/ui/forms/form-input";
 import SideModal from "@/app/(dashboard)/_components/side-modal";
 import { FormSelect } from "@/components/ui/forms/form-select";
@@ -31,30 +28,8 @@ export default function DealsModal({
   const productIds = watch("productIds") || [];
   const isFeatured = watch("isFeatured");
 
-  const { data: menuItems, isLoading } = useQuery<InventoryProduct[]>({
-    queryKey: ["inventory-products"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/inventory/products");
-        return response.data.data.data || [];
-      } catch (error) {
-        console.log("Error fetching products:", error);
-        return [];
-      }
-    },
-  });
-  const { data: campaigns } = useQuery<Campaign[]>({
-    queryKey: ["campaigns"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/deals/campaigns");
-        return response.data.data.data;
-      } catch (error) {
-        console.log("Error fetching campaigns:", error);
-        return null;
-      }
-    },
-  });
+  const { products: menuItems, isLoading } = useInventoryProducts();
+  const { campaigns } = useDealCampaigns();
   const toggleMenuItem = (itemId: string) => {
     const currentProductIds = productIds;
     if (currentProductIds.includes(itemId)) {

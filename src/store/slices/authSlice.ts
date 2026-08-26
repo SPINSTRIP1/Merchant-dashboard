@@ -16,6 +16,7 @@ export interface UserData {
   avatarUrl?: string;
   emailVerified?: boolean;
   phoneNumber?: string;
+  dob?: string;
   complianceStatus?: "ACTIVE" | "PENDING_VERIFICATION" | "REJECTED";
 }
 

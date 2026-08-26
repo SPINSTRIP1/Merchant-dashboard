@@ -9,11 +9,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import InventoryTable from "./_components/inventory-table";
 import WarningBar from "./_components/warning-bar";
-import { useQuery } from "@tanstack/react-query";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
-import toast from "react-hot-toast";
-import { InventoryStatsResponse } from "./_types";
+import { useInventoryStats } from "@/hooks/use-inventory";
 import { useCatalogs } from "@/hooks/use-catalogs";
 import Loader from "@/components/loader";
 import Image from "next/image";
@@ -25,27 +21,7 @@ import CatalogModal from "./_components/modals/catalog-modal";
 export default function Inventory() {
   const isLowstock = false;
   const [action, setAction] = useState<"offers" | "create" | null>(null);
-  const { data } = useQuery({
-    queryKey: ["inventory-stats"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(
-          SERVER_URL + "/inventory/products/stats",
-        );
-        return response.data.data as InventoryStatsResponse;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-        toast.error("Failed to fetch inventory statistics.");
-        return {
-          totalItems: 0,
-          inStock: 0,
-          lowStock: 0,
-          outOfStock: 0,
-          recentlyUpdated: 0,
-        };
-      }
-    },
-  });
+  const { stats: data } = useInventoryStats();
 
   const { catalogs, isLoadingCatalogs, refetch } = useCatalogs();
   const stats = [

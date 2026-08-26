@@ -16,49 +16,22 @@ import ContainerWrapper from "@/components/container-wrapper";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import CheckOutModal from "./_components/modals/checkout";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import FacilityCard from "@/app/(dashboard)/apps-tools/places/[id]/_components/facility-card";
 import { PLACE_TYPES } from "@/app/(dashboard)/apps-tools/places/_constants";
 import Loader from "@/components/loader";
-import { SERVER_URL } from "@/constants";
 import { useSearchParams } from "next/navigation";
-import { Place } from "@/app/(dashboard)/apps-tools/places/_schemas";
-import axios from "axios";
+import { usePublicPlace } from "@/hooks/use-places";
 import EmptyState from "@/components/empty-state";
 import { getOperatingHoursDisplay } from "@/app/(dashboard)/apps-tools/places/_utils";
-
-export interface PublicPlace extends Omit<Place, "coverImage"> {
-  coverImage: string;
-  images: string[];
-}
 
 export default function PlacesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState<"home" | "about">("home");
   const id = useSearchParams().get("id");
-  const [place, setPlace] = useState<PublicPlace | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { place, isLoading: loading } = usePublicPlace(id);
   const posts: string[] = [];
-
-  useEffect(() => {
-    const fetchEvent = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(SERVER_URL + `/places/public/${id}`);
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching products:", error);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchEvent().then((data) => setPlace(data));
-    }
-  }, [id]);
   const placeTypes = place?.facilities?.map((facility) =>
     PLACE_TYPES.find((type) => type.label === facility.facilityCategory),
   );

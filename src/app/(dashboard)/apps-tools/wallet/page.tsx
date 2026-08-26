@@ -18,16 +18,11 @@ import { useState } from "react";
 import Account from "./_components/modals/account";
 import SettlementAccount from "./_components/modals/settlement-account";
 import Withdrawal from "./_components/modals/withdraw";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api/axios-client";
-import { SERVER_URL, USER_ACCOUNT_URL } from "@/constants";
-import toast from "react-hot-toast";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/loader";
-import { useReduxAuth } from "@/hooks/use-redux-auth";
-import { KYCData } from "./_types";
-import { countries } from "@/data/countries";
+import { useKyc } from "@/hooks/use-kyc";
+import { useWallet } from "@/hooks/use-wallet";
 
 export default function Wallet() {
   const router = useRouter();
@@ -35,82 +30,8 @@ export default function Wallet() {
     "pos" | "account" | "settlement" | "withdraw" | null
   >(null);
 
-  const { user } = useReduxAuth();
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["user-wallets"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(USER_ACCOUNT_URL + "/wallet");
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching wallet data:", error);
-        toast.error("Failed to fetch wallet data.");
-        return [];
-      }
-    },
-  });
-
-  const { data: kycData } = useQuery<KYCData>({
-    queryKey: ["compliance-data"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/kyc/merchant/status");
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-        return {} as KYCData;
-      }
-    },
-  });
-
-  const [loading, setLoading] = useState(false);
-
-  async function handleCreateWallet() {
-    const nin = kycData?.ubos[0]?.identityMetadata?.nin;
-    const bvn = kycData?.ubos[0]?.identityMetadata?.bvn;
-    const address = kycData?.ubos[0]?.address;
-    const currency = countries.find(
-      (c) => c.name === kycData?.countryOfIncorporation,
-    )?.currency;
-
-    if (!nin || !bvn || !address) {
-      toast.error(
-        "Missing KYC information. Please complete your KYC to create a wallet.",
-      );
-      return;
-    }
-
-    if (!currency) {
-      toast.error(
-        "Could not determine currency from country of incorporation.",
-      );
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await api.post(USER_ACCOUNT_URL + "/wallet", {
-        currency: currency,
-        customer_email: user?.email,
-        customer_mobile: user?.phoneNumber,
-        customer_name: user?.fullName,
-        bvn: bvn,
-        nin: nin,
-        address: address,
-        dob: user?.dob || "1990-05-14",
-      });
-
-      toast.success("Wallet created successfully!");
-      refetch();
-    } catch (error) {
-      console.log("Error initiating wallet creation:", error);
-      toast.error("Failed to create wallet. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-  console.log(data);
+  const { wallets, isLoading, createWallet, isCreating } = useWallet();
+  const { kyc } = useKyc();
 
   if (isLoading) return <Loader />;
 
@@ -130,7 +51,7 @@ export default function Wallet() {
           <ChevronLeft /> <p className="font-bold text-primary-text">Wallet</p>
         </button>
       </div>
-      {data?.length === 0 ? (
+      {wallets?.length === 0 ? (
         <div className="flex items-center justify-center flex-col gap-y-1.5 flex-1 mt-52">
           <Image
             src={"/icons/work-in-progress.svg"}
@@ -145,12 +66,12 @@ export default function Wallet() {
             your finances.
           </p>
           <Button
-            onClick={handleCreateWallet}
-            disabled={loading}
+            onClick={() => createWallet(kyc)}
+            disabled={isCreating}
             size={"lg"}
             className="w-[368px] mt-2 h-[51px]"
           >
-            {loading ? "Creating Wallet..." : "Create Wallet"}
+            {isCreating ? "Creating Wallet..." : "Create Wallet"}
           </Button>
         </div>
       ) : (

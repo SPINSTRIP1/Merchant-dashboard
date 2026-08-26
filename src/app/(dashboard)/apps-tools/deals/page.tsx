@@ -8,7 +8,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import DealsTable from "./_components/deals-table";
-import { useQuery } from "@tanstack/react-query";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import toast from "react-hot-toast";
@@ -16,50 +15,14 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useState } from "react";
 import SubscribeModal from "./_components/modals/subscribe-modal";
-import { DealsStatsResponse } from "./_types";
 import Loader from "@/components/loader";
+import { useDealSubscription, useDealStats } from "@/hooks/use-deals";
 
 export default function Deals() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const {
-    data: subscriptionStatus,
-    refetch,
-    isLoading,
-  } = useQuery({
-    queryKey: ["deals-subscription-status"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/deals/subscriptions");
-        return response.data.data as { subscribed: boolean };
-      } catch (error) {
-        console.log("Error fetching subscription status:", error);
-        toast.error("Failed to fetch subscription status.");
-        return {
-          subscribed: false,
-        };
-      }
-    },
-  });
-  const { data } = useQuery<DealsStatsResponse>({
-    queryKey: ["deals-stats"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/deals/stats");
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-        toast.error("Failed to fetch deals statistics.");
-        return {
-          active: 0,
-          archived: 0,
-          canceled: 0,
-          inactive: 0,
-          total: 0,
-        };
-      }
-    },
-  });
+  const { subscribed, refetch, isLoading } = useDealSubscription();
+  const { stats: data } = useDealStats();
 
   async function handleSubscribeClick() {
     setLoading(true);
@@ -115,7 +78,7 @@ export default function Deals() {
   if (isLoading) return <Loader />;
   return (
     <div>
-      {subscriptionStatus?.subscribed || data?.active ? (
+      {subscribed || data?.active ? (
         <div>
           <div className="flex flex-wrap mb-5 gap-4">
             {stats.map((stat) => (

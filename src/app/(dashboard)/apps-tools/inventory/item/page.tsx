@@ -23,7 +23,8 @@ import InventoryItemTable from "./_components/table";
 import InventoryModal from "../_components/modals/inventory-modal";
 import DeleteModal from "@/components/modals/delete-modal";
 import DuplicateModal from "@/components/modals/delete-modal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useInventoryItem } from "@/hooks/use-inventory";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { InventoryProduct } from "../_schemas";
@@ -60,21 +61,7 @@ export default function InventoryItem() {
   const itemId = params.get("id");
   const [showlogs, setShowlogs] = useState(false);
   const [showPrices, setShowPrices] = useState(false);
-  const { data, isLoading } = useQuery({
-    queryKey: ["inventory-item", itemId],
-    queryFn: async () => {
-      try {
-        const response = await api.get(
-          SERVER_URL + "/inventory/products/" + itemId,
-        );
-        return response.data.data as InventoryProduct;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-
-        return null;
-      }
-    },
-  });
+  const { item: data, isLoading } = useInventoryItem(itemId);
   const stats = [
     {
       title: "Total Sales",

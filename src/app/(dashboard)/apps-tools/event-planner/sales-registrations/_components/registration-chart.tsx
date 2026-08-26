@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,6 +22,7 @@ import { ChevronDown } from "lucide-react";
 import EmptyState from "@/components/empty-state";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChartLineData02Icon } from "@hugeicons/core-free-icons";
+import { useEventRegistrations } from "@/hooks/use-event-registrations";
 
 ChartJS.register(
   CategoryScale,
@@ -31,7 +32,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 const months = [
@@ -50,39 +51,51 @@ const months = [
 ];
 
 export default function RegistrationChart({
-  revenueData = [],
-  expenseData = [],
+  eventId,
+  totalRegistrations = 0,
 }: {
-  revenueData?: number[];
-  expenseData?: number[];
+  eventId: string | null;
+  totalRegistrations?: number;
 }) {
+  const { registrations, isLoading } = useEventRegistrations({
+    eventId,
+    limit: 100,
+  });
+
+  // Years present in the data, newest first
+  const years = Array.from(
+    new Set(registrations.map((r) => new Date(r.createdAt).getFullYear())),
+  ).sort((a, b) => b - a);
+
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const activeYear = selectedYear ?? years[0] ?? new Date().getFullYear();
+
+  // Count registrations per month for the active year
+  const monthlyCounts = months.map(
+    (_, monthIndex) =>
+      registrations.filter((r) => {
+        const date = new Date(r.createdAt);
+        return (
+          date.getFullYear() === activeYear && date.getMonth() === monthIndex
+        );
+      }).length,
+  );
+
+  const hasData = monthlyCounts.some((count) => count > 0);
+
   const data = {
     labels: months,
     datasets: [
       {
-        label: "Revenue",
-        data: revenueData,
+        label: "Registrations",
+        data: monthlyCounts,
         borderColor: "#6932E2",
         backgroundColor: "rgba(105, 50, 226, 0.1)",
         borderWidth: 2.5,
-        fill: false,
+        fill: true,
         tension: 0.4,
         pointBackgroundColor: "#6932E2",
         pointBorderColor: "#6932E2",
-        pointRadius: 0,
-        pointHoverRadius: 8,
-        pointBorderWidth: 2,
-      },
-      {
-        label: "Expenses",
-        data: expenseData,
-        borderColor: "#EBE2FF",
-        backgroundColor: "rgba(255, 141, 40, 0.1)",
-        borderWidth: 2.5,
-        fill: false,
-        tension: 0.4,
-        pointBackgroundColor: "#EBE2FF",
-        pointBorderColor: "#EBE2FF",
         pointRadius: 0,
         pointHoverRadius: 8,
         pointBorderWidth: 2,
@@ -107,7 +120,8 @@ export default function RegistrationChart({
         displayColors: false,
         callbacks: {
           label: function (context: any) {
-            return `Revenue: $${context.parsed.y.toLocaleString()}`;
+            const value = context.parsed.y;
+            return `${value} ${value === 1 ? "registration" : "registrations"}`;
           },
         },
       },
@@ -139,10 +153,7 @@ export default function RegistrationChart({
           font: {
             size: 14,
           },
-          stepSize: 10000,
-          callback: function (value: any) {
-            return `${value / 1000}k`;
-          },
+          precision: 0,
         },
       },
     },
@@ -152,8 +163,6 @@ export default function RegistrationChart({
     },
   };
 
-  const hasData = revenueData.length > 0 || expenseData.length > 0;
-
   return (
     <div className="mt-4 h-full">
       <div className="flex mb-7 items-center justify-between">
@@ -161,43 +170,42 @@ export default function RegistrationChart({
           <h3 className="text-secondary-text text-sm">Total Registrations</h3>
 
           <p className="text-primary-text font-bold">
-            {hasData ? "450 Registrants" : "0 Registrants"}
+            {totalRegistrations.toLocaleString()}{" "}
+            {totalRegistrations === 1 ? "Registrant" : "Registrants"}
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <div className="flex items-center border p-1 rounded-lg">
-              <p className="text-sm">This Year</p>
-              <ChevronDown
-                className="inline-block text-secondary-text ml-1"
-                size={18}
-              />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48">
-            <DropdownMenuItem>Last Week</DropdownMenuItem>
-            <DropdownMenuItem>Yesterday</DropdownMenuItem>
-            <DropdownMenuItem>Next Month</DropdownMenuItem>
-            <DropdownMenuItem>This Year</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {years.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <div className="flex items-center border p-1 rounded-lg">
+                <p className="text-sm">{activeYear}</p>
+                <ChevronDown
+                  className="inline-block text-secondary-text ml-1"
+                  size={18}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48">
+              {years.map((year) => (
+                <DropdownMenuItem
+                  key={year}
+                  onClick={() => setSelectedYear(year)}
+                >
+                  {year}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
-      {hasData ? (
-        <>
-          <div className="h-56">
-            <Line data={data} options={options} />
-          </div>
-          <div className="flex items-center mt-4 gap-x-2">
-            <div className="flex items-center gap-x-2">
-              <div className="size-6 rounded bg-primary" />
-              <p className="text-sm">Female</p>
-            </div>
-            <div className="flex items-center gap-x-2">
-              <div className="size-6 rounded bg-primary-accent" />
-              <p className="text-sm">Male</p>
-            </div>
-          </div>
-        </>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-56">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+        </div>
+      ) : hasData ? (
+        <div className="h-56">
+          <Line data={data} options={options} />
+        </div>
       ) : (
         <EmptyState
           icon={

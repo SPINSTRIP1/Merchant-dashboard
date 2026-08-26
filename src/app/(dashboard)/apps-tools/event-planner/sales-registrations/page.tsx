@@ -6,11 +6,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import RegistrationChart from "./_components/registration-chart";
 import RegistrationTable from "./_components/table";
+import { useEventRegistrations } from "@/hooks/use-event-registrations";
+import { useEvent } from "@/hooks/use-events";
 import TicketSalesChart from "./_components/ticket-sales-chart";
-import { Event } from "../_schemas";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api/axios-client";
-import { SERVER_URL } from "@/constants";
 import { useSearchParams } from "next/navigation";
 import Loader from "@/components/loader";
 import { extractTimeFromDateTime } from "../_utils";
@@ -19,21 +17,14 @@ import ImpressionsStack from "../_components/impressions-stack";
 
 export default function SalesAndRegistration() {
   const id = useSearchParams().get("id");
-  const { data: event, isLoading } = useQuery<Event>({
-    queryKey: ["single-event", id],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + `/events/${id}`);
-        return response.data.data;
-      } catch (error) {
-        console.log("Error fetching products:", error);
-        return null;
-      }
-    },
-    enabled: !!id,
-  });
+  const { event, isLoading } = useEvent(id);
+  const { stats } = useEventRegistrations({ eventId: id, limit: 1 });
   if (isLoading) return <Loader />;
   if (!event) return <p>No event found.</p>;
+
+  const totalTicketsSold =
+    stats?.ticketTiers?.reduce((acc, t) => acc + t.sold, 0) ?? 0;
+
   return (
     <div>
       <ContainerWrapper>
@@ -85,12 +76,7 @@ export default function SalesAndRegistration() {
             <h2 className="font-bold mb-1 text-primary-text">
               Total Tickets Sales
             </h2>
-            <p>
-              {event.ticketSalesBreakdown?.reduce(
-                (acc, curr) => acc + Number(curr),
-                0
-              ) ?? 0}
-            </p>
+            <p>{totalTicketsSold}</p>
           </div>
           <div className="flex items-center justify-between my-2 w-full">
             <h2 className="font-bold mb-1 text-primary-text">
@@ -125,7 +111,10 @@ export default function SalesAndRegistration() {
               Registrations
             </h2>
           </div>
-          <RegistrationChart />
+          <RegistrationChart
+            eventId={id}
+            totalRegistrations={event.totalTransactions ?? 0}
+          />
         </ContainerWrapper>
         <ContainerWrapper className="w-full h-auto">
           <div className="bg-[#D9EDFF]  py-3 px-3 rounded-2xl">
@@ -133,10 +122,10 @@ export default function SalesAndRegistration() {
               Ticket Sales
             </h2>
           </div>
-          <TicketSalesChart />
+          <TicketSalesChart stats={stats} />
         </ContainerWrapper>
       </div>
-      <RegistrationTable />
+      <RegistrationTable eventId={id} />
     </div>
   );
 }

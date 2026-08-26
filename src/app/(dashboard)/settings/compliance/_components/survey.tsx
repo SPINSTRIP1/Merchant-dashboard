@@ -4,26 +4,10 @@ import SelectDropdown from "@/components/select-dropdown";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { MultiSelect } from "../../_components/multi-select";
-import { useQuery } from "@tanstack/react-query";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
-import { FALLBACK_BUSINESS_CATEGORIES } from "../../_constants";
+import { useBusinessCategories } from "@/hooks/use-kyc";
 import { useComplianceForm } from "../_context";
 export default function Survey() {
-  const { data: businessCategories, isLoading } = useQuery<
-    { id: string; name: string }[]
-  >({
-    queryKey: ["business-categories"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/kyc/business/categories");
-        return response.data.data.categories;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-        return FALLBACK_BUSINESS_CATEGORIES;
-      }
-    },
-  });
+  const { categories: businessCategories, isLoading } = useBusinessCategories();
   const {
     form: {
       getValues,

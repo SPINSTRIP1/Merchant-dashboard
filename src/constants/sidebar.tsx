@@ -1,5 +1,5 @@
 import {
-  Briefcase01Icon,
+  // Briefcase01Icon,
   CreditCardIcon,
   DashboardSquare03Icon,
   DashboardSquareAddIcon,
@@ -27,12 +27,12 @@ export const navigationLinks = [
     hasChildren: true,
   },
 
-  {
-    name: "Admin",
-    href: "/admin",
-    icon: Briefcase01Icon,
-    comingSoon: true,
-  },
+  // {
+  //   name: "Admin",
+  //   href: "/admin",
+  //   icon: Briefcase01Icon,
+  //   comingSoon: true,
+  // },
   {
     name: "Settings",
     href: "/settings",

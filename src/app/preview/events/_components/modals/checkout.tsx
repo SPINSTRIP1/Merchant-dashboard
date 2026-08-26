@@ -19,8 +19,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PublicEvent } from "../../page";
-import { useHandleRequest } from "@/hooks/use-fetch";
+import { PublicEvent } from "@/hooks/use-events";
+import { EVENTS_SERVER_URL } from "@/constants";
+import apiClient from "@/lib/api/axios-client";
+import { handleAxiosError } from "@/lib/api/handle-axios-error";
+import { AxiosError } from "axios";
+import toast from "react-hot-toast";
 
 // Props type
 interface AddEventsModalProps {
@@ -55,6 +59,22 @@ const registerSchema = z
   });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+interface RegisterResponse {
+  status: string;
+  message: string;
+  data: {
+    registrationId: string;
+    totalAmount: string;
+    email: string;
+    payment?: {
+      authorizationUrl: string;
+      accessCode: string;
+      reference: string;
+      provider: "PAYSTACK" | "PAYONUS";
+    };
+  };
+}
 
 export default function CheckOutModal({
   isOpen,
@@ -107,6 +127,7 @@ export default function CheckOutModal({
   const [currentStep, setCurrentStep] = useState<number>(1);
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -118,6 +139,7 @@ export default function CheckOutModal({
     email: false,
     update: false,
   });
+  const [loading, setLoading] = useState(false);
   const handleReset = useCallback(() => {
     form.reset();
     setCurrentStep(1);
@@ -125,33 +147,49 @@ export default function CheckOutModal({
     setNotificationPermission({ email: false, update: false });
   }, [form]);
 
-  const { loading, handleRequest } = useHandleRequest({
-    route: `/events/public/${event.id}/register`,
-    action: "post",
-    params: {
-      firstName: form.getValues("firstName"),
-      lastName: form.getValues("lastName"),
-      email: form.getValues("email"),
-      confirmEmail: form.getValues("confirmEmail"),
-      tickets: selectedTickets.map((ticket) => ({
-        ticketTierId: ticket.tierId,
-        quantity: ticket.quantity,
-      })),
-      marketingConsentEvents: notificationPermission.email,
-      marketingConsentNews: notificationPermission.update,
-      paymentProvider: "PAYSTACK",
-      callbackUrl: "https://merchant.spinstrip.com",
-    },
-    successMessage: "Registration successful!",
-    onSuccess: (data) => {
-      //@ts-expect-error: it'll match
-      const paymentUrl = data?.payment?.data?.authorization_url;
+  const onSubmit = form.handleSubmit(async (values) => {
+    if (selectedTickets.length === 0) {
+      toast.error("Please select at least one ticket");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await apiClient.post<RegisterResponse>(
+        `${EVENTS_SERVER_URL}/events/public/${event.id}/register`,
+        {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          confirmEmail: values.confirmEmail,
+          tickets: selectedTickets.map((ticket) => ({
+            ticketTierId: ticket.tierId,
+            quantity: ticket.quantity,
+          })),
+          marketingConsentEvents: notificationPermission.email,
+          marketingConsentNews: notificationPermission.update,
+          paymentProvider: "PAYSTACK",
+          callbackUrl: `${window.location.origin}/preview/events/success`,
+        },
+      );
+
+      const data = res.data.data;
+      console.log(res.data);
+      const paymentUrl = data?.payment?.authorizationUrl;
       if (paymentUrl) {
-        window.open(paymentUrl, "_blank");
+        // Redirect to Paystack checkout; it returns to callbackUrl on completion
+        window.location.href = paymentUrl;
+        return;
       }
+      // No payment required (e.g. free ticket) — go straight to success
+      toast.success("Registration successful!");
       handleReset();
       onClose();
-    },
+      window.location.href = `/preview/events/success?reference=${data?.registrationId ?? ""}`;
+    } catch (error) {
+      const err = handleAxiosError(error as AxiosError);
+      toast.error(err || "Something went wrong");
+      setLoading(false);
+    }
   });
 
   return (
@@ -430,7 +468,7 @@ export default function CheckOutModal({
               </div>
               <Button
                 disabled={!form.formState.isValid || loading}
-                onClick={handleRequest}
+                onClick={onSubmit}
                 className="w-[368px] mt-4"
                 size={"lg"}
               >

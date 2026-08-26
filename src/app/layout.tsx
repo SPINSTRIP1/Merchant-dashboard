@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ReduxProvider } from "@/providers/redux-provider";
+import Providers from "./(dashboard)/providers";
 
 export const metadata: Metadata = {
   title: {
@@ -86,18 +87,20 @@ export default function RootLayout({
         className={`font-sf-pro bg-background h-full text-secondary-text antialiased overflow-x-hidden`}
       >
         <ReduxProvider>
-          {children}
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: "#EBE2FF",
-                color: "#6932E2",
-                fontWeight: "500",
-              },
-            }}
-          />
+          <Providers>
+            {children}
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: "#EBE2FF",
+                  color: "#6932E2",
+                  fontWeight: "500",
+                },
+              }}
+            />
+          </Providers>
         </ReduxProvider>
       </body>
     </html>

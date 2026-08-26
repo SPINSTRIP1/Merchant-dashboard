@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { PublicPlace } from "../../page";
+import { PublicPlace } from "@/hooks/use-places";
 import { getOperatingHoursDisplay } from "@/app/(dashboard)/apps-tools/places/_utils";
 
 // Props type

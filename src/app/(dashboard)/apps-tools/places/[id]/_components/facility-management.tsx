@@ -10,10 +10,7 @@ import FacilityModal from "./modals/facility-modal";
 import { PLACE_TYPES } from "../../_constants";
 import EmptyState from "@/components/empty-state";
 import { SinglePlace } from "../../_components/claim-places-steps/find-place";
-import { useQuery } from "@tanstack/react-query";
-import { Facility } from "../../_schemas";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
+import { usePlaceFacilities } from "@/hooks/use-places";
 import Loader from "@/components/loader";
 import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
 import { getOperatingHoursDisplay } from "../../_utils";
@@ -28,20 +25,7 @@ export default function FacilityManagement({
   const placeType = PLACE_TYPES.find(
     (type) => type.value === place?.placeType,
   )?.label;
-  const { data, isLoading } = useQuery<Facility[]>({
-    queryKey: ["place-facility", place?.id],
-    queryFn: async () => {
-      try {
-        const response = await api.get(
-          SERVER_URL + `/places/${place?.id}/facilities`,
-        );
-        return response.data.data.facilities;
-      } catch (error) {
-        console.log("Error fetching facilities:", error);
-        return [];
-      }
-    },
-  });
+  const { facilities: data, isLoading } = usePlaceFacilities(place?.id);
   if (!place) {
     return <p className="text-center text-primary-text">Place not found.</p>;
   }

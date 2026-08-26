@@ -7,39 +7,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import EventsTable from "./_components/events-table";
-import { useQuery } from "@tanstack/react-query";
-import { SERVER_URL } from "@/constants";
-import api from "@/lib/api/axios-client";
-import { toast } from "react-hot-toast";
-
-interface EventStatsResponse {
-  total: number;
-  active: number;
-  inactive: number;
-  upcoming: number;
-  past: number;
-}
+import { useEventStats } from "@/hooks/use-events";
 
 export default function EventPlanner() {
-  const { data } = useQuery({
-    queryKey: ["events-stats"],
-    queryFn: async () => {
-      try {
-        const response = await api.get(SERVER_URL + "/events/stats");
-        return response.data.data as EventStatsResponse;
-      } catch (error) {
-        console.log("Error fetching compliance status:", error);
-        toast.error("Failed to fetch inventory statistics.");
-        return {
-          total: 0,
-          active: 0,
-          inactive: 0,
-          upcoming: 0,
-          past: 0,
-        };
-      }
-    },
-  });
+  const { stats: data } = useEventStats();
   const stats = [
     {
       title: "All Events",
