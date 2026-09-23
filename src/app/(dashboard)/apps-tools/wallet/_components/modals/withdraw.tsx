@@ -2,6 +2,16 @@ import { Modal } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useBankAccounts } from "@/hooks/use-bank-accounts";
 import { BankIcon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
@@ -10,13 +20,33 @@ import React, { useCallback } from "react";
 export default function Withdrawal({
   isOpen,
   onClose,
+  onAddSettlementAccount,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onAddSettlementAccount?: () => void;
 }) {
   const [step, setStep] = React.useState<number>(1);
   const [pin, setPin] = React.useState<string[]>(["", "", "", ""]);
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+
+  const {
+    accounts,
+    defaultAccount,
+    isLoading: isLoadingAccounts,
+  } = useBankAccounts();
+  const [selectedAccountId, setSelectedAccountId] = React.useState<string>("");
+
+  // Default to the merchant's default settlement account once accounts load.
+  React.useEffect(() => {
+    if (defaultAccount && !selectedAccountId) {
+      setSelectedAccountId(defaultAccount.id);
+    }
+  }, [defaultAccount, selectedAccountId]);
+
+  const selectedAccount =
+    accounts.find((account) => account.id === selectedAccountId) ??
+    defaultAccount;
 
   const handlePinChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return; // Only allow digits
@@ -89,38 +119,88 @@ export default function Withdrawal({
         <>
           <h2 className="font-bold text-primary-text">Withdraw Funds</h2>
 
-          <p className="text-sm">
-            Funds will be withdrawn to your default settlement account
-          </p>
-          <h2 className="font-bold text-sm text-primary-text">
-            Canton Cuisine 002*****1
-          </h2>
-          <div className="flex justify-center mb-4 items-center gap-x-1">
-            <div className="size-4 bg-neutral-accent rounded-full" />
-            <p className="uppercase font-bold text-xxs text-center text-secondary-text">
-              SPINSTRIP BANK
-            </p>
-          </div>
+          {isLoadingAccounts ? (
+            <div className="py-8">
+              <div className="size-6 animate-spin rounded-full border-b-2 border-primary" />
+            </div>
+          ) : !selectedAccount ? (
+            <>
+              <p className="text-sm text-center mb-4">
+                You have no settlement account yet. Add one to withdraw your
+                funds.
+              </p>
+              <Button
+                size={"lg"}
+                className="w-full mt-2"
+                onClick={() => {
+                  handleClose();
+                  onAddSettlementAccount?.();
+                }}
+              >
+                Add Settlement Account
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">
+                Funds will be withdrawn to your settlement account
+              </p>
+              <h2 className="font-bold text-sm text-primary-text">
+                {selectedAccount.accountName} {selectedAccount.accountNumber}
+              </h2>
+              <div className="flex justify-center mb-4 items-center gap-x-1">
+                <div className="size-4 bg-neutral-accent rounded-full" />
+                <p className="uppercase font-bold text-xxs text-center text-secondary-text">
+                  {selectedAccount.bankName}
+                </p>
+              </div>
 
-          <div className="w-full space-y-2 mb-4">
-            <Label>Amount</Label>
-            <Input
-              type="number"
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="Enter amount"
-              value={amount !== null ? amount : ""}
-              onChange={(e) => setAmount(Number(e.target.value))}
-            />
-          </div>
+              {accounts.length > 1 && (
+                <div className="w-full space-y-2 mb-4">
+                  <Label>Settlement Account</Label>
+                  <Select
+                    value={selectedAccount.id}
+                    onValueChange={setSelectedAccountId}
+                  >
+                    <SelectTrigger className="w-full !rounded-2xl border bg-[#F3F3F3] border-neutral-accent !h-[49px]">
+                      <SelectValue placeholder="Select an account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Settlement Accounts</SelectLabel>
+                        {accounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {account.bankName} • {account.accountNumber}
+                            {account.isDefault ? " (Default)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          <Button
-            onClick={() => setStep(2)}
-            disabled={!amount || amount < 100}
-            size={"lg"}
-            className="w-full mt-2"
-          >
-            Confirm
-          </Button>
+              <div className="w-full space-y-2 mb-4">
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  className="!rounded-2xl border border-neutral-accent"
+                  placeholder="Enter amount"
+                  value={amount !== null ? amount : ""}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                />
+              </div>
+
+              <Button
+                onClick={() => setStep(2)}
+                disabled={!amount || amount < 100}
+                size={"lg"}
+                className="w-full mt-2"
+              >
+                Confirm
+              </Button>
+            </>
+          )}
         </>
       )}
       {step === 2 && (

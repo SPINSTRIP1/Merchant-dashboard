@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import Loader from "@/components/loader";
 import { useKyc } from "@/hooks/use-kyc";
 import { useWallet } from "@/hooks/use-wallet";
+import { useBankAccounts } from "@/hooks/use-bank-accounts";
 
 export default function Wallet() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function Wallet() {
 
   const { wallets, isLoading, createWallet, isCreating } = useWallet();
   const { kyc } = useKyc();
+  const { defaultAccount } = useBankAccounts();
 
   if (isLoading) return <Loader />;
 
@@ -142,7 +144,9 @@ export default function Wallet() {
                   color={"#6932E2"}
                 />
                 <p className="text-primary line-clamp-1">
-                  Add Settlement Account
+                  {defaultAccount
+                    ? `${defaultAccount.bankName} • ${defaultAccount.accountNumber}`
+                    : "Add Settlement Account"}
                 </p>
                 <div className="p-1.5 rounded-full bg-primary">
                   <HugeiconsIcon
@@ -196,6 +200,7 @@ export default function Wallet() {
       <Withdrawal
         isOpen={action === "withdraw"}
         onClose={() => setAction(null)}
+        onAddSettlementAccount={() => setAction("settlement")}
       />
     </div>
   );
