@@ -4,6 +4,7 @@ import Navbar from "@/components/navbar";
 import MaxWidthWrapper from "@/components/max-width-wrapper";
 import { useCallback, useState } from "react";
 import MobileSidebar from "@/components/mobile-sidebar";
+import Providers from "./providers";
 
 export default function DashboardLayout({
   children,
@@ -15,14 +16,16 @@ export default function DashboardLayout({
     setIsOpen((prev) => !prev);
   }, []);
   return (
-    <div className={"flex lg:pl-64 gap-x-2"}>
-      <Sidebar />
-      <MobileSidebar isOpen={isOpen} toggle={toggle} />
+    <Providers>
+      <div className={"flex lg:pl-64 gap-x-2"}>
+        <Sidebar />
+        <MobileSidebar isOpen={isOpen} toggle={toggle} />
 
-      <MaxWidthWrapper className="flex-1 w-full h-full">
-        <Navbar toggle={toggle} />
-        {children}
-      </MaxWidthWrapper>
-    </div>
+        <MaxWidthWrapper className="flex-1 w-full h-full">
+          <Navbar toggle={toggle} />
+          {children}
+        </MaxWidthWrapper>
+      </div>
+    </Providers>
   );
 }
