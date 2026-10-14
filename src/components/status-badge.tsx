@@ -6,69 +6,55 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import React from "react";
+import { cn } from "@/lib/utils";
 
+const STATUS_STYLES = {
+  REJECTED: {
+    className: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    icon: InformationDiamondIcon,
+    title: "Rejected - try again",
+  },
+  PENDING: {
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    icon: Clock05Icon,
+    title: "Review Pending",
+  },
+  ACTIVE: {
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    icon: CheckmarkCircle02Icon,
+    title: "Approved",
+  },
+  WARNING: {
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    icon: InformationDiamondIcon,
+    title: "Warning",
+  },
+  UNVERIFIED: {
+    className: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
+    icon: AlertDiamondIcon,
+    title: "Not Verified",
+  },
+};
+
+/** Compliance-style status chip with an icon. For generic statuses use `StatusPill`. */
 export default function StatusBadge({
   status,
   title,
 }: {
-  status: "REJECTED" | "PENDING" | "ACTIVE" | "WARNING" | "UNVERIFIED";
+  status: keyof typeof STATUS_STYLES;
   title?: string;
 }) {
-  const statusColors = {
-    REJECTED: {
-      text: "#FF383C",
-      bg: "#F6DDDD",
-      border: "#FF383C",
-      icon: InformationDiamondIcon,
-      title: "Rejected - try again",
-    },
-    PENDING: {
-      text: "#FF8D28",
-      bg: "#F6E9DD",
-      border: "#FF8D28",
-      icon: Clock05Icon,
-      title: "Review Pending",
-    },
-    ACTIVE: {
-      text: "#34C759",
-      bg: "#DDF6E2",
-      border: "#34C759",
-      icon: CheckmarkCircle02Icon,
-      title: "Approved",
-    },
-    WARNING: {
-      text: "#FF8D28",
-      bg: "#F6E9DD",
-      border: "#FF8D28",
-      icon: InformationDiamondIcon,
-      title: "WARNING",
-    },
-    UNVERIFIED: {
-      text: "#8B6914",
-      bg: "#FFFBEB",
-      border: "#8B6914",
-      icon: AlertDiamondIcon,
-      title: "Not Verified",
-    },
-  };
+  const style = STATUS_STYLES[status];
 
   return (
-    <div
-      style={{
-        color: statusColors[status].text,
-        backgroundColor: statusColors[status].bg,
-        borderColor: statusColors[status].border,
-      }}
-      className="flex gap-x-1 items-center  h-fit p-1 border rounded-full"
+    <span
+      className={cn(
+        "inline-flex h-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        style.className
+      )}
     >
-      <HugeiconsIcon
-        icon={statusColors[status].icon}
-        size={16}
-        color={statusColors[status].text}
-      />
-      <p className="text-[9px] font-medium uppercase">
-        {title || statusColors[status].title}
-      </p>
-    </div>
+      <HugeiconsIcon icon={style.icon} size={14} />
+      {title || style.title}
+    </span>
   );
 }

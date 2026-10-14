@@ -46,16 +46,13 @@ export default function Dropdown({
         <h2 className="font-bold text-primary-text text-sm">{header}</h2>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger className="outline-none">
-          <div className="flex items-center border outline-none p-1 rounded-lg">
-            <p className="text-sm">{selectedValue}</p>
-            <ChevronDown
-              className="inline-block text-secondary-text ml-1"
-              size={18}
-            />
+        <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+          <div className="flex h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-xs font-semibold text-foreground transition-colors hover:bg-muted">
+            <span>{selectedValue}</span>
+            <ChevronDown className="text-muted-foreground" size={16} />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className={cn("w-48", className)}>
+        <DropdownMenuContent align="end" className={cn("w-48 rounded-xl", className)}>
           {options.map((option) => (
             <DropdownMenuItem key={option} onClick={() => handleSelect(option)}>
               {option}

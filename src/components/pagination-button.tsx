@@ -1,5 +1,6 @@
 import React from "react";
-import { Button } from "./ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function PaginationButton({
   currentPage,
@@ -55,43 +56,41 @@ export default function PaginationButton({
   };
 
   return (
-    <div className="flex items-center justify-end gap-x-2 my-6 px-2">
-      {/* Previous Button */}
-      <Button
-        variant="outline"
+    <div className="flex items-center justify-center gap-1.5 px-4 py-4">
+      <button
+        type="button"
         onClick={handlePrevious}
         disabled={currentPage === 1}
-        className="flex items-center gap-1 px-2 h-7 rounded-lg bg-[#F3F3F3] border border-[#C8C8C8] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-border px-3.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="inline text-neutral-accent font-bold">Prev</span>
-      </Button>
+        <ChevronLeft className="h-3.5 w-3.5" /> Prev
+      </button>
 
-      {/* Page Numbers */}
-      <div className="flex items-center gap-1">
-        {getPageNumbers().map((pageNum, index) => (
-          <button
-            key={index}
-            onClick={() => onPageChange(pageNum)}
-            className={`h-7 px-2.5 font-bold rounded-lg border ${
-              currentPage === pageNum
-                ? "bg-foreground text-secondary-text border-secondary-text"
-                : " border-neutral-accent text-neutral-accent hover:bg-foreground"
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
-      </div>
+      {getPageNumbers().map((pageNum) => (
+        <button
+          type="button"
+          key={pageNum}
+          onClick={() => onPageChange(pageNum)}
+          aria-current={currentPage === pageNum ? "page" : undefined}
+          className={cn(
+            "grid h-9 w-9 place-items-center rounded-full text-xs font-semibold transition-colors",
+            currentPage === pageNum
+              ? "brand-gradient text-white shadow-sm"
+              : "border border-border text-foreground hover:bg-muted"
+          )}
+        >
+          {pageNum}
+        </button>
+      ))}
 
-      {/* Next Button */}
-      <Button
-        variant="outline"
+      <button
+        type="button"
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className="flex items-center gap-1 px-2 h-7 rounded-lg border border-[#C8C8C8] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-border px-3.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="inline text-neutral-accent font-bold">Next</span>
-      </Button>
+        Next <ChevronRight className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

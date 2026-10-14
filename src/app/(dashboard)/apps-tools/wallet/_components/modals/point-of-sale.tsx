@@ -17,7 +17,7 @@ export default function PointOfSale({
       <div className="flex border border-[#E0E0E0] py-4 rounded-xl items-center justify-center flex-col">
         <div className="flex items-center gap-x-2">
           <Image
-            src={user?.avatarUrl || "/avatar.jpg"}
+            src={user?.profilePicture || "/avatar.jpg"}
             width={150}
             height={150}
             alt="Point of Sale"

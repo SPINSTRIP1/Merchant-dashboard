@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { Label } from "../label";
 
 // Define the supported input types (excluding select)
@@ -84,7 +83,7 @@ export function FormInput<TFieldValues extends FieldValues>({
                 {...field}
                 {...rest} // Pass remaining props
                 value={field.value ?? ""}
-                className={cn("rounded-2xl", rest.className)}
+                className={rest.className}
               />
             );
           }
@@ -99,10 +98,7 @@ export function FormInput<TFieldValues extends FieldValues>({
               onChange={(e) => {
                 field.onChange(handleInputChange(e, type));
               }}
-              className={cn(
-                "!rounded-2xl border inline-block border-neutral-accent",
-                rest.className
-              )}
+              className={rest.className}
             />
           );
         };

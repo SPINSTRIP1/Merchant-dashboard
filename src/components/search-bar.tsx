@@ -16,14 +16,14 @@ export default function SearchBar({
   return (
     <div
       className={cn(
-        "bg-[#E0E0E0] h-[35px] border border-[#C8C8C8] flex-shrink-0 w-full flex items-center gap-x-1.5 px-1 rounded-3xl max-w-[220px] md:max-w-[340px]",
+        "relative flex h-11 w-full min-w-[200px] max-w-[220px] flex-shrink-0 items-center md:max-w-[340px]",
         className
       )}
     >
-      <Search className="text-[#6F6D6D]" strokeWidth={1.2} />
+      <Search className="pointer-events-none absolute left-4 h-4 w-4 text-muted-foreground" />
       <input
         placeholder={placeholder || "Search anything"}
-        className="bg-transparent outline-none placeholder:text-secondary-text text-base h-auto w-full"
+        className="h-full w-full rounded-full border border-border bg-card pl-10 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
         value={value}
         onChange={onChange}
       />

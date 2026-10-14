@@ -8,7 +8,7 @@ export default function ContainerWrapper({
   className?: string;
 }) {
   return (
-    <div className={`rounded-[32px] bg-foreground p-4 ${className}`}>
+    <div className={`rounded-[32px] bg-card p-4 ${className}`}>
       {children}
     </div>
   );

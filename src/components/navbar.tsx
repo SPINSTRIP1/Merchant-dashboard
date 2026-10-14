@@ -1,111 +1,130 @@
 "use client";
-import {
-  ArrowRight02Icon,
-  CustomerSupportIcon,
-  Menu02Icon,
-  NotificationSquareIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+
 import React from "react";
 import Link from "next/link";
-import { ComplianceStatus } from "@/types";
-import { useComplianceStatus } from "@/hooks/use-compliance";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
+import {
+  Bell,
+  ChevronDown,
+  ClipboardList,
+  Headset,
+  LogOut,
+  Menu as MenuIcon,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { useReduxAuth } from "@/hooks/use-redux-auth";
-import StatusBadge from "./status-badge";
+import { useReduxApps } from "@/hooks/use-redux-apps";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getInitials } from "@/components/sidebar-content";
 
+const iconButton =
+  "grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+
+/** Sticky top bar: mobile menu toggle, quick actions and the account menu. */
 export default function Navbar({ toggle }: { toggle: () => void }) {
-  const { data, isLoading } = useComplianceStatus();
-  const status: ComplianceStatus = data || "UNVERIFIED";
-  const user = useReduxAuth().user;
+  const { user, logout } = useReduxAuth();
+  const { activeApps } = useReduxApps();
+  const { can, isOwner, roleLabel } = usePermissions();
+  const showOrders = can("menu") && activeApps.some((app) => app.name === "Menu");
 
   return (
-    <nav className="w-full max-w-[1240px] mx-auto mb-10 bg-foreground rounded-[32px] p-4 lg:p-6">
-      <div className="flex items-center lg:items-end justify-between lg:justify-end w-full">
-        {/* <div className="bg-[#E0E0E0] h-[35px] border border-[#C8C8C8] flex-shrink-0 w-full flex items-end gap-x-1.5 px-1 py-1.5 rounded-3xl max-w-[370px]">
-          <Search className="text-[#6F6D6D]" strokeWidth={1.2} />
-          <input
-            placeholder="Search anything"
-            className="bg-transparent outline-none placeholder:text-secondary-text text-base h-auto w-full"
-          />
-        </div> */}
-        <button onClick={toggle} className="lg:hidden">
-          <HugeiconsIcon icon={Menu02Icon} size={24} color={"#6F6D6D"} />
+    <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-lg">
+      <div className="flex h-16 items-center gap-2 px-4 md:px-8">
+        <button type="button" onClick={toggle} className={`${iconButton} lg:hidden`} aria-label="Open menu">
+          <MenuIcon className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-x-5">
-          <HugeiconsIcon
-            icon={NotificationSquareIcon}
-            size={24}
-            color={"#6F6D6D"}
-          />
-          {/* <HugeiconsIcon icon={Settings04Icon} size={24} color={"#6F6D6D"} /> */}
-          <HugeiconsIcon
-            icon={CustomerSupportIcon}
-            size={24}
-            color={"#6F6D6D"}
-          />
-          <div className="flex lg:ml-2 items-center">
-            <div className="size-10 lg:size-12 bg-primary-accent rounded-full overflow-hidden flex items-center justify-center mr-1.5 lg:mr-3">
-              <span className="text-primary font-semibold text-sm">
-                {user?.fullName
-                  ?.split(" ")
-                  .map((name: string) => name.charAt(0))
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2) || "U"}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              {/* <p className="text-xs text-secondary-text">Hello</p> */}
-              <p className="font-bold text-sm lg:text-base text-[#0F0F0F]">
-                {user?.fullName}
+        <Link href="/" className="lg:hidden" aria-label="SpinStrip home">
+          <Image src="/logo.svg" alt="SpinStrip" width={76} height={30} className="h-[30px] w-[76px]" />
+        </Link>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          {showOrders && (
+            <Link href="/apps-tools/menu" className={`${iconButton} hidden sm:grid`} aria-label="Orders" title="Orders">
+              <ClipboardList className="h-5 w-5" />
+            </Link>
+          )}
+
+          <Popover>
+            <PopoverTrigger className={iconButton} aria-label="Notifications" title="Notifications">
+              <Bell className="h-5 w-5" />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 rounded-2xl p-0">
+              <p className="border-b px-4 py-3 font-display text-sm font-bold text-foreground">Notifications</p>
+              <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                <div className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
+                  <Bell className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
+                <p className="text-xs text-muted-foreground">
+                  New orders, bookings and settlements will show up here.
+                </p>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger className={`${iconButton} hidden sm:grid`} aria-label="Support" title="Support">
+              <Headset className="h-5 w-5" />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 rounded-2xl p-4">
+              <p className="font-display text-sm font-bold text-foreground">Need help?</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                In-app support chat is coming soon.
               </p>
-              <p className="text-xs text-secondary-text">{user?.email}</p>
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="ml-1 flex items-center gap-2.5 rounded-full border bg-card py-1.5 pl-1.5 pr-3 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                {getInitials(user?.fullName)}
+              </span>
+              <span className="hidden text-left sm:block">
+                <span className="block max-w-[140px] truncate text-xs font-semibold leading-tight text-foreground">
+                  {user?.fullName?.split(" ")[0]}
+                </span>
+                <span className="block text-[10px] leading-tight text-muted-foreground">{roleLabel}</span>
+              </span>
+              <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:block" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 rounded-xl">
+              <DropdownMenuLabel className="font-normal">
+                <p className="truncate text-sm font-semibold text-foreground">{user?.fullName}</p>
+                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {can("settings") && (
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {isOwner && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin" className="cursor-pointer">
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Admin & Roles
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="cursor-pointer text-rose-500 focus:text-rose-500">
+                <LogOut className="mr-2 h-4 w-4" /> Log Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      <div className="flex flex-col lg:flex-row gap-y-4 lg:items-center gap-x-5 mt-6 justify-between">
-        <div className="flex items-center justify-between gap-x-2">
-          <h2 className="text-[#0F0F0F]">Compliance Status</h2>
-          {isLoading ? <p>Fetching...</p> : <StatusBadge status={status} />}
-        </div>
-        <div className="max-w-[383px] 2xl:max-w-[453px] w-full h-1.5 rounded-2xl bg-primary-accent">
-          <div
-            className={cn(
-              "h-full bg-primary rounded-2xl",
-              status === "REJECTED"
-                ? "w-1/4"
-                : status === "PENDING"
-                ? "w-2/4"
-                : "w-full"
-            )}
-          />
-        </div>
-        {(status === "REJECTED" ||
-          status === "PENDING" ||
-          status === "UNVERIFIED") && (
-          <Link
-            href="/settings/compliance"
-            className="flex items-center w-fit bg-primary-accent p-2 rounded-3xl gap-x-2"
-          >
-            <p className="text-primary line-clamp-1">
-              {status === "REJECTED"
-                ? "Retry Compliance"
-                : status === "PENDING"
-                ? "Review Compliance Results"
-                : "Complete Compliance"}
-            </p>
-            <div className="p-1.5 rounded-full bg-primary">
-              <HugeiconsIcon
-                icon={ArrowRight02Icon}
-                size={16}
-                color={"white"}
-              />
-            </div>
-          </Link>
-        )}
-      </div>
-    </nav>
+    </header>
   );
 }

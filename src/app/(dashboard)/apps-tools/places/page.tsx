@@ -3,10 +3,10 @@
 import { SERVER_URL } from "@/constants";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import PlacesModal from "./_components/modals/create-places-modal";
-import Image from "next/image";
+import { Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePlacesForm } from "./_context";
-import Loader from "@/components/loader";
 import Places from "./_components/places";
 import DeleteModal from "@/components/modals/delete-modal";
 import { useCallback, useState } from "react";
@@ -15,12 +15,17 @@ import { DEFAULT_PLACES_VALUES } from "./_constants";
 import SelectModal from "./_components/modals/select-modal";
 import ClaimPlacesModal from "./_components/modals/claim-places-modal";
 import { SinglePlace } from "./_components/claim-places-steps/find-place";
+import PageHeader from "@/components/page-header";
+import Breadcrumb from "@/components/breadcrumb";
+import EmptyState from "@/components/empty-state";
+import PaginationButton from "@/components/pagination-button";
 
 export default function PlacesPage() {
-  const { items, isLoading } = useServerPagination<SinglePlace>({
-    queryKey: "places",
-    endpoint: `${SERVER_URL}/places`,
-  });
+  const { items, isLoading, currentPage, totalPages, handlePageChange } =
+    useServerPagination<SinglePlace>({
+      queryKey: "places",
+      endpoint: `${SERVER_URL}/places`,
+    });
   const { action, setAction, form, handleReset } = usePlacesForm();
   const [selectedPlace, setSelectedPlace] = useState<SinglePlace | null>(null);
   const { deleteItem } = useOptimisticDelete<SinglePlace & { id: string }>({
@@ -54,11 +59,22 @@ export default function PlacesPage() {
     [setAction],
   );
 
-  if (isLoading) return <Loader />;
   return (
     <div>
-      {items && items.length > 0 ? (
-        <div className="space-y-6">
+      <Breadcrumb parent={{ label: "Tools", href: "/apps-tools" }} current="Places" />
+      <PageHeader
+        title="Places"
+        subtitle="Publish short lets, venues and hubs — each place gets a public page, facilities, visitors and bookings."
+      />
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[420px] rounded-2xl" />
+          ))}
+        </div>
+      ) : items && items.length > 0 ? (
+        <div className="space-y-8">
           <Places
             title="Pending Places"
             places={pendingPlaces}
@@ -73,27 +89,26 @@ export default function PlacesPage() {
             onEdit={onEdit}
             onDelete={onDelete}
           />
+          {totalPages > 1 && (
+            <PaginationButton
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       ) : (
-        <div className="flex items-center justify-center flex-col gap-y-1.5 flex-1 mt-52">
-          <Image
-            src={"/icons/work-in-progress.svg"}
-            width={600}
-            height={400}
-            className="w-[174px] h-[106px]"
-            alt="Empty state"
+        <div className="rounded-2xl border bg-card">
+          <EmptyState
+            icon={<Building2 />}
+            title="Welcome to Places"
+            description="Set up Places to get the most out of your facility."
+            action={
+              <Button variant="brand" onClick={onAdd}>
+                <Plus /> Get Started
+              </Button>
+            }
           />
-          <h1 className="font-bold text-primary-text">Welcome to Places</h1>
-          <p className="text-sm">
-            Set up Places tto get the most out of your facility
-          </p>
-          <Button
-            onClick={onAdd}
-            size={"lg"}
-            className="w-[368px] mt-2 h-[51px]"
-          >
-            Get Started
-          </Button>
         </div>
       )}
       <PlacesModal

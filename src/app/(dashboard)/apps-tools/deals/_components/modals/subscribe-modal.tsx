@@ -72,7 +72,7 @@ export default function SubscribeModal({
     >
       <div
         className={
-          "bg-foreground rounded-3xl flex flex-col gap-y-3 px-4 py-5  shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
+          "bg-card rounded-3xl flex flex-col gap-y-3 px-4 py-5  shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
         }
         onClick={(e) => e.stopPropagation()}
       >

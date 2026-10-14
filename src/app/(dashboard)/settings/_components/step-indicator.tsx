@@ -31,11 +31,11 @@ export default function StepIndicator({
               <div
                 className={cn(
                   "p-2 md:p-2.5 w-fit rounded-full",
-                  isActive ? "bg-primary-accent" : "bg-foreground"
+                  isActive ? "bg-primary-accent" : "bg-card"
                 )}
               >
                 <div
-                  className={`w-8 h-8 md:w-10 md:h-10 rounded-full text-foreground flex items-center justify-center ${
+                  className={`w-8 h-8 md:w-10 md:h-10 rounded-full text-white flex items-center justify-center ${
                     isActiveOrCompleted ? "bg-primary" : "bg-[#C8C8C8]"
                   } `}
                 >

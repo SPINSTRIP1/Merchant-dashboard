@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
 
+// Every colour reads from a CSS variable in globals.css (light values in :root, dark in .dark)
+// so opacity modifiers like `bg-primary/10` work and the palette can be themed in one place.
+const token = (name: string) => `hsl(var(--${name}) / <alpha-value>)`;
+
 export default {
   darkMode: ["class"],
   content: [
@@ -10,64 +14,85 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        "sf-pro": ["SF Pro Display", "system-ui", "sans-serif"],
-        sans: ["SF Pro Display", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
+        // Legacy alias: older screens still use `font-sf-pro`
+        "sf-pro": ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       colors: {
-        background: { DEFAULT: "#F3F3F3", light: "#E0E0E0" },
-        foreground: "#F8F8F8",
-
+        background: {
+          DEFAULT: token("background"),
+          light: token("muted"),
+        },
+        foreground: token("foreground"),
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: token("card"),
+          foreground: token("card-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: token("popover"),
+          foreground: token("popover-foreground"),
         },
         primary: {
-          DEFAULT: "#6932E2",
-          accent: "#EBE2FF",
-          text: "#0F0F0F",
-          background: "#D9D9D9",
+          DEFAULT: token("primary"),
+          foreground: token("primary-foreground"),
+          accent: token("primary-accent"),
+          // Legacy aliases kept so existing screens keep working
+          text: token("foreground"),
+          background: token("muted"),
         },
         neutral: {
-          DEFAULT: "#F3F3F3",
-          accent: "#C8C8C8",
+          DEFAULT: token("muted"),
+          accent: token("neutral-accent"),
         },
-
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-          text: "#6F6D6D",
+          DEFAULT: token("secondary"),
+          foreground: token("secondary-foreground"),
+          text: token("muted-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: token("muted"),
+          foreground: token("muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: token("accent"),
+          foreground: token("accent-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: token("destructive"),
+          foreground: token("destructive-foreground"),
         },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+        border: token("border"),
+        input: token("input"),
+        ring: token("ring"),
+        sidebar: {
+          DEFAULT: token("sidebar-background"),
+          foreground: token("sidebar-foreground"),
+          primary: token("sidebar-primary"),
+          "primary-foreground": token("sidebar-primary-foreground"),
+          accent: token("sidebar-accent"),
+          "accent-foreground": token("sidebar-accent-foreground"),
+          border: token("sidebar-border"),
+          ring: token("sidebar-ring"),
+        },
         chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
+          "1": token("chart-1"),
+          "2": token("chart-2"),
+          "3": token("chart-3"),
+          "4": token("chart-4"),
+          "5": token("chart-5"),
+          "6": token("chart-6"),
         },
       },
       borderRadius: {
+        xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xs: "calc(var(--radius) - 6px)",
+      },
+      boxShadow: {
+        xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
       },
       fontSize: {
         xxs: "0.625rem",

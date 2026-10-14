@@ -8,16 +8,61 @@ export interface AuthTokens {
   refreshToken?: string;
 }
 
+/** One of the account's platform profiles (USER, MERCHANT, ADMIN, …) as returned by login / auth/me. */
+export interface UserProfile {
+  id: string;
+  role: string;
+  status: string;
+  kycStatus: string | null;
+  adminNotes: string | null;
+}
+
+/** The `permissions` block returned alongside the user by login and GET /auth/me. */
+export interface AccountCapabilities {
+  userKycStatus?: string;
+  merchantKycStatus?: string;
+  isUser?: boolean;
+  isMerchant?: boolean;
+  isAdmin?: boolean;
+  canCreateWallet?: boolean;
+  canFundWallet?: boolean;
+  canWithdrawFromWallet?: boolean;
+  canTransferFunds?: boolean;
+  canCreateDeal?: boolean;
+  canCreateInventory?: boolean;
+  canCreateMenuItems?: boolean;
+  canCreatePlaces?: boolean;
+  canCreateEvents?: boolean;
+  canCreateForms?: boolean;
+  canManageUsers?: boolean;
+  canManageMerchants?: boolean;
+  canAccessAuditLogs?: boolean;
+  canApproveKyc?: boolean;
+  isActive?: boolean;
+  isSuspended?: boolean;
+  suspendedReason?: string | null;
+}
+
 export interface UserData {
+  id?: string;
   email: string;
   fullName: string;
-  userName: string;
-  role: string;
-  avatarUrl?: string;
-  emailVerified?: boolean;
+  username?: string;
   phoneNumber?: string;
+  profilePicture?: string | null;
+  emailVerified?: boolean;
+  isActive?: boolean;
+  profiles?: UserProfile[];
+  /** Copied from the response's top-level `permissions` block so it persists with the user. */
+  capabilities?: AccountCapabilities;
+  /**
+   * Merchant team role (owner / admin_ops / waiter). Not returned by the backend yet — team
+   * members are mocked — so it's normally absent and the account is treated as the owner.
+   */
+  role?: string;
+  /** Dashboard sections an admin-ops team member may open (see src/lib/permissions.ts). */
+  dashboardPermissions?: string[];
   dob?: string;
-  complianceStatus?: "ACTIVE" | "PENDING_VERIFICATION" | "REJECTED";
 }
 
 interface AuthState {
@@ -128,7 +173,8 @@ export const loginUser = createAsyncThunk(
         credentials.emailOrUsername,
         credentials.password
       );
-      const { accessToken, refreshToken, user } = response.data;
+      const { accessToken, refreshToken, permissions } = response.data;
+      const user: UserData = { ...response.data.user, capabilities: permissions };
 
       const tokens: AuthTokens = {
         accessToken,

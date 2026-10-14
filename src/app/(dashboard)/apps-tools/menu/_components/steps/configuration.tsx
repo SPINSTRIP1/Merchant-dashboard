@@ -1,295 +1,171 @@
-import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import React from "react";
+import { Input } from "@/components/ui/input";
+import PillGroup from "@/components/pill-group";
+import ChipsInput from "@/components/chips-input";
+import { cn } from "@/lib/utils";
 import { useMenuForm } from "../../_context";
-import { Controller } from "react-hook-form";
-import { X } from "lucide-react";
+import type { Menu } from "../../_schemas";
+import PricedListEditor from "../priced-list-editor";
+
+const AVAILABILITY_OPTIONS: { value: Menu["availabilityType"]; label: string }[] = [
+  { value: "ALWAYS_AVAILABLE", label: "Always Available" },
+  { value: "SCHEDULED", label: "Specific days/time" },
+  { value: "UNAVAILABLE", label: "Unavailable" },
+];
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const SIZE_OPTIONS = ["Small", "Medium", "Large", "Other"];
 
 export default function Configuration() {
   const {
-    form: { control, watch, setValue },
+    form: { watch, setValue },
   } = useMenuForm();
 
-  // const availabilityType = watch("availabilityType");
-  const sizeOptions = watch("sizeOptions") || [];
-  const nutritionAllergens = watch("nutritionAllergens") || [];
-  const extras = watch("extras") || [];
+  const availabilityType = watch("availabilityType");
+  const schedule = watch("availabilitySchedule") ?? { days: [], startTime: "", endTime: "" };
+  const sizeOptions = watch("sizeOptions") ?? [];
+  const nutritionAllergens = watch("nutritionAllergens") ?? [];
+  const addOns = watch("addOns") ?? [];
+  const extras = watch("extras") ?? [];
 
-  // Sample menu items - replace with your actual data
-  const availableSizeOptions = ["Small", "Medium", "Large", "Other"];
+  const set = <K extends keyof Menu>(name: K, value: Menu[K]) =>
+    setValue(name, value as never, { shouldDirty: true, shouldValidate: true });
 
-  const toggleSizeOption = (item: string) => {
-    const currentOptions = sizeOptions || [];
-    if (currentOptions.includes(item)) {
-      setValue(
-        "sizeOptions",
-        currentOptions.filter((i) => i !== item)
-      );
-    } else {
-      setValue("sizeOptions", [...currentOptions, item]);
-    }
-  };
+  const toggleDay = (day: string) =>
+    set("availabilitySchedule", {
+      ...schedule,
+      days: schedule.days.includes(day)
+        ? schedule.days.filter((d) => d !== day)
+        : [...schedule.days, day],
+    });
 
-  const addNutritionAllergen = (
-    name: string,
-    type: "allergen" | "nutrition"
-  ) => {
-    if (name.trim()) {
-      setValue("nutritionAllergens", [...nutritionAllergens, { name, type }]);
-    }
-  };
+  // Keep each existing entry's type; new entries are recorded as allergens.
+  const setNutrition = (names: string[]) =>
+    set(
+      "nutritionAllergens",
+      names.map(
+        (name) =>
+          nutritionAllergens.find((n) => n.name === name) ?? { name, type: "allergen" as const }
+      )
+    );
 
-  const addAddOn = (name: string) => {
-    if (name.trim()) {
-      const addOns = watch("addOns") || [];
-      setValue("addOns", [...addOns, { name, price: 0 }]);
-    }
-  };
-
-  const addExtra = ({ name, price }: { name: string; price: number }) => {
-    setValue("extras", [...extras, { name, price }]);
-  };
-
-  const [extraInput, setExtraInput] = React.useState({ name: "", price: 0 });
-
-  // const updateExtra = (
-  //   index: number,
-  //   field: "name" | "price",
-  //   value: string | number
-  // ) => {
-  //   const updatedExtras = [...extras];
-  //   updatedExtras[index] = { ...updatedExtras[index], [field]: value };
-  //   setValue("extras", updatedExtras);
-  // };
-  const [nutritionInput, setNutritionInput] = React.useState("");
-  const [addOnInput, setAddOnInput] = React.useState("");
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <PillGroup
+          label="Availability"
+          options={AVAILABILITY_OPTIONS}
+          value={availabilityType}
+          onChange={(value) => set("availabilityType", value)}
+        />
+        {availabilityType === "SCHEDULED" && (
+          <div className="space-y-3 rounded-2xl border bg-muted/30 p-4">
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-foreground">Serving days</p>
+              <div className="flex flex-wrap gap-1.5">
+                {DAYS.map((day) => {
+                  const on = schedule.days.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDay(day)}
+                      aria-pressed={on}
+                      className={cn(
+                        "min-h-[34px] rounded-full border px-3 text-xs font-semibold transition-colors",
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {day.slice(0, 3)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="serve-from" className="text-xs">From</Label>
+                <Input
+                  id="serve-from"
+                  type="time"
+                  value={schedule.startTime}
+                  onChange={(e) => set("availabilitySchedule", { ...schedule, startTime: e.target.value })}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="serve-to" className="text-xs">To</Label>
+                <Input
+                  id="serve-to"
+                  type="time"
+                  value={schedule.endTime}
+                  onChange={(e) => set("availabilitySchedule", { ...schedule, endTime: e.target.value })}
+                  className="h-11"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="space-y-1.5">
-        <Label>Availability</Label>
-        <Controller
-          control={control}
-          name="availabilityType"
-          render={({ field }) => (
-            <MultiSelect
-              value={field.value}
-              options={[
-                { label: "Always Available", value: "ALWAYS_AVAILABLE" },
-                { label: "On Demand", value: "ON_DEMAND" },
-                { label: "Specific days/time", value: "SPECIFIC_DAYS_TIME" },
-                { label: "Other", value: "OTHER" },
-              ]}
-              onValueChange={field.onChange}
-            />
-          )}
+        <Label>Nutrition / Allergens (optional)</Label>
+        <ChipsInput
+          values={nutritionAllergens.map((n) => n.name)}
+          onChange={setNutrition}
+          placeholder="e.g. Contains nuts"
+        />
+        <p className="text-[11px] text-muted-foreground">Press Enter to add each one.</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Add Ons</Label>
+        <PricedListEditor
+          items={addOns}
+          onChange={(items) => set("addOns", items)}
+          namePlaceholder="e.g. Extra chicken"
+          emptyText="No add-ons yet."
         />
       </div>
-      <div className="space-y-1.5">
-        <Label>Nutrition/Allergens (Optional)</Label>
-        {nutritionAllergens.map((item, index) => (
-          <div key={index} className="flex items-center pt-2 gap-x-2">
-            <Input
-              className="!rounded-2xl border border-neutral-accent"
-              value={item.name}
-              readOnly
-            />
-            <button
-              onClick={() => {
-                const updatedList = [...nutritionAllergens];
-                updatedList.splice(index, 1);
-                setValue("nutritionAllergens", updatedList);
-              }}
-              className="bg-primary-accent rounded-full p-3"
-            >
-              <X size={20} className="text-primary" />
-            </button>
-          </div>
-        ))}
-        <div className="flex items-center pt-2 gap-x-2">
-          <button
-            onClick={() => {
-              if (nutritionInput.trim()) {
-                addNutritionAllergen(nutritionInput, "allergen");
-                setNutritionInput("");
-              }
-            }}
-          >
-            <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-          </button>
-          <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Add Item"
-            value={nutritionInput}
-            onChange={(e) => setNutritionInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (nutritionInput.trim()) {
-                  addNutritionAllergen(nutritionInput, "allergen");
-                  setNutritionInput("");
-                }
-              }
-            }}
-          />
-        </div>
-        <p className="text-center mt-4">
-          Click on the + icon or press Enter to add an item to the list.
-        </p>
-      </div>
-      <div className="space-y-1.5">
-        <Label>Add Ons</Label>
-        {(watch("addOns") || []).map(
-          (item: { name: string; price: number }, index: number) => (
-            <div key={index} className="flex items-center pt-2 gap-x-2">
-              <Input
-                className="!rounded-2xl border border-neutral-accent"
-                value={item.name}
-                readOnly
-              />
-              <button
-                onClick={() => {
-                  const addOns = watch("addOns") || [];
-                  const updatedList = [...addOns];
-                  updatedList.splice(index, 1);
-                  setValue("addOns", updatedList);
-                }}
-                className="bg-primary-accent rounded-full p-3"
-              >
-                <X size={20} className="text-primary" />
-              </button>
-            </div>
-          )
-        )}
-        <div className="flex items-center pt-2 gap-x-2">
-          <button
-            onClick={() => {
-              if (addOnInput.trim()) {
-                addAddOn(addOnInput);
-                setAddOnInput("");
-              }
-            }}
-          >
-            <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-          </button>
-          <Input
-            className="rounded-none border-b bg-transparent border-neutral-accent"
-            placeholder="Add Item"
-            value={addOnInput}
-            onChange={(e) => setAddOnInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (addOnInput.trim()) {
-                  addAddOn(addOnInput);
-                  setAddOnInput("");
-                }
-              }
-            }}
-          />
-        </div>
-        <p className="text-center mt-4">
-          Click on the + icon or press Enter to add an item to the list.
-        </p>
-      </div>
-      <div className="space-y-1.5">
-        <label htmlFor="size" className="text-secondary-text text-sm">
-          Size Options
-        </label>
-        <div className="flex flex-wrap mt-4 items-center gap-3">
-          {availableSizeOptions.map((item, index) => {
-            const isSelected = sizeOptions.includes(item);
+
+      <div className="space-y-2">
+        <Label>Size Options</Label>
+        <div className="flex flex-wrap gap-2">
+          {SIZE_OPTIONS.map((size) => {
+            const on = sizeOptions.includes(size);
             return (
-              <div
-                key={index}
-                onClick={() => toggleSizeOption(item)}
-                className={`flex cursor-pointer w-[160px] items-center py-2.5 px-2.5 gap-x-2 rounded-3xl transition-all duration-200 ${
-                  isSelected
-                    ? "bg-primary-accent"
-                    : "bg-background-light hover:bg-gray-200"
-                }`}
+              <button
+                key={size}
+                type="button"
+                onClick={() =>
+                  set("sizeOptions", on ? sizeOptions.filter((s) => s !== size) : [...sizeOptions, size])
+                }
+                aria-pressed={on}
+                className={cn(
+                  "inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-4 text-xs font-semibold transition-colors",
+                  on
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
+                )}
               >
-                <Checkbox checked={isSelected} />
-                <p
-                  className={`text-sm ${
-                    isSelected ? "text-primary" : "text-gray-500"
-                  }`}
-                >
-                  {item}
-                </p>
-              </div>
+                {on && <Check className="h-3.5 w-3.5" />} {size}
+              </button>
             );
           })}
         </div>
-        <div>
-          <label htmlFor="extras" className="text-secondary-text text-sm">
-            Extras
-          </label>
-          {extras.map((extra, index) => (
-            <div key={index} className="flex items-center pt-2 gap-x-2">
-              {/* <button
-                type="button"
-                onClick={() => addExtra()}
-                className="flex-shrink-0"
-              >
-                <HugeiconsIcon
-                  icon={PlusSignIcon}
-                  size={24}
-                  color={"#6F6D6D"}
-                />
-              </button> */}
-              <Input
-                className="rounded-none border-b bg-transparent border-neutral-accent"
-                placeholder="Add Item"
-                defaultValue={extra.name}
-              />
-              <Input
-                type="number"
-                className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-                placeholder="₦0.00"
-                defaultValue={extra.price || ""}
-              />
-            </div>
-          ))}
-          <div className="flex items-center pt-2 gap-x-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (extraInput.name.trim() && extraInput.price >= 0)
-                  addExtra(extraInput);
-              }}
-              className="flex-shrink-0"
-            >
-              <HugeiconsIcon icon={PlusSignIcon} size={24} color={"#6F6D6D"} />
-            </button>
-            <Input
-              className="rounded-none border-b bg-transparent border-neutral-accent"
-              placeholder="Add Item"
-              value={extraInput.name}
-              onChange={(e) =>
-                setExtraInput({ ...extraInput, name: e.target.value })
-              }
-            />
-            <Input
-              type="number"
-              className="!rounded-2xl max-w-[169px] border border-neutral-accent"
-              placeholder="₦0.00"
-              value={extraInput.price || ""}
-              onChange={(e) =>
-                setExtraInput({
-                  ...extraInput,
-                  price: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-          <p className="text-center mt-4">
-            Click on the + icon to add an item to the extras list.
-          </p>
-        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Extras</Label>
+        <PricedListEditor
+          items={extras}
+          onChange={(items) => set("extras", items)}
+          namePlaceholder="Extra name"
+          emptyText="No extras added yet."
+        />
       </div>
     </div>
   );

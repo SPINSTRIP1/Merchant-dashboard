@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronDown } from "lucide-react";
 import { MenuStatus } from "../_schemas";
 import {
   DropdownMenu,
@@ -6,8 +7,34 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
+const STATUS_STYLES: Record<MenuStatus, { label: string; pill: string; dot: string }> = {
+  AVAILABLE: {
+    label: "Available",
+    pill: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  PENDING: {
+    label: "Pending",
+    pill: "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
+  UNAVAILABLE: {
+    label: "Out of Stock",
+    pill: "border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    dot: "bg-rose-500",
+  },
+  DRAFT: {
+    label: "Draft",
+    pill: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
+  },
+};
+
+const SELECTABLE: MenuStatus[] = ["AVAILABLE", "PENDING", "UNAVAILABLE"];
+
+/** Menu item status pill; pass `onStatusChange` + `menuId` to make it a dropdown. */
 export default function MenuStatusBadge({
   status,
   onStatusChange,
@@ -17,81 +44,36 @@ export default function MenuStatusBadge({
   onStatusChange?: (menuId: string, newStatus: MenuStatus) => void;
   menuId?: string;
 }) {
-  const statusColors: Record<MenuStatus, string> = {
-    AVAILABLE: "text-[#34C759] bg-[#34C75926]",
-    PENDING: "text-[#FF8D28] bg-[#F6E9DD]",
-    UNAVAILABLE: "text-[#FF383C] bg-[#C7343426]",
-    DRAFT: "text-gray-500 bg-gray-100",
-  };
-
-  const statusOptions: { label: string; value: MenuStatus }[] = [
-    { label: "AVAILABLE", value: "AVAILABLE" },
-    { label: "PENDING", value: "PENDING" },
-    { label: "OUT OF STOCK", value: "UNAVAILABLE" },
-    // { label: "DRAFT", value: "DRAFT" },
-  ];
-
-  const handleStatusChange = (e: React.MouseEvent, newStatus: MenuStatus) => {
-    e.stopPropagation();
-    if (onStatusChange && menuId) {
-      onStatusChange(menuId, newStatus);
-    }
-  };
+  const style = STATUS_STYLES[status] ?? STATUS_STYLES.DRAFT;
+  const pillClass =
+    "inline-flex h-8 min-w-[120px] items-center justify-center gap-1 rounded-full border px-3 text-[10px] font-bold uppercase tracking-wide";
 
   if (!onStatusChange || !menuId) {
-    // Read-only mode
-    return (
-      <div
-        className={`${
-          statusColors[status] || statusColors["AVAILABLE"]
-        } w-[80px] flex items-center justify-center py-1 rounded-lg`}
-      >
-        <p className="font-semibold uppercase text-xxs">
-          {status === "UNAVAILABLE" ? "OUT OF STOCK" : status}
-        </p>
-      </div>
-    );
+    return <span className={cn(pillClass, style.pill)}>{style.label}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         onClick={(e) => e.stopPropagation()}
-        className="outline-none"
+        className={cn(pillClass, style.pill, "outline-none transition-opacity hover:opacity-80")}
+        aria-label={`Status: ${style.label}. Change status`}
       >
-        <div
-          className={`${
-            statusColors[status] || statusColors["AVAILABLE"]
-          } min-w-[100px] flex items-center justify-center gap-1 py-1 px-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity`}
-        >
-          <p className="font-semibold uppercase text-xxs">
-            {status === "UNAVAILABLE" ? "OUT OF STOCK" : status}
-          </p>
-          <ChevronDown size={12} />
-        </div>
+        {style.label}
+        <ChevronDown className="h-3 w-3" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-[130px] py-2 px-1 bg-neutral border rounded-2xl shadow-none border-neutral-accent"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {statusOptions.map((option) => (
+      <DropdownMenuContent className="w-44 rounded-xl" onClick={(e) => e.stopPropagation()}>
+        {SELECTABLE.map((value) => (
           <DropdownMenuItem
-            key={option.value}
-            onClick={(e) => handleStatusChange(e, option.value)}
-            className="flex items-center cursor-pointer gap-2 text-xs"
+            key={value}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (value !== status) onStatusChange(menuId, value);
+            }}
+            className="flex cursor-pointer items-center gap-2 text-xs"
           >
-            <div
-              className={`w-2 h-2 rounded-full ${
-                option.value === "AVAILABLE"
-                  ? "bg-[#34C759]"
-                  : option.value === "PENDING"
-                  ? "bg-[#FF8D28]"
-                  : option.value === "UNAVAILABLE"
-                  ? "bg-[#FF383C]"
-                  : "bg-gray-500"
-              }`}
-            />
-            <span className="text-secondary-text">{option.label}</span>
+            <span className={cn("h-2 w-2 rounded-full", STATUS_STYLES[value].dot)} />
+            {STATUS_STYLES[value].label}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

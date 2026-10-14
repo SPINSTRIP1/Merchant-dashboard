@@ -72,16 +72,21 @@ api.interceptors.response.use(
             },
           );
 
-          const {
-            accessToken,
-            refreshToken: newRefreshToken,
-            user,
-          } = response.data;
+          // Accept both the `{ status, message, data }` envelope (as login uses) and a bare payload
+          const payload = response.data?.data ?? response.data;
+          const { accessToken, refreshToken: newRefreshToken } = payload;
+          if (!accessToken) throw new Error("Refresh response did not include an access token");
 
           const tokens: AuthTokens = {
             accessToken,
-            refreshToken: newRefreshToken,
+            refreshToken: newRefreshToken ?? refreshToken,
           };
+
+          // Keep the current user unless the refresh returned a fresh one
+          const currentUser = store.getState().auth.user;
+          const user: UserData | null = payload.user
+            ? { ...payload.user, capabilities: payload.permissions ?? currentUser?.capabilities }
+            : currentUser;
 
           // Update tokens in Redux store
           store.dispatch(setTokens({ tokens, user: user as UserData }));

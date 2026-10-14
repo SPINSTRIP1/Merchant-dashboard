@@ -10,7 +10,7 @@ export default function GeneralInfo() {
     setCurrentStep,
   } = usePlacesForm();
   return (
-    <div className="space-y-7 py-5">
+    <div className="space-y-5">
       <FormArrayInput
         control={control}
         name="emails"
@@ -28,18 +28,13 @@ export default function GeneralInfo() {
         type="tel"
         description="Click on the + icon or press Enter to add a phone number."
       />
-      <FormInput
-        control={control}
-        label="Website (Optional)"
-        name="website"
-        placeholder="Enter Website URL"
-      />
+      <FormInput control={control} label="Website (Optional)" name="website" placeholder="Enter Website URL" />
 
-      <div className="flex justify-center mt-6 gap-x-3 items-center">
-        <Button
-          onClick={() => setCurrentStep(3)}
-          className="w-[368px] h-[51px] py-3"
-        >
+      <div className="flex justify-between gap-3 border-t pt-4">
+        <Button variant="outline" onClick={() => setCurrentStep(1)}>
+          Previous
+        </Button>
+        <Button variant="brand" onClick={() => setCurrentStep(3)}>
           Next
         </Button>
       </div>

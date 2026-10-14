@@ -34,7 +34,7 @@ export default function DetailsModal({
       <div
         onClick={(e) => e.stopPropagation()}
         className={
-          "bg-foreground scrollbar-hide rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
+          "bg-card scrollbar-hide rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
         }
       >
         <div className="flex w-full mb-4 justify-between items-center">

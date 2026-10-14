@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ReduxProvider } from "@/providers/redux-provider";
+
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+// Headings, big numbers and money totals (`font-display`)
+const fontDisplay = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -81,21 +97,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable}`}>
       <body
-        className={`font-sf-pro bg-background h-full text-secondary-text antialiased overflow-x-hidden`}
+        className="font-sans bg-background h-full text-secondary-text antialiased overflow-x-hidden"
       >
         <ReduxProvider>
           {children}
           <Toaster
-            position="bottom-right"
+            position="top-center"
             toastOptions={{
               duration: 3000,
               style: {
-                background: "#EBE2FF",
-                color: "#6932E2",
-                fontWeight: "500",
+                background: "hsl(var(--card))",
+                color: "hsl(var(--foreground))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "14px",
+                boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.1)",
+                fontSize: "14px",
+                fontWeight: 500,
               },
+              success: { iconTheme: { primary: "#10b981", secondary: "#fff" } },
+              error: { iconTheme: { primary: "#f43f5e", secondary: "#fff" } },
             }}
           />
         </ReduxProvider>

@@ -84,7 +84,7 @@ export default function Deals() {
             {stats.map((stat) => (
               <div
                 key={stat.title}
-                className="bg-foreground h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
+                className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
               >
                 <div
                   className="rounded-full p-2 bg-primary-accent w-fit"

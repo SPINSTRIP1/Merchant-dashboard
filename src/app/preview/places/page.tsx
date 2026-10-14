@@ -150,7 +150,7 @@ export default function PlacesPage() {
                     key={i}
                     className={cn(
                       "flex items-center cursor-pointer gap-x-1  rounded-full px-1 py-0.5 border ",
-                      "bg-foreground border-secondary-text text-secondary-text",
+                      "bg-card border-secondary-text text-secondary-text",
                     )}
                   >
                     <HugeiconsIcon

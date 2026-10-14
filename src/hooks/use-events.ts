@@ -137,3 +137,24 @@ export function usePublicEvent(eventId: string | null | undefined) {
     refetch,
   };
 }
+
+/**
+ * The merchant's most recent events from `GET /events` (first page, newest first).
+ * Pass `limit` to control how many are returned.
+ */
+export function useRecentEvents({ limit = 5 }: { limit?: number } = {}) {
+  const { data, isLoading, error, refetch } = useQuery<Event[]>({
+    queryKey: ["recent-events", limit],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`${SERVER_URL}/events`, { params: { page: 1, limit } });
+        return (response.data.data?.data ?? []).slice(0, limit);
+      } catch (error) {
+        console.log("Error fetching recent events:", error);
+        return [];
+      }
+    },
+  });
+
+  return { events: data ?? [], isLoading, error, refetch };
+}

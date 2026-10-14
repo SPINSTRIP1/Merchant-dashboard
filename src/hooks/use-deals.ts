@@ -1,7 +1,7 @@
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { DealsStatsResponse } from "@/app/(dashboard)/apps-tools/deals/_types";
-import { Campaign } from "@/app/(dashboard)/apps-tools/deals/_schemas";
+import { Campaign, Deal } from "@/app/(dashboard)/apps-tools/deals/_schemas";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -86,4 +86,26 @@ export function useDealCampaigns() {
     error,
     refetch,
   };
+}
+
+/**
+ * Active deals from `GET /deals?status=ACTIVE` (first page), for "apply a deal" pickers.
+ */
+export function useActiveDeals() {
+  const { data, isLoading, error, refetch } = useQuery<Deal[]>({
+    queryKey: ["deals", "active"],
+    queryFn: async () => {
+      try {
+        const response = await api.get(SERVER_URL + "/deals", {
+          params: { page: 1, limit: 100, status: "ACTIVE" },
+        });
+        return ((response.data.data?.data ?? []) as Deal[]).filter((d) => d.status === "ACTIVE");
+      } catch (error) {
+        console.log("Error fetching active deals:", error);
+        return [];
+      }
+    },
+  });
+
+  return { deals: data ?? [], isLoading, error, refetch };
 }

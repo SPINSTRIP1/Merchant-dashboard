@@ -11,6 +11,7 @@ export default function SafetyPolicies() {
   const {
     form: { control, getValues },
     handleReset,
+    setCurrentStep,
   } = usePlacesForm();
   const queryClient = useQueryClient();
   const [loading, setLoading] = React.useState(false);
@@ -62,29 +63,19 @@ export default function SafetyPolicies() {
     }
   }, [getValues, queryClient, handleReset]);
   return (
-    <div className="space-y-7 py-5">
-      <UploadFile
-        control={control}
-        name="environmentalSafetyPolicy"
-        label="Upload Environmental Safety Policy"
-      />
-      <UploadFile
-        control={control}
-        name="privacyPolicy"
-        label="Upload Privacy Policy"
-      />
-      <UploadFile
-        control={control}
-        name="disclaimers"
-        label="Upload Disclaimers"
-      />
+    <div className="space-y-5">
+      <UploadFile control={control} name="environmentalSafetyPolicy" label="Upload Environmental Safety Policy" />
+      <UploadFile control={control} name="privacyPolicy" label="Upload Privacy Policy" />
+      <UploadFile control={control} name="disclaimers" label="Upload Disclaimers" />
+      <p className="text-xs text-muted-foreground">
+        These documents are reviewed before ownership of the place is transferred to you.
+      </p>
 
-      <div className="flex justify-center mt-6 gap-x-3 items-center">
-        <Button
-          onClick={submitPlace}
-          className="w-[368px] h-[51px] py-3"
-          disabled={loading}
-        >
+      <div className="flex justify-between gap-3 border-t pt-4">
+        <Button variant="outline" onClick={() => setCurrentStep(2)}>
+          Previous
+        </Button>
+        <Button variant="brand" onClick={submitPlace} disabled={loading}>
           {loading ? "Claiming..." : "Claim Place"}
         </Button>
       </div>

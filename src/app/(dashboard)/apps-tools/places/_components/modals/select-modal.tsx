@@ -1,86 +1,56 @@
-import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-interface DeleteModalProps {
-  isOpen: boolean;
-  onClose: (e: "claim" | "new" | null) => void;
-}
+const OPTIONS = [
+  {
+    value: "new" as const,
+    title: "New Place",
+    description: "Create a brand new listing for a place that isn't on SpinStrip yet.",
+    image: "/places/new-place.svg",
+  },
+  {
+    value: "claim" as const,
+    title: "Claim Place",
+    description: "Take ownership of a place that already exists on SpinStrip.",
+    image: "/places/claim-place.svg",
+  },
+];
 
+/** Asks whether the merchant is adding a new place or claiming an existing one. */
 export default function SelectModal({
   isOpen,
   onClose,
-}: Readonly<DeleteModalProps>) {
-  const [selectedOption, setSelectedOption] = useState<"claim" | "new" | null>(
-    null
-  );
-  useEffect(() => {
-    if (selectedOption) {
-      onClose(selectedOption);
-      setSelectedOption(null);
-    }
-  }, [selectedOption, onClose]);
-  if (!isOpen) return null;
+}: Readonly<{ isOpen: boolean; onClose: (choice: "claim" | "new" | null) => void }>) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div
-        className={
-          "bg-foreground rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
-        }
-      >
-        <h1 className="text-center text-lg  font-bold text-primary-text">
-          Choose how you want to publish your place
-        </h1>
-
-        <div
-          style={{
-            backgroundImage: "url('/places/publish-bg.png')",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "140%",
-          }}
-          onClick={() => setSelectedOption("new")}
-          className={cn(
-            "cursor-pointer flex items-center h-[240px] bg-center justify-between rounded-2xl p-6 mt-6 gap-x-4",
-            selectedOption === "new" && "border border-primary"
-          )}
-        >
-          <div>
-            <h2 className="font-bold text-primary-text">New Place</h2>
-            <p className="text-sm">For Places not already on SpinStrip</p>
-          </div>
-          <Image
-            src={"/places/new-place.svg"}
-            width={400}
-            height={400}
-            alt="new place"
-            className="w-[173px] h-[155px] object-cover"
-          />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose(null)}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Choose how you want to publish your place</DialogTitle>
+          <DialogDescription>You can add as many places as you manage.</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onClose(option.value)}
+              className="card-hover group flex flex-col overflow-hidden rounded-2xl border bg-card text-left"
+            >
+              <div className="brand-gradient-soft grid h-40 place-items-center">
+                <Image src={option.image} alt="" width={180} height={140} className="h-28 w-auto" />
+              </div>
+              <div className="flex flex-1 items-start justify-between gap-3 p-4">
+                <div>
+                  <p className="font-display font-bold text-foreground">{option.title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{option.description}</p>
+                </div>
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </button>
+          ))}
         </div>
-        <div
-          style={{
-            backgroundImage: "url('/places/publish-bg.png')",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "140%",
-          }}
-          onClick={() => setSelectedOption("claim")}
-          className={cn(
-            "cursor-pointer flex items-center h-[240px] bg-center justify-between rounded-2xl p-6 mt-6 gap-x-4",
-            selectedOption === "claim" && "border border-primary"
-          )}
-        >
-          <div>
-            <h2 className="font-bold text-primary-text">Claim Place</h2>
-            <p className="text-sm">For Places already existing on SpinStrip</p>
-          </div>
-          <Image
-            src={"/places/claim-place.svg"}
-            width={400}
-            height={400}
-            alt="claim place"
-            className="w-[235px] h-[129px] object-cover"
-          />
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -47,10 +47,12 @@ export interface KYCData {
  *
  * Consumers that only need the verification status should use
  * `useComplianceStatus` (which derives it from this same query).
+ * Pass `{ enabled: false }` on public pages so signed-out visitors don't trigger a 401 → login redirect.
  */
-export function useKyc() {
+export function useKyc({ enabled = true }: { enabled?: boolean } = {}) {
   const { data, isLoading, error, refetch } = useQuery<KYCData, Error>({
     queryKey: ["kyc-merchant-status"],
+    enabled,
     queryFn: async () => {
       try {
         const response = await api.get(SERVER_URL + "/kyc/merchant/status");

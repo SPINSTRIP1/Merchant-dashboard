@@ -105,7 +105,7 @@ export default function RevenueChart() {
         displayColors: false,
         callbacks: {
           label: function (context: any) {
-            return `Revenue: $${context.parsed.y.toLocaleString()}`;
+            return `Revenue: ₦${context.parsed.y.toLocaleString()}`;
           },
         },
       },

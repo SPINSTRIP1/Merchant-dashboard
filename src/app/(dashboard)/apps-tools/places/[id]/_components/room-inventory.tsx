@@ -165,7 +165,7 @@ export default function RoomInventory() {
           />
         </div>
       </div>
-      <div className="bg-foreground rounded-3xl p-5 mt-4">
+      <div className="bg-card rounded-3xl p-5 mt-4">
         <Table>
           <TableHeader>
             <TableRow className="border-b-0">

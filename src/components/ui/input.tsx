@@ -2,13 +2,18 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/** Shared field styling, reused by Textarea, SelectTrigger and raw inputs that can't use these components. */
+export const inputClassName =
+  "w-full rounded-xl border border-input bg-card px-3.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50";
+
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (
       <input
         type={type}
         className={cn(
-          "flex !h-[49px] outline-none rounded-3xl font-normal w-full bg-[#F3F3F3] px-3 py-1 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-[#C8C8C8] font-sf-pro placeholder:text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          inputClassName,
+          "flex h-12 py-1 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
           className
         )}
         ref={ref}

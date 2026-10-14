@@ -5,26 +5,31 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex rounded-full items-center  justify-center gap-2 whitespace-nowrap text-white text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex rounded-full items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-white font-bold text-[#F8F8F8] shadow hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+        // Gradient call-to-action used for the main action on a page
+        brand:
+          "brand-gradient text-white shadow-lg shadow-primary/25 hover:opacity-95 active:scale-[0.98]",
+        // Tinted primary, for secondary actions that should still read as "on brand"
+        soft: "bg-primary/10 text-primary hover:bg-primary/20",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-card text-foreground hover:bg-muted",
         secondary:
-          "bg-primary-accent font-bold text-primary shadow-sm hover:bg-primary-accent/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "bg-primary-accent text-primary hover:bg-primary-accent/80",
+        ghost: "text-foreground hover:bg-muted",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
+        default: "min-h-[44px] px-5 py-2",
+        sm: "min-h-[36px] px-3.5 text-xs",
         lg: "h-[51px] px-8",
-        icon: "h-9 w-9",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

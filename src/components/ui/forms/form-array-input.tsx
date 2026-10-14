@@ -115,7 +115,7 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
                 {items.map((item, index) => (
                   <div key={index} className="flex items-center gap-x-2">
                     <Input
-                      className={`!rounded-2xl border border-neutral-accent ${inputClassName}`}
+                      className={inputClassName}
                       value={item}
                       readOnly
                     />

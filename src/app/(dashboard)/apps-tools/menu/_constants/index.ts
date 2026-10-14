@@ -14,7 +14,7 @@ export const DEFAULT_MENU_VALUES: Menu = {
   price: 0,
   quantity: 0,
   category: "",
-  status: "DRAFT",
+  status: "AVAILABLE",
   availabilityType: "ALWAYS_AVAILABLE",
   addOns: [],
   nutritionAllergens: [],

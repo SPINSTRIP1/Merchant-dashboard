@@ -1,8 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { Menu } from "../../_schemas";
 import Image from "next/image";
-import MenuStatusBadge from "../menu-status-badge";
+import { UtensilsCrossed } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { categoryLabel } from "@/hooks/use-menu";
 import { formatAmount } from "@/utils";
+import { Menu } from "../../_schemas";
+import MenuStatusBadge from "../menu-status-badge";
 
 interface DetailsModalProps {
   menu: Menu | null;
@@ -11,60 +14,100 @@ interface DetailsModalProps {
   onEdit: (menu: Menu) => void;
 }
 
-export default function DetailsModal({
-  isOpen,
-  menu,
-  onClose,
-  onEdit,
-}: Readonly<DetailsModalProps>) {
-  if (!isOpen || !menu) return null;
+const AVAILABILITY: Record<Menu["availabilityType"], string> = {
+  ALWAYS_AVAILABLE: "Always available",
+  SCHEDULED: "Specific days/time",
+  UNAVAILABLE: "Unavailable",
+};
+
+function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground">{children}</span>
+    </div>
+  );
+}
+
+export default function DetailsModal({ isOpen, menu, onClose, onEdit }: Readonly<DetailsModalProps>) {
+  if (!menu) return null;
+  const schedule = menu.availabilitySchedule;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div
-        className={
-          "bg-foreground rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[760px] overflow-y-auto"
-        }
-      >
-        <div className="md:flex grid grid-cols-2 gap-5 items-center overflow-x-auto ">
-          {menu?.images?.map((img, index) => (
-            <div
-              key={index}
-              className="w-full h-[150px] md:w-[253px] md:h-[206px] rounded-lg overflow-hidden"
-            >
-              <Image
-                src={img}
-                width={253}
-                height={206}
-                alt="Images"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-2xl">
+        {menu.images?.length ? (
+          <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1">
+            {menu.images.map((img, index) => (
+              <div key={index} className="relative h-44 w-56 shrink-0 overflow-hidden rounded-2xl">
+                <Image src={img} alt="" fill className="object-cover" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid h-32 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <UtensilsCrossed className="h-8 w-8" />
+          </div>
+        )}
+
+        <DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle className="text-2xl">{menu.name}</DialogTitle>
+            <MenuStatusBadge status={menu.status} />
+            {menu.isHidden && (
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                Hidden
+              </span>
+            )}
+          </div>
+          <DialogDescription className="text-base font-bold text-primary">
+            {formatAmount(menu.price)}
+          </DialogDescription>
+        </DialogHeader>
+
+        {menu.description && <p className="text-sm text-muted-foreground">{menu.description}</p>}
+
+        <div className="divide-y rounded-2xl border px-4">
+          {menu.code && <Detail label="Item code"><span className="font-mono text-xs">{menu.code}</span></Detail>}
+          <Detail label="Category">{categoryLabel(menu.category)}</Detail>
+          {menu.tag && <Detail label="Tag">{menu.tag}</Detail>}
+          <Detail label="Quantity">{menu.quantity}</Detail>
+          <Detail label="Availability">
+            {AVAILABILITY[menu.availabilityType] ?? menu.availabilityType}
+            {menu.availabilityType === "SCHEDULED" && schedule?.days?.length ? (
+              <span className="block text-xs font-normal text-muted-foreground">
+                {schedule.days.map((d) => d.slice(0, 3)).join(", ")} · {schedule.startTime}–{schedule.endTime}
+              </span>
+            ) : null}
+          </Detail>
+          {!!menu.sizeOptions?.length && <Detail label="Sizes">{menu.sizeOptions.join(", ")}</Detail>}
+          {!!menu.addOns?.length && (
+            <Detail label="Add ons">
+              {menu.addOns.map((a) => `${a.name}${a.price ? ` (${formatAmount(a.price)})` : ""}`).join(", ")}
+            </Detail>
+          )}
+          {!!menu.extras?.length && (
+            <Detail label="Extras">
+              {menu.extras.map((e) => `${e.name} (${formatAmount(e.price)})`).join(", ")}
+            </Detail>
+          )}
+          {!!menu.nutritionAllergens?.length && (
+            <Detail label="Nutrition / allergens">
+              {menu.nutritionAllergens.map((n) => n.name).join(", ")}
+            </Detail>
+          )}
+          <Detail label="Featured">{menu.isFeatured ? "Yes" : "No"}</Detail>
         </div>
-        <div className="flex items-center gap-x-3 mt-3 mb-1">
-          <h2 className="text-2xl text-primary-text font-bold">{menu.name}</h2>
-          <p>{menu.tag}</p>
-          <MenuStatusBadge status={menu.status} />
-        </div>
-        <h3 className="font-bold text-lg text-primary-text">
-          {formatAmount(menu.price)}
-        </h3>
-        <p>{menu.description}</p>
-        <div className="flex gap-x-2 w-full mt-4 items-center justify-center">
-          <Button
-            onClick={onClose}
-            className="w-full"
-            size={"lg"}
-            variant={"secondary"}
-          >
-            Cancel
+
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            Close
           </Button>
-          <Button onClick={() => onEdit(menu)} className="w-full" size={"lg"}>
+          <Button variant="brand" className="flex-1" onClick={() => onEdit(menu)}>
             Edit Item
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

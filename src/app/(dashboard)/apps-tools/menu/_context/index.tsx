@@ -71,8 +71,15 @@ function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
     try {
       const values = form.getValues();
       const { files, ...payload } = values;
-      delete payload.images;
       const isUpdating = Boolean(payload.id);
+      // New items get their images through the upload below. On edit, send the remaining image
+      // URLs so images removed in the Media step are removed on the server too.
+      if (!isUpdating) delete payload.images;
+      // A schedule only applies to "Specific days/time"
+      if (payload.availabilityType !== "SCHEDULED") delete payload.availabilitySchedule;
+      // Drop add-on / extra rows left without a name
+      payload.addOns = payload.addOns?.filter((item) => item.name.trim());
+      payload.extras = payload.extras?.filter((item) => item.name.trim());
       let res;
       if (isUpdating) {
         const { id, ...updateData } = payload;
@@ -126,6 +133,22 @@ function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
     // Flush any pending array inputs before navigation
     flushPendingArrayInputs();
 
+    // Don't leave General Info until the required fields are valid
+    if (currentStep === 1) {
+      const valid = await form.trigger(["name", "price", "quantity", "category", "status", "description"]);
+      if (!valid) {
+        toast.error("Fill in the item name, price, category and description to continue.");
+        return;
+      }
+    }
+    if (currentStep === 3 && form.getValues("availabilityType") === "SCHEDULED") {
+      const schedule = form.getValues("availabilitySchedule");
+      if (!schedule?.days?.length || !schedule.startTime || !schedule.endTime) {
+        toast.error("Choose the days and serving times for this item.");
+        return;
+      }
+    }
+
     try {
       if (currentStep < steps.length) {
         setCurrentStep(currentStep + 1);
@@ -136,7 +159,7 @@ function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.log("Error in menu handleNext:", error);
     }
-  }, [baseContext, submitMenu]);
+  }, [baseContext, submitMenu, form]);
 
   // Save form data to localStorage
   const saveFormToLocalStorage = useCallback(() => {

@@ -215,7 +215,7 @@ export default function InventoryItem() {
         {stats.map((stat) => (
           <div
             key={stat.title}
-            className="bg-foreground h-[165px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
+            className="bg-card h-[165px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
           >
             <div className="rounded-full p-2 bg-primary-accent w-fit">
               <HugeiconsIcon icon={stat.icon} size={24} color={"#6932E2"} />

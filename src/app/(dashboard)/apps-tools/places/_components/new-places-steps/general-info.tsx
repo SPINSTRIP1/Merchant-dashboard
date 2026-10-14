@@ -59,7 +59,7 @@ export default function GeneralInfo() {
                 "flex items-center gap-x-1 rounded-full hover:bg-primary-accent hover:border-primary hover:text-primary px-1 py-0.5 border cursor-pointer",
                 placeType === type.value
                   ? "bg-primary-accent border-primary text-primary"
-                  : "bg-foreground border-neutral-accent text-neutral-accent",
+                  : "bg-card border-neutral-accent text-neutral-accent",
               )}
             >
               <HugeiconsIcon

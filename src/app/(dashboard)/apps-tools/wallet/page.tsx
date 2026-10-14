@@ -78,7 +78,7 @@ export default function Wallet() {
         </div>
       ) : (
         <>
-          <div className="bg-foreground h-[165px] mb-5 w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
+          <div className="bg-card h-[165px] mb-5 w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
             <div className="flex items-center justify-between">
               <div className="rounded-full p-2 bg-primary-accent w-fit">
                 <HugeiconsIcon
@@ -131,7 +131,7 @@ export default function Wallet() {
             </div>
             <div className="flex w-full items-center justify-between">
               <div>
-                <p className="text-2xl text-primary-text font-bold">N0.00</p>
+                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
                 <h3 className="text-secondary-text text-lg">Balance</h3>
               </div>
               <button
@@ -159,7 +159,7 @@ export default function Wallet() {
             </div>
           </div>
           <div className="flex flex-wrap mb-5 gap-4">
-            <div className="bg-foreground h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
+            <div className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
               <div className="rounded-full p-2 bg-primary-accent w-fit">
                 <HugeiconsIcon
                   icon={AlignBoxTopLeftIcon}
@@ -168,11 +168,11 @@ export default function Wallet() {
                 />
               </div>
               <div>
-                <p className="text-2xl text-primary-text font-bold">N0.00</p>
+                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
                 <h3 className="text-secondary-text text-lg">Revenue</h3>
               </div>
             </div>
-            <div className="bg-foreground h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
+            <div className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
               <div className="rounded-full p-2 bg-primary-accent w-fit">
                 <HugeiconsIcon
                   icon={AlignBoxTopLeftIcon}
@@ -181,7 +181,7 @@ export default function Wallet() {
                 />
               </div>
               <div>
-                <p className="text-2xl text-primary-text font-bold">N0.00</p>
+                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
                 <h3 className="text-secondary-text text-lg">Withdrawal</h3>
               </div>
             </div>

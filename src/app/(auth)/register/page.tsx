@@ -121,8 +121,7 @@ export default function SignUpPage() {
           {
             email: response.data.email,
             fullName: response.data.fullName,
-            userName: response.data.username,
-            role: "USER",
+            username: response.data.username,
             emailVerified: response.data.emailVerified,
           }
         );

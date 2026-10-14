@@ -112,7 +112,7 @@ export default function VisitorList() {
           />
         </div>
       </div>
-      <div className="bg-foreground rounded-3xl p-4 mt-3">
+      <div className="bg-card rounded-3xl p-4 mt-3">
         <Table>
           <TableHeader>
             <TableRow className="border-b-0">

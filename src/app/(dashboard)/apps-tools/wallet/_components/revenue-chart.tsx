@@ -87,7 +87,7 @@ export default function RevenueChart() {
         displayColors: false,
         callbacks: {
           label: function (context: any) {
-            return `Revenue: $${context.parsed.y.toLocaleString()}`;
+            return `Revenue: ₦${context.parsed.y.toLocaleString()}`;
           },
         },
       },
@@ -137,7 +137,7 @@ export default function RevenueChart() {
   const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
 
   return (
-    <div className="bg-foreground mb-5 p-3 lg:p-6 rounded-[32px] m-2">
+    <div className="bg-card mb-5 p-3 lg:p-6 rounded-[32px] m-2">
       <div className="flex mb-7 items-center justify-between">
         <div>
           <h3 className="text-secondary-text lg:text-lg">Total Revenue</h3>

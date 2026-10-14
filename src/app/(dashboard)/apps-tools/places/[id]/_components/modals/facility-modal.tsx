@@ -346,7 +346,7 @@ export default function FacilityModal({
                   control={control}
                   label="Gate Fee"
                   name="fees.0.amount"
-                  placeholder="N0.00"
+                  placeholder="₦0.00"
                   type="number"
                 />
               </div>

@@ -39,7 +39,7 @@ export const statusColors: Record<Status, string> = {
 
 export default function InventoryItemTable() {
   return (
-    <div className="bg-foreground rounded-3xl p-5 mt-8">
+    <div className="bg-card rounded-3xl p-5 mt-8">
       <Table>
         <TableHeader>
           <TableRow className="border-b-0">

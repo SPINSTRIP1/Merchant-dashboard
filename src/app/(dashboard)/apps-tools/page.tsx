@@ -113,7 +113,7 @@ export default function Apps() {
                 index % 2 === 0
                   ? "lg:justify-self-start"
                   : "lg:justify-self-end"
-              } md:max-w-[487px]  w-full flex items-center gap-x-3 bg-foreground`}
+              } md:max-w-[487px]  w-full flex items-center gap-x-3 bg-card`}
             >
               <Image
                 src={app.icon}

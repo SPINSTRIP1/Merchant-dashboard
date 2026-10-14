@@ -1,50 +1,40 @@
-import Dropdown from "@/components/dropdown";
+"use client";
+
+import React, { useState } from "react";
+import Image from "next/image";
+import { Copy, Eye, EyeOff, MoreVertical, Pencil, Plus, Trash2, UtensilsCrossed } from "lucide-react";
 import SearchBar from "@/components/search-bar";
+import EmptyState from "@/components/empty-state";
+import PaginationButton from "@/components/pagination-button";
+import DeleteModal from "@/components/modals/delete-modal";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Copy01Icon,
-  Delete02Icon,
-  Edit02Icon,
-  EyeIcon,
-  ViewOffSlashIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { EllipsisVertical, UtensilsCrossed } from "lucide-react";
-import React, { useState } from "react";
-import MenuModal from "./modals/menu-modal";
-import PaginationButton from "@/components/pagination-button";
-import { SERVER_URL } from "@/constants";
-import { Menu } from "../_schemas";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { categoryLabel, useMenuCategories, useMenuItemActions, useMenuItems } from "@/hooks/use-menu";
 import { formatAmount } from "@/utils";
-import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import DeleteModal from "@/components/modals/delete-modal";
-import DuplicateModal from "@/components/modals/delete-modal";
-import { useServerPagination } from "@/hooks/use-server-pagination";
+import { Menu } from "../_schemas";
 import { useMenuForm } from "../_context";
-import { useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api/axios-client";
-import toast from "react-hot-toast";
-import AddButton from "@/app/(dashboard)/_components/add-button";
-import Item from "@/components/item";
-import EmptyState from "@/components/empty-state";
-import { MENU_QUERY_KEY } from "../_constants";
-import FeaturedMenus from "./featured-menus";
-import TopMenus from "@/app/(dashboard)/_components/top-menus";
+import MenuModal from "./modals/menu-modal";
 import DetailsModal from "./modals/details-modal";
 import MenuStatusBadge from "./menu-status-badge";
+import FeaturedMenus from "./featured-menus";
+import TopMenusCard from "./top-menus-card";
+
+const ALL = "all";
+const STATUS_FILTERS = [
+  { value: ALL, label: "All Status" },
+  { value: "AVAILABLE", label: "Available" },
+  { value: "PENDING", label: "Pending" },
+  { value: "UNAVAILABLE", label: "Out of Stock" },
+];
 
 export default function MenuTable() {
   const [selectedItem, setSelectedItem] = useState<Menu | null>(null);
@@ -52,91 +42,26 @@ export default function MenuTable() {
     form,
     debouncedSearch,
     statusFilter,
-    sortBy,
+    sortBy: categoryFilter,
     setSearchQuery,
     setStatusFilter,
-    setSortBy,
+    setSortBy: setCategoryFilter,
     searchQuery,
     setAction,
     action,
+    resetForm,
   } = useMenuForm();
-  const queryClient = useQueryClient();
-
-  // Use server pagination hook with search and filters
-  const { items, currentPage, totalPages, isLoading, handlePageChange } =
-    useServerPagination<Menu>({
-      queryKey: MENU_QUERY_KEY,
-      endpoint: `${SERVER_URL}/menu/menu-items`,
-      searchQuery: debouncedSearch,
-      filters: {
-        status: statusFilter,
-        category: sortBy,
-      },
-    });
-
-  // Optimistic delete hook
-  const { deleteItem } = useOptimisticDelete<Menu & { id: string }>({
-    queryKey: [MENU_QUERY_KEY, currentPage],
-    deleteEndpoint: `${SERVER_URL}/menu/menu-items`,
-    successMessage: "Item deleted successfully",
-    errorMessage: "Failed to delete item",
+  const { categories } = useMenuCategories();
+  const { items, currentPage, totalPages, isLoading, handlePageChange } = useMenuItems({
+    search: debouncedSearch,
+    status: statusFilter,
+    category: categoryFilter,
   });
+  const { updateStatus, duplicate, toggleHidden, remove } = useMenuItemActions();
 
-  const handleDuplicate = async (id: string) => {
-    try {
-      await api.post(`${SERVER_URL}/menu/menu-items/${id}/duplicate`);
-      queryClient.invalidateQueries({ queryKey: ["menus"] });
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to duplicate item");
-    }
-  };
-
-  const handleStatusChange = async (id: string) => {
-    try {
-      await api.patch(`${SERVER_URL}/menu/menu-items/${id}/toggle-hidden`);
-      queryClient.invalidateQueries({ queryKey: ["menus"] });
-      toast.success("Visibility updated successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to change Visibility");
-    }
-  };
-
-  const handleMenuStatusChange = async (menuId: string, newStatus: string) => {
-    // Optimistic update - update the cache for the current query
-    queryClient.setQueryData(
-      [
-        MENU_QUERY_KEY,
-        currentPage,
-        debouncedSearch,
-        {
-          status: statusFilter,
-          category: sortBy,
-        },
-      ],
-      (oldData: { data: Menu[] } | undefined) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          data: oldData.data.map((item: Menu) =>
-            item.id === menuId ? { ...item, status: newStatus } : item,
-          ),
-        };
-      },
-    );
-
-    try {
-      await api.patch(`${SERVER_URL}/menu/menu-items/${menuId}`, {
-        status: newStatus,
-      });
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to update status");
-      // Revert on error
-      queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
-    }
+  const openAdd = () => {
+    resetForm();
+    setAction("add");
   };
 
   const handleEditClick = (item: Menu) => {
@@ -153,7 +78,7 @@ export default function MenuTable() {
       category: item.category,
       isFeatured: item.isFeatured,
       availabilityType: item.availabilityType,
-      availabilitySchedule: item.availabilitySchedule,
+      availabilitySchedule: item.availabilitySchedule ?? { days: [], startTime: "", endTime: "" },
       nutritionAllergens: item.nutritionAllergens || [],
       addOns: item.addOns || [],
       sizeOptions: item.sizeOptions || [],
@@ -167,263 +92,228 @@ export default function MenuTable() {
     setSelectedItem(item);
     setAction("delete");
   };
+
+  const isFiltered = !!(searchQuery || statusFilter || categoryFilter);
+
   return (
-    <section>
-      <div className="flex flex-col lg:flex-row gap-x-5">
-        <div className="w-full flex-1">
-          <div className="flex flex-col md:flex-row md:items-center flex-wrap gap-3 justify-between w-full">
-            <h1 className="text-sm lg:text-base font-bold">Menu</h1>
-            <SearchBar
-              placeholder="Find Menu"
-              className="bg-[#F3F3F3] w-full max-w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="flex items-center gap-x-2">
-              <Dropdown
-                header=""
-                options={["All", "Available", "Pending", "Unavailable"]}
-                placeholder="All"
-                onSelect={(value) => {
-                  if (value === "All") {
-                    setStatusFilter("");
-                  } else if (value === "Available") {
-                    setStatusFilter("AVAILABLE");
-                  } else if (value === "Pending") {
-                    setStatusFilter("PENDING");
-                  } else if (value === "Unavailable") {
-                    setStatusFilter("UNAVAILABLE");
-                  }
-                }}
-              />
-              <Dropdown
-                header=""
-                options={["All Categories", "Breakfast", "Lunch", "Dinner"]}
-                placeholder="All Categories"
-                onSelect={(value) =>
-                  setSortBy(
-                    value === "All Categories" ? "" : value.toUpperCase(),
-                  )
-                }
-              />
+    <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <SearchBar
+            placeholder="Find Menu"
+            className="max-w-sm flex-1 md:max-w-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Select value={statusFilter || ALL} onValueChange={(v) => setStatusFilter(v === ALL ? "" : v)}>
+            <SelectTrigger className="h-11 w-[150px] rounded-full text-xs font-semibold">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTERS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter || ALL} onValueChange={(v) => setCategoryFilter(v === ALL ? "" : v)}>
+            <SelectTrigger className="h-11 w-[160px] rounded-full text-xs font-semibold">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All Categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {categoryLabel(c)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="brand" className="ml-auto" onClick={openAdd}>
+            <Plus /> Add Menu
+          </Button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border bg-card">
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
             </div>
-            <AddButton
-              onClick={() => {
-                setAction("add");
-              }}
-              title="Add Menu"
+          ) : items.length === 0 ? (
+            <EmptyState
+              icon={<UtensilsCrossed />}
+              title={isFiltered ? "No menu items found" : "No menu items yet"}
+              description={
+                isFiltered
+                  ? "No menu items match your filters. Try adjusting them."
+                  : "Add your first menu item to publish it on your public menu."
+              }
+              action={
+                !isFiltered && (
+                  <Button variant="brand" onClick={openAdd}>
+                    <Plus /> Add Your First Menu
+                  </Button>
+                )
+              }
             />
-          </div>
-          <div className="bg-foreground rounded-3xl p-5 mt-8">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b-0">
-                  {[
-                    "Item Code",
-                    "Item",
-                    "Price",
-                    "Status",
-                    "Tag",
-                    "Actions",
-                  ].map((header) => (
-                    <TableHead
-                      key={header}
-                      className="text-primary-text font-bold text-base"
-                    >
-                      {header}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
+          ) : (
+            <>
+              <Table className="min-w-[720px]">
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      <p className="text-gray-500">Loading menus...</p>
-                    </TableCell>
+                    <TableHead>Item Code</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tag</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : items.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-0">
-                      <EmptyState
-                        icon={
-                          <UtensilsCrossed className="h-16 w-16 text-primary" />
-                        }
-                        title="No Menu Items"
-                        description={
-                          searchQuery
-                            ? "No menu items match your search criteria. Try adjusting your filters."
-                            : "You haven't added any menu items yet. Add your first menu item to get started!"
-                        }
-                        action={
-                          !searchQuery ? (
-                            <AddButton
-                              onClick={() => {
-                                setAction("add");
-                              }}
-                              title="Add Your First Menu"
-                            />
-                          ) : undefined
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  items?.map((item) => (
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => (
                     <TableRow
-                      className="border-b-0 cursor-pointer hover:bg-neutral"
                       key={item.id}
+                      className="cursor-pointer"
                       onClick={() => {
                         setSelectedItem(item);
                         setAction("details");
                       }}
                     >
-                      <TableCell className="min-w-[100px]">
-                        {item.code}
-                      </TableCell>
+                      <TableCell className="font-mono text-[11px] text-muted-foreground">{item.code || "—"}</TableCell>
                       <TableCell>
-                        <Item
-                          item={{
-                            name: item?.name || "",
-                            id: item.category,
-                            img: item?.images?.[0],
-                          }}
-                        />
+                        <div className="flex items-center gap-3">
+                          {item.images?.[0] ? (
+                            <Image
+                              src={item.images[0]}
+                              alt=""
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 rounded-xl object-cover"
+                            />
+                          ) : (
+                            <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                              <UtensilsCrossed className="h-4 w-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-1.5 truncate font-semibold text-foreground">
+                              {item.name}
+                              {item.isHidden && <EyeOff className="h-3.5 w-3.5 text-muted-foreground" aria-label="Hidden" />}
+                            </p>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                              {categoryLabel(item.category)}
+                            </p>
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell>{formatAmount(item.price)}</TableCell>
-                      <TableCell className="w-[140px]">
+                      <TableCell className="font-semibold text-foreground">{formatAmount(item.price)}</TableCell>
+                      <TableCell>
                         <MenuStatusBadge
                           status={item.status}
-                          onStatusChange={handleMenuStatusChange}
                           menuId={item.id}
+                          onStatusChange={(id, status) => updateStatus.mutate({ id, status })}
                         />
                       </TableCell>
-                      <TableCell>{item.tag}</TableCell>
-
                       <TableCell>
+                        {item.tag ? (
+                          <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
+                            {item.tag}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="pl-4 outline-none">
-                            <EllipsisVertical />
+                          <DropdownMenuTrigger
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Actions for ${item.name}`}
+                            className="grid h-9 w-9 place-items-center rounded-full outline-none hover:bg-muted"
+                          >
+                            <MoreVertical className="h-4 w-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-[144px] py-3 px-2 mr-5 md:mr-0 bg-neutral border rounded-2xl shadow-none border-neutral-accent">
-                            {[
-                              {
-                                icon: Edit02Icon,
-                                label: "Edit Item",
-                                onClick: (e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  handleEditClick(item);
-                                },
-                              },
-                              {
-                                icon: Copy01Icon,
-                                label: "Duplicate Item",
-                                onClick: (e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  setSelectedItem(item);
-                                  setAction("duplicate");
-                                },
-                              },
-
-                              {
-                                icon: item.isHidden
-                                  ? EyeIcon
-                                  : ViewOffSlashIcon,
-                                label: item.isHidden
-                                  ? "Show Item"
-                                  : "Hide Item",
-                                onClick: (e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  handleStatusChange(item.id!);
-                                },
-                              },
-                              {
-                                icon: Delete02Icon,
-                                label: "Delete Item",
-                                color: "#FF5F57",
-                                onClick: (e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  handleDeleteClick(item);
-                                },
-                              },
-                            ].map(({ icon, label, color, onClick }) => (
-                              <DropdownMenuItem
-                                key={label}
-                                onClick={(e) => {
-                                  onClick(e);
-                                }}
-                                className="flex items-center cursor-pointer gap-2"
-                              >
-                                <HugeiconsIcon
-                                  icon={icon}
-                                  size={24}
-                                  color={color || "#6F6D6D"}
-                                />
-                                <p
-                                  style={{ color: color || "#6F6D6D" }}
-                                  className=" text-sm"
-                                >
-                                  {" "}
-                                  {label}
-                                </p>
-                              </DropdownMenuItem>
-                            ))}
+                          <DropdownMenuContent align="end" className="w-44 rounded-xl" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(item)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit Item
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setAction("duplicate");
+                              }}
+                            >
+                              <Copy className="mr-2 h-4 w-4" /> Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => toggleHidden.mutate(item.id!)}>
+                              {item.isHidden ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}
+                              {item.isHidden ? "Show Item" : "Hide Item"}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="cursor-pointer text-rose-500 focus:text-rose-500"
+                              onClick={() => handleDeleteClick(item)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination Component */}
-          {!isLoading && totalPages > 0 && (
-            <PaginationButton
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+                  ))}
+                </TableBody>
+              </Table>
+              {totalPages > 1 && (
+                <div className="border-t">
+                  <PaginationButton
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </>
           )}
-          <MenuModal
-            isOpen={action === "add" || action === "edit"}
-            action={action}
-            onClose={() => setAction(null)}
-          />
-          <DetailsModal
-            isOpen={action === "details"}
-            menu={selectedItem}
-            onClose={() => setAction(null)}
-            onEdit={(menu) => handleEditClick(menu)}
-          />
-          <DeleteModal
-            isOpen={action === "delete"}
-            title={selectedItem?.name || "this item"}
-            onClose={() => setAction(null)}
-            onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
-            secondaryText="Cancel"
-            description="This menu will be deleted permanently and cannot be recovered!"
-          />
-          <DuplicateModal
-            isOpen={action === "duplicate"}
-            title={selectedItem?.name || "this item"}
-            onClose={() => setAction(null)}
-            onDeleteConfirm={() => handleDuplicate(selectedItem?.id || "")}
-            secondaryText="Cancel"
-            primaryText="Duplicate"
-            description="This menu will be duplicated!"
-            successMessage="This menu has been duplicated successfully."
-            headTitle={`Are you sure you want to duplicate ${
-              selectedItem?.name || "this item"
-            }?`}
-          />
         </div>
-        <TopMenus />
       </div>
-      <FeaturedMenus
-        onDeleteClick={handleDeleteClick}
-        onEditClick={handleEditClick}
+
+      <aside className="space-y-5">
+        <TopMenusCard />
+        <FeaturedMenus onDeleteClick={handleDeleteClick} onEditClick={handleEditClick} />
+      </aside>
+
+      <MenuModal
+        isOpen={action === "add" || action === "edit"}
+        action={action}
+        onClose={() => setAction(null)}
+      />
+      <DetailsModal
+        isOpen={action === "details"}
+        menu={selectedItem}
+        onClose={() => setAction(null)}
+        onEdit={(menu) => handleEditClick(menu)}
+      />
+      <DeleteModal
+        isOpen={action === "delete"}
+        title={selectedItem?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => selectedItem?.id && remove.mutate(selectedItem.id)}
+        secondaryText="Cancel"
+        description="This menu item will be deleted permanently and cannot be recovered."
+      />
+      <DeleteModal
+        isOpen={action === "duplicate"}
+        title={selectedItem?.name || "this item"}
+        onClose={() => setAction(null)}
+        onDeleteConfirm={() => selectedItem?.id && duplicate.mutate(selectedItem.id)}
+        secondaryText="Cancel"
+        primaryText="Duplicate"
+        description="A copy of this item will be added to your menu."
+        successMessage="This menu item has been duplicated."
+        headTitle={`Duplicate ${selectedItem?.name || "this item"}?`}
       />
     </section>
   );

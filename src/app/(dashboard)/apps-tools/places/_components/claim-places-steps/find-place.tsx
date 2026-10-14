@@ -1,23 +1,18 @@
-import Dropdown from "@/components/dropdown";
-import SearchBar from "@/components/search-bar";
+"use client";
+
 import React from "react";
-import { Place } from "../../_schemas";
 import Image from "next/image";
-import {
-  Globe02Icon,
-  Location01Icon,
-  Time01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { getPlaceType } from "../../_utils";
+import { Building2, Clock, Eye, Globe, MapPin } from "lucide-react";
+import SearchBar from "@/components/search-bar";
+import EmptyState from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
-import { usePlacesForm } from "../../_context";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
 import { useDebounce } from "@/hooks/use-debounce";
-import Loader from "@/components/loader";
-import EmptyState from "@/components/empty-state";
-import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
+import { Place } from "../../_schemas";
+import { getOperatingHoursDisplay, getPlaceType } from "../../_utils";
+import { usePlacesForm } from "../../_context";
 
 export interface SinglePlace extends Omit<Place, "coverImage"> {
   coverImage: string;
@@ -40,90 +35,78 @@ export default function FindPlace() {
     searchQuery: debouncedSearchQuery,
   });
 
-  if (isLoading) return <Loader />;
-
   return (
-    <div>
-      <div className="flex items-center justify-between w-full">
-        <SearchBar
-          placeholder="Search"
-          className="bg-[#F3F3F3] w-full max-w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="space-y-4">
+      <SearchBar
+        placeholder="Search"
+        className="max-w-full md:max-w-full"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-72 rounded-2xl" />
+          ))}
+        </div>
+      ) : !items || items.length === 0 ? (
+        <EmptyState
+          icon={<Building2 />}
+          title="No Places Found"
+          description={
+            searchQuery
+              ? "No places match your search criteria. Please try again with different keywords."
+              : "No places available to claim at the moment."
+          }
         />
-
-        <Dropdown
-          header=""
-          options={["Name", "Price", "Stock", "Date Updated", "Date Created"]}
-          placeholder="Sort by"
-          onSelect={() => {}}
-        />
-      </div>
-      <div className="grid grid-cols-2 mt-5 gap-5">
-        {!items || items.length === 0 ? (
-          <div className="col-span-2">
-            <EmptyState
-              title="No Places Found"
-              description={
-                searchQuery
-                  ? "No places match your search criteria. Please try again with different keywords."
-                  : "No places available to claim at the moment."
-              }
-              className="pt-20"
-            />
-          </div>
-        ) : (
-          items.map((place, index) => (
-            <div key={index} className="flex flex-col gap-y-1.5">
-              <Image
-                src={place.coverImage || ""}
-                alt={place.name!}
-                width={960}
-                height={650}
-                className="w-full h-[206px] object-cover object-center rounded-xl"
-              />
-
-              <h1 className="text-xl md:text-2xl font-bold text-primary-text">
-                {place.name} - {place.city}
-              </h1>
-              <p className="text-base text-primary-text">
-                {getPlaceType(place.placeType!)}
-              </p>
-
-              <p>{place.description}</p>
-
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon
-                  icon={Location01Icon}
-                  size={24}
-                  color="#6F6D6D"
-                />
-                <p className="text-sm">
-                  {place.city}, {place.state}
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {items.map((place, index) => (
+            <article key={index} className="flex flex-col overflow-hidden rounded-2xl border bg-card">
+              {place.coverImage ? (
+                <div className="relative h-32">
+                  <Image src={place.coverImage} alt={place.name} fill className="object-cover" />
+                </div>
+              ) : (
+                <div className="brand-gradient-soft grid h-32 place-items-center">
+                  <Building2 className="h-7 w-7 text-primary/60" />
+                </div>
+              )}
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="truncate font-display text-base font-bold text-foreground">
+                  {place.name} - {place.city}
+                </h3>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                  {getPlaceType(place.placeType!)}
                 </p>
+                {place.description && (
+                  <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{place.description}</p>
+                )}
+                <div className="mt-3 flex-1 space-y-1.5 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-primary" /> {place.city}, {place.state}
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    {getOperatingHoursDisplay(place.operatingHours)}
+                  </p>
+                  <p className="flex items-center gap-1.5 truncate">
+                    <Globe className="h-3.5 w-3.5 shrink-0 text-primary" /> {place.website || "N/A"}
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Eye className="h-3.5 w-3.5 text-primary" />
+                    {place.views ? `${place.views.toLocaleString()} views` : "No views yet"}
+                  </p>
+                </div>
+                <Button variant="brand" size="sm" className="mt-4 w-full" onClick={() => setCurrentStep(2)}>
+                  Claim
+                </Button>
               </div>
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-                <p className="text-sm">Open 24 hours daily</p>
-              </div>
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
-                <p className="text-sm">{place.website || "N/A"}</p>
-              </div>
-
-              <ImpressionsStack impressions={place.views ?? 0} />
-
-              <Button
-                onClick={() => setCurrentStep(2)}
-                size={"lg"}
-                className="w-full mt-3"
-              >
-                Claim
-              </Button>
-            </div>
-          ))
-        )}
-      </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

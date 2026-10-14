@@ -1,14 +1,11 @@
-import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
-import SelectDropdown from "@/components/select-dropdown";
-import { Label } from "@/components/ui/label";
-import React from "react";
-import { useMenuForm } from "../../_context";
-import { SERVER_URL } from "@/constants";
-import { Deal } from "../../../deals/_schemas";
-import { useServerPagination } from "@/hooks/use-server-pagination";
-import { useDealSubscription } from "@/hooks/use-deals";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import PillGroup from "@/components/pill-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useActiveDeals, useDealSubscription } from "@/hooks/use-deals";
+import { useMenuForm } from "../../_context";
+
+const NO_DEAL = "none";
 
 export default function DealSettings() {
   const {
@@ -19,74 +16,60 @@ export default function DealSettings() {
   const isFeatured = watch("isFeatured");
   const dealId = watch("dealId");
   const { subscribed } = useDealSubscription();
-  const { items, isLoading } = useServerPagination<Deal>({
-    queryKey: "deals",
-    endpoint: `${SERVER_URL}/deals`,
-  });
-  const options =
-    items?.map((deal) => ({ label: deal.name, value: deal.id! })) || [];
-  return (
-    <div className="space-y-7">
-      <div className="space-y-1.5">
-        <Label>Mark as Featured</Label>
-        <MultiSelect
-          value={isFeatured ? "YES" : "NO"}
-          options={[
-            { label: "Yes", value: "YES" },
-            { label: "No", value: "NO" },
-          ]}
-          className="lg:grid"
-          radioClassName="lg:w-full"
-          onValueChange={(value) => {
-            setValue("isFeatured", value === "YES", {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
-          }}
-        />
-      </div>
-      <div className=" flex flex-col">
-        <Label>Apply a campaign (Deals)</Label>
-        <input
-          className="text-xs my-1.5 outline-none"
-          placeholder="Brief description of this option goes here..."
-        />
+  const { deals, isLoading } = useActiveDeals();
 
-        {isLoading && <p>Fetching deals...</p>}
-        <SelectDropdown
-          className="!rounded-2xl border border-neutral-accent"
-          placeholder="Select Deal"
-          options={options}
-          value={dealId || ""}
-          onValueChange={(value) => {
-            setValue("dealId", value == dealId ? undefined : value, {
+  return (
+    <div className="space-y-6">
+      <PillGroup
+        label="Mark as Featured"
+        options={[
+          { value: "yes", label: "Yes" },
+          { value: "no", label: "No" },
+        ]}
+        value={isFeatured ? "yes" : "no"}
+        onChange={(value) =>
+          setValue("isFeatured", value === "yes", { shouldDirty: true, shouldValidate: true })
+        }
+      />
+
+      <div className="space-y-1.5">
+        <Label>Apply a campaign</Label>
+        <Select
+          value={dealId || NO_DEAL}
+          onValueChange={(value) =>
+            setValue("dealId", value === NO_DEAL ? undefined : value, {
               shouldDirty: true,
               shouldValidate: true,
-            });
-          }}
-          category="Deals"
-          isLoading={isLoading}
-        />
-        {/* {items && items.length ? null : ( */}
-        <p className="text-[#000000E5] mt-2 text-sm">
+            })
+          }
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={isLoading ? "Loading deals…" : "Select Deal"} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_DEAL}>No deal</SelectItem>
+            {deals.map((deal) => (
+              <SelectItem key={deal.id} value={deal.id!}>
+                {deal.name} — {deal.discountPercentage}% off
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {deals.length || isLoading ? "Only active deals are listed." : "You have no active deals."}{" "}
           Want to apply a campaign?{" "}
-          <Button
+          <button
             type="button"
-            variant="link"
-            className="font-bold text-primary p-0 h-auto"
+            className="font-semibold text-primary hover:underline"
             onClick={() => {
               handleCreateDeals();
-              router.push(
-                subscribed
-                  ? "/apps-tools/deals"
-                  : "/apps-tools"
-              );
+              router.push(subscribed ? "/apps-tools/deals" : "/apps-tools");
             }}
           >
             Create Deals
-          </Button>
+          </button>
         </p>
-        {/* )} */}
       </div>
     </div>
   );

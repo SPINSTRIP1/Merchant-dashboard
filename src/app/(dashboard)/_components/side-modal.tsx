@@ -38,21 +38,22 @@ export default function SideModal({
   return (
     <div
       onClick={handleClose}
-      className={`fixed inset-0 bg-black backdrop-blur-md flex items-center justify-end z-50 transition-all duration-300 ease-in-out ${
-        isAnimating ? "bg-opacity-50" : "bg-opacity-0"
+      className={`fixed inset-0 z-50 flex items-center justify-end backdrop-blur-[2px] transition-colors duration-300 ease-in-out ${
+        isAnimating ? "bg-black/50" : "bg-black/0"
       }`}
     >
       <div
-        className={`bg-foreground relative rounded-l-3xl p-3 lg:p-4 scrollbar-hide shadow-xl max-w-[92vw] lg:max-w-[732px] w-full h-screen overflow-y-auto transition-transform duration-300 ease-in-out ${
+        className={`relative h-screen w-full max-w-[92vw] overflow-y-auto rounded-l-3xl border-l bg-card p-4 text-card-foreground shadow-xl scrollbar-hide lg:max-w-[732px] lg:p-6 transition-transform duration-300 ease-in-out ${
           isAnimating ? "translate-x-0" : "translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={handleClose}
-          className="p-1 absolute top-4 left-3 bg-neutral-accen rounded-full hover:bg-gray-200 transition-colors duration-200"
+          className="absolute left-3 top-4 grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <X size={20} />
+          <X size={18} />
+          <span className="sr-only">Close</span>
         </button>
         {children}
       </div>

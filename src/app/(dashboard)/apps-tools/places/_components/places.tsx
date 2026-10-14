@@ -1,155 +1,160 @@
-import ContainerWrapper from "@/components/container-wrapper";
-import React from "react";
-import {
-  ArrowRight02Icon,
-  Globe02Icon,
-  Time01Icon,
-} from "@hugeicons/core-free-icons";
-import {
-  Delete02Icon,
-  Edit02Icon,
-  Location01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
-import AddButton from "@/app/(dashboard)/_components/add-button";
-import StatusBadge from "@/components/status-badge";
-import { cn } from "@/lib/utils";
-import { PLACE_TYPES } from "../_constants";
-import Link from "next/link";
-import { SinglePlace } from "./claim-places-steps/find-place";
-import ImpressionsStack from "../../event-planner/_components/impressions-stack";
-import { getOperatingHoursDisplay } from "../_utils";
+"use client";
 
-interface PlaceProps {
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight, Building2, Clock, Eye, Globe, Hourglass, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SinglePlace } from "./claim-places-steps/find-place";
+import { cn } from "@/lib/utils";
+import { getOperatingHoursDisplay, getPlaceType } from "../_utils";
+
+const STATUS = {
+  PUBLISHED: { label: "Published", text: "text-emerald-600 dark:text-emerald-400", bar: "w-full bg-emerald-500" },
+  UNPUBLISHED: { label: "Review Pending", text: "text-amber-600 dark:text-amber-400", bar: "w-1/2 brand-gradient" },
+  DRAFT: { label: "Draft", text: "text-muted-foreground", bar: "w-1/4 bg-muted-foreground/40" },
+  REJECTED: { label: "Rejected", text: "text-rose-600 dark:text-rose-400", bar: "w-1/4 bg-rose-500" },
+} as const;
+
+function PlaceCard({
+  place,
+  index,
+  onEdit,
+  onDelete,
+}: {
   place: SinglePlace;
-  onEdit?: (place: SinglePlace) => void;
-  onDelete?: (place: SinglePlace) => void;
+  index: number;
+  onEdit: (place: SinglePlace) => void;
+  onDelete: (place: SinglePlace) => void;
+}) {
+  const status = STATUS[place.status ?? "UNPUBLISHED"] ?? STATUS.UNPUBLISHED;
+  const edit = () =>
+    onEdit({
+      ...place,
+      // @ts-expect-error - URL strings are passed instead of File objects for editing
+      environmentalSafetyPolicy: place.environmentalSafetyPolicyUrl || undefined,
+      // @ts-expect-error - URL strings are passed instead of File objects for editing
+      privacyPolicy: place.privacyPolicyUrl || undefined,
+      // @ts-expect-error - URL strings are passed instead of File objects for editing
+      disclaimers: place.disclaimersUrl || undefined,
+      // @ts-expect-error - URL strings are passed instead of File objects for editing
+      ownershipDocument: place.ownershipDocumentUrl || undefined,
+      // @ts-expect-error - URL strings are passed instead of File objects for editing
+      ownershipVideo: place.ownershipVideoUrl || undefined,
+    });
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.35 }}
+      className="card-hover flex flex-col overflow-hidden rounded-2xl border bg-card"
+    >
+      {place.coverImage ? (
+        <div className="relative h-36">
+          <Image src={place.coverImage} alt="" fill className="object-cover" />
+        </div>
+      ) : (
+        <div className="brand-gradient-soft grid h-36 place-items-center">
+          <Building2 className="h-8 w-8 text-primary/60" />
+        </div>
+      )}
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate font-display text-base font-bold text-foreground">
+              {place.name} - {place.city}
+            </h3>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
+              {getPlaceType(place.placeType)}
+            </p>
+          </div>
+          <Button size="sm" variant="outline" asChild className="shrink-0">
+            <Link href={`/apps-tools/places/${place.id}`}>
+              View Place <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="mt-3 flex-1 space-y-1.5 text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-primary" /> {place.city}, {place.state}
+          </p>
+          <p className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary" /> {getOperatingHoursDisplay(place.operatingHours)}
+          </p>
+          {place.website && (
+            <p className="flex items-center gap-1.5 truncate">
+              <Globe className="h-3.5 w-3.5 shrink-0 text-primary" /> {place.website}
+            </p>
+          )}
+          <p className="flex items-center gap-1.5">
+            <Eye className="h-3.5 w-3.5 text-primary" />
+            {place.views ? `${place.views.toLocaleString()} views` : "No views yet"}
+          </p>
+        </div>
+
+        <div className="mt-4 border-t pt-3">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-semibold text-muted-foreground">
+              Approval Status: <span className={cn("font-bold", status.text)}>{status.label}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={edit}
+                aria-label={`Edit ${place.name}`}
+                className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(place)}
+                aria-label={`Delete ${place.name}`}
+                className="grid h-9 w-9 place-items-center rounded-full text-rose-500 transition-colors hover:bg-rose-500/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full rounded-full", status.bar)} />
+          </div>
+          {place.status === "REJECTED" && place.rejectionReason && (
+            <p className="mt-2 rounded-xl bg-rose-500/10 px-3 py-2 text-[11px] text-rose-600 dark:text-rose-400">
+              {place.rejectionReason}
+            </p>
+          )}
+
+          {place.status === "PUBLISHED" ? (
+            <Button size="sm" variant="soft" className="mt-3 w-full" onClick={edit}>
+              Edit Place
+            </Button>
+          ) : place.status === "REJECTED" ? (
+            <Button size="sm" variant="brand" className="mt-3 w-full" onClick={edit}>
+              Fix &amp; Resubmit <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          ) : place.status === "DRAFT" ? (
+            <Button size="sm" variant="brand" className="mt-3 w-full" onClick={edit}>
+              Continue Setup <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <p
+              className="mt-3 flex min-h-[36px] items-center justify-center gap-1.5 rounded-full bg-amber-500/10 text-xs font-semibold text-amber-600 dark:text-amber-400"
+              title="SpinStrip is reviewing this place. You'll be notified once it's published."
+            >
+              <Hourglass className="h-3.5 w-3.5" /> Awaiting review
+            </p>
+          )}
+        </div>
+      </div>
+    </motion.article>
+  );
 }
 
-const Place = ({ place, onEdit, onDelete }: PlaceProps) => {
-  const status = place.status || "UNVERIFIED";
-  const placeType = PLACE_TYPES.find(
-    (type) => type.value === place.placeType,
-  )?.label;
-  console.log(place);
-  return (
-    <div className="border-b last:border-0 last:pb-2 space-y-2 pt-3 pb-5 border-neutral-accent">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-primary-text">
-            {place.name} - {place.city}
-          </h1>
-          <p className="text-base text-primary-text">{placeType}</p>
-        </div>
-        <Link
-          href={`/apps-tools/places/${place.id}`}
-          className="text-sm text-primary underline"
-        >
-          View Place
-        </Link>
-      </div>
-      <Image
-        src={place.coverImage || ""}
-        alt={place.name}
-        width={960}
-        height={650}
-        className="w-full h-[206px] object-cover object-center rounded-xl"
-      />
-
-      <p>{place.description}</p>
-      <div className="flex items-center flex-wrap justify-between gap-3 my-3">
-        <div className="flex items-center gap-x-2">
-          <HugeiconsIcon icon={Location01Icon} size={24} color="#6F6D6D" />
-          <p className="text-sm">
-            {place.city}, {place.state}
-          </p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-          <p className="text-sm">
-            {getOperatingHoursDisplay(place.operatingHours)}
-          </p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
-          <p className="text-sm">{place.website || "N/A"}</p>
-        </div>
-
-        <ImpressionsStack impressions={place.views ?? 0} />
-      </div>
-      <div className="flex justify-between pt-3 w-full">
-        <button
-          onClick={() =>
-            onEdit?.({
-              ...place,
-              // @ts-expect-error - URL strings are passed instead of File objects for editing
-              environmentalSafetyPolicy:
-                place.environmentalSafetyPolicyUrl || undefined,
-              // @ts-expect-error - URL strings are passed instead of File objects for editing
-              privacyPolicy: place.privacyPolicyUrl || undefined,
-              // @ts-expect-error - URL strings are passed instead of File objects for editing
-              disclaimers: place.disclaimersUrl || undefined,
-              // @ts-expect-error - URL strings are passed instead of File objects for editing
-              ownershipDocument: place.ownershipDocumentUrl || undefined,
-              // @ts-expect-error - URL strings are passed instead of File objects for editing
-              ownershipVideo: place.ownershipVideoUrl || undefined,
-            })
-          }
-          className="rounded-2xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2"
-        >
-          <HugeiconsIcon icon={Edit02Icon} size={16} color="#FFFFFF" />
-          <p className="font-normal text-sm">Edit</p>
-        </button>
-
-        <button
-          onClick={() => onDelete?.(place)}
-          className="rounded-2xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
-        >
-          <HugeiconsIcon icon={Delete02Icon} color="#FF383C" size={16} />
-          <p className="font-normal text-sm">Delete</p>
-        </button>
-      </div>
-      <div className="flex flex-col lg:flex-row gap-y-4 lg:items-center gap-x-5 mt-6 justify-between">
-        <div className="flex items-center justify-between gap-x-2">
-          <h2 className="text-[#0F0F0F]">Approval Status</h2>
-          <StatusBadge
-            status={
-              status === "PUBLISHED"
-                ? "ACTIVE"
-                : status === "UNPUBLISHED"
-                  ? "PENDING"
-                  : "REJECTED"
-            }
-            title={status === "UNPUBLISHED" ? "Review Pending" : status}
-          />
-        </div>
-        <div className="max-w-[383px] 2xl:max-w-[453px] w-full h-1.5 rounded-2xl bg-primary-accent">
-          <div
-            className={cn(
-              "h-full bg-primary rounded-2xl",
-              status === "DRAFT"
-                ? "w-1/4"
-                : status === "UNPUBLISHED"
-                  ? "w-2/4"
-                  : "w-full",
-            )}
-          />
-        </div>
-
-        <button className="flex items-center w-fit bg-primary-accent p-2 rounded-3xl gap-x-2">
-          <p className="text-primary line-clamp-1">
-            {status == "PUBLISHED" ? "Edit Place" : "Awaiting Publishing"}
-          </p>
-          <div className="p-1.5 rounded-full bg-primary">
-            <HugeiconsIcon icon={ArrowRight02Icon} size={16} color={"white"} />
-          </div>
-        </button>
-      </div>
-    </div>
-  );
-};
-
+/** A titled grid of place cards ("Pending Places", "Published Places"). */
 export default function Places({
   title,
   places,
@@ -159,28 +164,29 @@ export default function Places({
 }: {
   title: string;
   places: SinglePlace[];
-  onEdit?: (place: SinglePlace) => void;
-  onDelete?: (place: SinglePlace) => void;
+  onEdit: (place: SinglePlace) => void;
+  onDelete: (place: SinglePlace) => void;
   onAdd: () => void;
 }) {
-  if (places.length === 0) {
-    return null;
-  }
-
   return (
-    <ContainerWrapper className="space-y-3 w-full">
-      <div className="flex items-center justify-between">
-        <h1 className="font-bold text-base text-primary-text">{title}</h1>
-        <AddButton title="Add Place" onClick={onAdd} />
+    <section>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+        <Button variant="brand" size="sm" onClick={onAdd}>
+          <Plus /> Add Place
+        </Button>
       </div>
-      {places.map((place) => (
-        <Place
-          key={place.id}
-          place={place}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      ))}
-    </ContainerWrapper>
+      {places.length === 0 ? (
+        <div className="rounded-2xl border border-dashed bg-card/50 py-10 text-center text-sm text-muted-foreground">
+          No {title.toLowerCase()} right now.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {places.map((place, i) => (
+            <PlaceCard key={place.id} place={place} index={i} onEdit={onEdit} onDelete={onDelete} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

@@ -1,11 +1,12 @@
 import GeneralInfo from "../steps/general-info";
-import { ActionType, useMenuForm } from "../../_context";
+import { useMenuForm } from "../../_context";
+import { ActionType } from "@/app/(dashboard)/_types";
 import { Button } from "@/components/ui/button";
-import StepIndicator from "@/app/(dashboard)/settings/_components/step-indicator";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import StepProgress from "@/components/step-progress";
 import Media from "../steps/media";
 import Configuration from "../steps/configuration";
 import DealSettings from "../steps/deal-settings";
-import SideModal from "@/app/(dashboard)/_components/side-modal";
 
 export default function MenuModal({
   isOpen,
@@ -16,8 +17,9 @@ export default function MenuModal({
   onClose: () => void;
   action?: ActionType;
 }) {
-  const { currentStep, handleNext, handlePrevious, loading, steps } =
-    useMenuForm();
+  const { currentStep, handleNext, handlePrevious, loading, steps } = useMenuForm();
+  const isEditing = action === "edit";
+
   const renderContent = () => {
     switch (currentStep) {
       case 1:
@@ -31,45 +33,43 @@ export default function MenuModal({
     }
   };
 
-  const getButtonLabel = () => {
-    if (loading) {
-      return action === "edit" ? "Updating..." : "Submitting...";
-    }
-    if (currentStep === 4) {
-      return action === "edit" ? "Update" : "Submit";
-    }
-    return "Next";
-  };
+  const isLastStep = currentStep === steps.length;
+  const nextLabel = loading
+    ? isEditing
+      ? "Saving…"
+      : "Submitting…"
+    : isLastStep
+      ? isEditing
+        ? "Save Changes"
+        : "Submit"
+      : "Next";
 
   return (
-    <SideModal isOpen={isOpen} onClose={onClose}>
-      <div className="space-y-7 pb-10 md:pb-0">
-        <StepIndicator
-          className="mb-16 mt-10 md:mt-0 justify-end items-end"
-          currentStep={currentStep}
-          steps={steps}
-        />
-        {renderContent()}
-        <div className="flex gap-x-2 w-full items-center justify-center">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{isEditing ? "Edit Menu Item" : "Add Menu"}</SheetTitle>
+          <SheetDescription>
+            Step {currentStep} of {steps.length} — {steps[currentStep - 1]}
+          </SheetDescription>
+        </SheetHeader>
+        <StepProgress steps={steps} currentStep={currentStep} />
+
+        <div className="flex-1 pb-2">{renderContent()}</div>
+
+        <div className="flex items-center justify-between gap-3 border-t pt-4">
           <Button
-            onClick={handlePrevious}
-            className="w-full"
-            size={"lg"}
-            variant={"secondary"}
-            disabled={currentStep === 1}
+            type="button"
+            variant="outline"
+            onClick={currentStep === 1 ? onClose : handlePrevious}
           >
-            Previous
+            {currentStep === 1 ? "Cancel" : "Previous"}
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={loading}
-            className="w-full"
-            size={"lg"}
-          >
-            {getButtonLabel()}
+          <Button type="button" variant="brand" onClick={handleNext} disabled={loading}>
+            {nextLabel}
           </Button>
         </div>
-      </div>
-    </SideModal>
+      </SheetContent>
+    </Sheet>
   );
 }

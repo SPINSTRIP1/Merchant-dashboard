@@ -91,3 +91,24 @@ export function usePublicPlace(placeId: string | null | undefined) {
     refetch,
   };
 }
+
+/**
+ * Number of places the merchant has listed, from the `count` of `GET /places` (fetches one row).
+ * Used by the Overview page.
+ */
+export function usePlacesCount() {
+  const { data, isLoading, error, refetch } = useQuery<number>({
+    queryKey: ["places-count"],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`${SERVER_URL}/places`, { params: { page: 1, limit: 1 } });
+        return response.data.data?.count ?? 0;
+      } catch (error) {
+        console.log("Error fetching places count:", error);
+        return 0;
+      }
+    },
+  });
+
+  return { count: data ?? 0, isLoading, error, refetch };
+}

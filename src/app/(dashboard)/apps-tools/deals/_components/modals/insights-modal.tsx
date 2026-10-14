@@ -22,7 +22,7 @@ export default function InsightsModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div
         className={
-          "bg-foreground scrollbar-hide rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[857px] overflow-y-auto"
+          "bg-card scrollbar-hide rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[857px] overflow-y-auto"
         }
       >
         <div className="flex gap-x-4 justify-between mb-3 w-full">

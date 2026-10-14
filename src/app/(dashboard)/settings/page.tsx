@@ -55,7 +55,7 @@ export default function Settings() {
         <Link
           key={item.title}
           href={item.comingSoon ? "#" : item.link}
-          className="p-6 bg-foreground relative rounded-[32px] w-full md:min-w-[269px] md:max-w-[269px] flex flex-col items-center justify-center h-[165px] gap-x-4 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-6 bg-card relative rounded-[32px] w-full md:min-w-[269px] md:max-w-[269px] flex flex-col items-center justify-center h-[165px] gap-x-4 cursor-pointer hover:shadow-md transition-shadow"
         >
           <div className="w-12 h-12 bg-primary-accent rounded-full flex items-center justify-center">
             <HugeiconsIcon icon={item.icon} size={24} color={"#6932E2"} />

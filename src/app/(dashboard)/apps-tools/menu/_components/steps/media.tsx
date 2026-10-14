@@ -45,8 +45,11 @@ export default function Media() {
   };
 
   return (
-    <div className="space-y-3 w-full">
+    <div className="w-full space-y-3">
       <Label>Upload Menu Images</Label>
+      <p className="text-xs text-muted-foreground">
+        The first image is used as the thumbnail. JPG, JPEG, PNG or WEBP, up to 10MB each.
+      </p>
 
       {/* Display existing media images from server */}
       {
@@ -61,14 +64,15 @@ export default function Media() {
                   src={imageUrl}
                   alt={`Product image ${index + 1}`}
                   fill
-                  className="object-cover rounded-2xl border border-neutral-accent"
+                  className="rounded-2xl border object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => removeMediaImage(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors z-10"
+                  aria-label="Remove image"
+                  className="absolute right-1.5 top-1.5 z-10 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                 >
-                  <X size={16} />
+                  <X size={14} />
                 </button>
               </div>
             ))}
@@ -83,9 +87,10 @@ export default function Media() {
                 <button
                   type="button"
                   onClick={() => removeImageUploadField(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  aria-label="Remove image slot"
+                  className="absolute right-1.5 top-1.5 z-10 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                 >
-                  <X size={16} />
+                  <X size={14} />
                 </button>
               )}
             </div>
@@ -93,24 +98,16 @@ export default function Media() {
         </div>
       }
 
-      <div className="flex items-center justify-center flex-col pt-2">
-        <p className="text-sm text-gray-600">
-          Click to upload or drag and drop images
-        </p>
-        <span className="text-[9px] font-semibold text-gray-500">
-          JPG, JPEG, PNG, WEBP formats supported (Max 10MB per image)
-        </span>
-      </div>
       {/* Add more images button */}
       {imageUploadFields.length < 6 && (
         <div className="flex justify-center mt-4">
           <Button
             type="button"
             onClick={addImageUploadField}
-            variant="secondary"
-            className="md:w-auto"
+            variant="soft"
+            size="sm"
           >
-            <Plus className="mr-2" size={18} />
+            <Plus />
             Add Another Image
           </Button>
         </div>

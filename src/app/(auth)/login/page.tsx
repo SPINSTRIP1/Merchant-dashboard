@@ -11,6 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import InfiniteCarousel from "../_components/carousel";
 import { useReduxAuth } from "@/hooks/use-redux-auth";
+import { ALL_PERMISSIONS, landingPathFor, resolveRole } from "@/lib/permissions";
 
 export default function LoginPage() {
   const [formData, setFormData] = React.useState({
@@ -30,10 +31,11 @@ export default function LoginPage() {
       return;
     }
     const res = await login(formData);
-    console.log(res.user);
     if (res.success) {
       toast.success("Login successful!");
-      router.push("/settings/compliance");
+      const role = resolveRole(res.user);
+      const granted: string[] = role === "owner" ? ALL_PERMISSIONS : (res.user?.dashboardPermissions ?? []);
+      router.push(landingPathFor(role, (perm) => granted.includes(perm)));
     } else {
       toast.error(res?.error || "Invalid credentials. Please try again.");
       if (
