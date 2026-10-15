@@ -3,6 +3,7 @@ import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ReduxProvider } from "@/providers/redux-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -97,12 +98,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable}`}>
+    <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable}`} suppressHydrationWarning>
       <body
         className="font-sans bg-background h-full text-secondary-text antialiased overflow-x-hidden"
       >
         <ReduxProvider>
-          {children}
+          <ThemeProvider>{children}</ThemeProvider>
           <Toaster
             position="top-center"
             toastOptions={{

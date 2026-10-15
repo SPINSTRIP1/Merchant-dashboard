@@ -1,7 +1,7 @@
 import { FormMultiSelect } from "@/components/ui/forms/form-multi-select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import SideModal from "@/app/(dashboard)/_components/side-modal";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useEventsForm } from "../_context";
 import { FormInput } from "@/components/ui/forms/form-input";
 import { useCallback, useMemo } from "react";
@@ -90,8 +90,14 @@ export default function AddEventsModal({
 
   // Memoized options
   const dealOptions = useMemo(
-    () => deals?.map((deal) => ({ label: deal.name, value: deal.id! })) || [],
-    [deals],
+    () =>
+      deals
+        ?.filter((deal) => deal.status === "ACTIVE" || deal.id === watch("dealId"))
+        .map((deal) => ({
+          label: `${deal.name} — ${deal.discountPercentage}% off`,
+          value: deal.id!,
+        })) || [],
+    [deals, watch],
   );
 
   // Handlers
@@ -128,270 +134,236 @@ export default function AddEventsModal({
         ? "Updating..."
         : "Update Event";
 
+  const updateTicket = (index: number, patch: Partial<TicketTier>) =>
+    setValue(
+      "ticketTiers",
+      tickets.map((t, i) => (i === index ? { ...t, ...patch } : t)),
+    );
+  const removeTicket = (index: number) =>
+    setValue(
+      "ticketTiers",
+      tickets.filter((_, i) => i !== index),
+    );
+  const linkedLocation = [watch("location"), watch("city"), watch("state"), watch("country")]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <SideModal isOpen={isOpen} onClose={handleClose}>
-      <div className="space-y-7 pt-16 pb-5">
-        {/* Event Basic Info */}
-        <FormInput
-          control={control}
-          name="name"
-          label="Event Name"
-          placeholder="Enter Event Name"
-        />
-        <FormInput
-          control={control}
-          name="description"
-          label="Event Description"
-          placeholder="Enter description"
-          type="textarea"
-        />
+    <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <SheetContent className="sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle>{action === "edit" ? "Edit Event" : "Create Event"}</SheetTitle>
+          <SheetDescription>
+            Events are published on your public event page, where guests can buy tickets.
+          </SheetDescription>
+        </SheetHeader>
 
-        {/* Place Selection */}
-        <PlaceAutocomplete
-          control={control}
-          name="placeId"
-          label="Add a place"
-          placeholder="Search for a place"
-          onSelect={handlePlaceSelect}
-        />
-
-        {/* Contact Info */}
-        <div className="grid grid-cols-2 gap-5">
+        <div className="space-y-5 pb-2">
           <FormInput
             control={control}
-            name="contactPhone"
-            label="Contact Phone"
-            placeholder="e.g. 08102345060"
+            name="name"
+            label="Event Name"
+            placeholder="e.g. Independence Day"
           />
           <FormInput
             control={control}
-            name="contactEmail"
-            label="Contact Email"
-            placeholder="e.g. johndoe@example.com"
+            name="description"
+            label="Event Description"
+            placeholder="What is this event about?"
+            type="textarea"
           />
-        </div>
 
-        {/* Location Fields (shown when no place selected) */}
-        {!placeId && (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-              <FormInput
-                control={control}
-                label="City"
-                name="city"
-                placeholder="City"
-              />
-              <FormInput
-                control={control}
-                label="State"
-                name="state"
-                placeholder="State"
-              />
-              <FormInput
-                control={control}
-                label="Country"
-                name="country"
-                placeholder="Country"
-              />
-            </div>
-            <AddressAutocomplete
+          <PlaceAutocomplete
+            control={control}
+            name="placeId"
+            label="Add a place"
+            placeholder="Search for a place"
+            onSelect={handlePlaceSelect}
+          />
+          {placeId && linkedLocation && (
+            <p className="-mt-3 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Location: {linkedLocation}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormInput
               control={control}
-              name="location"
-              label="Address"
-              placeholder="Enter Street Name and Number"
+              name="contactPhone"
+              label="Contact Phone"
+              placeholder="0810 000 0000"
             />
-          </>
-        )}
+            <FormInput
+              control={control}
+              name="contactEmail"
+              label="Contact Email"
+              placeholder="you@business.com"
+            />
+          </div>
 
-        {/* Media Upload Section */}
-        <div className="space-y-3 w-full">
-          <Label>Upload Event Media</Label>
-          <div className="flex gap-4 flex-wrap mb-4">
-            {media.map((imageUrl, index) => (
-              <MediaImage
-                key={`media-${index}`}
-                imageUrl={imageUrl}
-                index={index}
-                id={watch("id") || ""}
-                onRemove={removeMediaImage}
+          {!placeId && (
+            <>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <FormInput control={control} label="City" name="city" placeholder="Lagos" />
+                <FormInput control={control} label="State" name="state" placeholder="Lagos" />
+                <FormInput control={control} label="Country" name="country" placeholder="Nigeria" />
+              </div>
+              <AddressAutocomplete
+                control={control}
+                name="location"
+                label="Address"
+                placeholder="Venue street address"
               />
-            ))}
-            {imageUploadFields.map((fieldId, index) => (
-              <ImageUploadField
-                key={fieldId}
-                fieldId={fieldId}
-                index={index}
-                file={files[index]}
-                canRemove={imageUploadFields.length > 1}
-                onFileSelect={handleFileSelect}
-                onRemove={removeImageUploadField}
-              />
-            ))}
-          </div>
-          {errors.files && (
-            <p className="text-sm text-red-600">
-              {errors.files.message as string}
-            </p>
+            </>
           )}
-          <div className="flex items-center justify-center flex-col pt-2">
-            <p className="text-sm text-gray-600">
-              Click to upload or drag and drop images
+
+          <div className="space-y-3">
+            <Label>Upload Event Media</Label>
+            <p className="text-xs text-muted-foreground">
+              The first image is used as the thumbnail. JPG, JPEG, PNG or WEBP, up to 10MB each.
             </p>
-            <span className="text-[9px] font-semibold text-gray-500">
-              JPG, JPEG, PNG, WEBP formats supported (Max 10MB per image)
-            </span>
-          </div>
-          {canAddMoreImages && (
-            <div className="flex justify-center mt-4">
-              <Button
-                type="button"
-                onClick={addImageUploadField}
-                variant="secondary"
-                className="md:w-auto"
-              >
-                <Plus className="mr-2" size={18} />
-                Add Another Image
-              </Button>
+            <div className="flex flex-wrap gap-4">
+              {media.map((imageUrl, index) => (
+                <MediaImage
+                  key={`media-${index}`}
+                  imageUrl={imageUrl}
+                  index={index}
+                  id={watch("id") || ""}
+                  onRemove={removeMediaImage}
+                />
+              ))}
+              {imageUploadFields.map((fieldId, index) => (
+                <ImageUploadField
+                  key={fieldId}
+                  fieldId={fieldId}
+                  index={index}
+                  file={files[index]}
+                  canRemove={imageUploadFields.length > 1}
+                  onFileSelect={handleFileSelect}
+                  onRemove={removeImageUploadField}
+                />
+              ))}
             </div>
-          )}
-        </div>
+            {errors.files && (
+              <p className="text-xs font-medium text-destructive">{errors.files.message as string}</p>
+            )}
+            {canAddMoreImages && (
+              <Button type="button" onClick={addImageUploadField} variant="soft" size="sm">
+                <Plus /> Add Another Image
+              </Button>
+            )}
+          </div>
 
-        {/* Event Frequency */}
-        <FormMultiSelect
-          control={control}
-          name="frequency"
-          label="Event Frequency"
-          options={FREQUENCY_OPTIONS}
-          className="lg:grid"
-          radioClassName="lg:w-full"
-        />
-        {showRecurrencePattern && (
           <FormMultiSelect
             control={control}
-            name="recurringPattern"
-            label="Recurrence Pattern"
-            options={RECURRENCE_OPTIONS}
-            radioClassName="lg:max-w-[140px]"
+            name="frequency"
+            label="Event Frequency"
+            options={FREQUENCY_OPTIONS}
+            className="lg:grid"
+            radioClassName="lg:w-full"
           />
-        )}
-        {showCustomRecurrence && (
-          <FormInput
-            control={control}
-            name="customRecurrenceDays"
-            label="Custom Recurrence (Days)"
-            placeholder="Enter number of days"
-            type="number"
-          />
-        )}
+          {showRecurrencePattern && (
+            <FormMultiSelect
+              control={control}
+              name="recurringPattern"
+              label="Recurrence Pattern"
+              options={RECURRENCE_OPTIONS}
+              radioClassName="lg:max-w-[140px]"
+            />
+          )}
+          {showCustomRecurrence && (
+            <FormInput
+              control={control}
+              name="customRecurrenceDays"
+              label="Custom Recurrence (Days)"
+              placeholder="Enter number of days"
+              type="number"
+            />
+          )}
 
-        {/* Date and Time */}
-        <div className="grid grid-cols-2 gap-5">
-          <FormInput
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput control={control} type="date" name="startDate" label="Start Date" />
+            <FormInput control={control} type="date" name="endDate" label="End Date" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <FormInput control={control} type="time" name="startTime" label="Start Time" />
+            <FormInput control={control} type="time" name="endTime" label="End Time" />
+            <div className="col-span-2 md:col-span-1">
+              <FormSelect
+                control={control}
+                name="timezone"
+                label="Timezone"
+                options={TIMEZONE_OPTIONS}
+                placeholder="Select Timezone"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tickets</Label>
+            {tickets.map((ticket, index) => (
+              <TicketRow
+                key={`ticket-${index}`}
+                ticket={ticket}
+                onChange={(patch) => updateTicket(index, patch)}
+                onRemove={() => removeTicket(index)}
+              />
+            ))}
+            <TicketInputRow
+              ticketInput={ticketInput}
+              onInputChange={handleInputChange}
+              onAdd={addTicket}
+            />
+            <p className="text-xs text-muted-foreground">
+              Fill in a tier and tap + to add it. Leave tickets empty for a free event.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput
+              control={control}
+              name="expectedGuests"
+              label="Expected Guests"
+              placeholder="1000"
+              type="number"
+            />
+            <FormInput
+              control={control}
+              name="soldOutThreshold"
+              label="Sold Out Threshold"
+              placeholder="500"
+              type="number"
+            />
+          </div>
+
+          <FormMultiSelect
             control={control}
-            type="date"
-            name="startDate"
-            label="Start Date"
-          />
-          <FormInput
-            control={control}
-            type="date"
-            name="endDate"
-            label="End Date"
-          />
-        </div>
-        <div className="grid grid-cols-3 gap-5">
-          <FormInput
-            control={control}
-            type="time"
-            name="startTime"
-            label="Start Time"
-          />
-          <FormInput
-            control={control}
-            type="time"
-            name="endTime"
-            label="End Time"
+            name="isFeatured"
+            label="Mark as Featured"
+            options={FEATURED_OPTIONS}
+            valueType="boolean"
+            className="lg:grid"
+            radioClassName="lg:w-full"
           />
           <FormSelect
+            label="Add to Deal"
             control={control}
-            name="timezone"
-            label="Timezone"
-            options={TIMEZONE_OPTIONS}
-            placeholder="Select Timezone"
+            name="dealId"
+            options={[{ label: "None", value: "None" }, ...dealOptions]}
+            placeholder="Add to Deal"
+            disabled={isDealsLoading}
           />
         </div>
 
-        {/* Tickets Section */}
-        <div>
-          <Label>Tickets</Label>
-          {tickets.map((ticket, index) => (
-            <TicketRow key={`ticket-${index}`} ticket={ticket} />
-          ))}
-          <TicketInputRow
-            ticketInput={ticketInput}
-            onInputChange={handleInputChange}
-            onAdd={addTicket}
-          />
-          <p className="text-center mt-4">
-            Click on the + icon to add a new ticket tier.
-          </p>
-        </div>
-
-        {/* Guest Settings */}
-        <div className="grid grid-cols-2 gap-5">
-          <FormInput
-            control={control}
-            name="expectedGuests"
-            label="Expected Guests"
-            placeholder="1000 Guests"
-            type="number"
-          />
-          <FormInput
-            control={control}
-            name="soldOutThreshold"
-            label="Sold Out Threshold"
-            placeholder="500 Tickets"
-            type="number"
-          />
-        </div>
-
-        {/* Featured and Deal */}
-        <FormMultiSelect
-          control={control}
-          name="isFeatured"
-          label="Mark as Featured"
-          options={FEATURED_OPTIONS}
-          valueType="boolean"
-          className="lg:grid"
-          radioClassName="lg:w-full"
-        />
-        <FormSelect
-          label="Add to Deal"
-          control={control}
-          name="dealId"
-          options={[{ label: "None", value: "None" }, ...dealOptions]}
-          placeholder="Add to Deal"
-          disabled={isDealsLoading}
-        />
-
-        {/* Action Buttons */}
-        <div className="flex mt-6 gap-x-3 items-center">
-          <Button
-            variant="secondary"
-            className="w-full h-[51px] py-3"
-            onClick={handleClose}
-          >
+        <div className="flex items-center justify-between gap-3 border-t pt-4">
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button
-            disabled={loading}
-            className="w-full h-[51px] py-3"
-            onClick={submitEvent}
-          >
+          <Button variant="brand" disabled={loading} onClick={submitEvent}>
             {submitButtonText}
           </Button>
         </div>
-      </div>
-    </SideModal>
+      </SheetContent>
+    </Sheet>
   );
 }

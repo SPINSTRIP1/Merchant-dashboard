@@ -9,22 +9,27 @@ import {
 } from "@/components/ui/table";
 import { useParams } from "next/navigation";
 import React, { useState } from "react";
+import { FileSpreadsheet, UserPlus, Users } from "lucide-react";
 import EmptyState from "@/components/empty-state";
-import AddButton from "@/app/(dashboard)/_components/add-button";
-import { GoogleSheetIcon } from "@hugeicons/core-free-icons";
+import Field from "@/components/field";
+import SampleDataBadge from "@/components/sample-data-badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
 import PaginationButton from "@/components/pagination-button";
 import { useDebounce } from "@/hooks/use-debounce";
-
-type Availability = "Available" | "Blocked" | "Occupied" | "Maintenance";
-
-export const statusColors: Record<Availability, string> = {
-  Available: "text-[#34C759] bg-[#34C75926]",
-  Maintenance: "text-[#FF8D28] bg-[#F6E9DD]",
-  Blocked: "text-[#FF383C] bg-[#FF383C26]",
-  Occupied: "text-[#0088FF] bg-[#0088FF26]",
-};
+import { useAddPlaceVisitor, useManualVisitors } from "@/hooks/use-place-extras";
+import { exportCsv } from "@/utils";
 
 interface Visitor {
   id: string;
@@ -34,6 +39,8 @@ interface Visitor {
   visitorPhone: string;
   purpose: string;
 }
+
+const EMPTY_VISITOR = { visitorName: "", visitorEmail: "", visitorPhone: "", purpose: "" };
 
 export default function VisitorList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,142 +52,160 @@ export default function VisitorList() {
       endpoint: `${SERVER_URL}/places/${id}/visitors`,
       enabled: !!id,
       searchQuery: debouncedSearch,
-      // filters: {
-      //   stockStatus: statusFilter,
-      //   sortBy: sortBy,
-      // },
     });
+
+  // Visitors added by hand (sample data until there's a create-visitor endpoint), shown first.
+  const manualVisitors = useManualVisitors(id);
+  const addVisitor = useAddPlaceVisitor(id ?? "");
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_VISITOR);
+
+  const query = searchQuery.trim().toLowerCase();
+  const manualRows = manualVisitors.filter(
+    (v) =>
+      !query ||
+      v.visitorName.toLowerCase().includes(query) ||
+      v.visitorEmail.toLowerCase().includes(query)
+  );
+  const rows = [...(currentPage === 1 ? manualRows : []), ...(items ?? [])];
+
+  const handleExport = () =>
+    exportCsv(
+      "visitors.csv",
+      ["Name", "Email Address", "Phone Number", "Purpose"],
+      rows.map((v) => [v.visitorName, v.visitorEmail, v.visitorPhone, v.purpose])
+    );
+
+  const submitVisitor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!draft.visitorName.trim()) return;
+    await addVisitor.mutateAsync({ ...draft, visitorName: draft.visitorName.trim() });
+    setDraft(EMPTY_VISITOR);
+    setAdding(false);
+  };
+
   return (
-    <section className="w-full mt-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
-        <h1 className="text-sm lg:text-base font-bold">Visitor List</h1>
+    <section className="w-full">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <SearchBar
-          placeholder="Search"
-          className="bg-[#F3F3F3] w-full max-w-full"
+          placeholder="Search visitors…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        {/* <div className="flex items-center gap-x-2">
-          <Dropdown
-            header=""
-            options={["All", "In Stock", "Low Stock", "Out of Stock"]}
-            placeholder="All"
-            onSelect={() => {
-              //   if (value === "All Status") {
-              //     setStatusFilter("");
-              //   } else if (value === "In Stock") {
-              //     setStatusFilter("inStock");
-              //   } else if (value === "Low Stock") {
-              //     setStatusFilter("lowStock");
-              //   } else if (value === "Out of Stock") {
-              //     setStatusFilter("outOfStock");
-              //   }
-            }}
-          />
-          <Dropdown
-            header=""
-            options={["Name", "Price", "Stock", "Date Updated", "Date Created"]}
-            placeholder="Sort by"
-            onSelect={() => {
-              //   switch (value) {
-              //     case "Name":
-              //       setSortBy("name");
-              //       break;
-              //     case "Price":
-              //       setSortBy("price");
-              //       break;
-              //     case "Stock":
-              //       setSortBy("stock");
-              //       break;
-              //     case "Date Updated":
-              //       setSortBy("updated");
-              //       break;
-              //     case "Date Created":
-              //       setSortBy("created");
-              //       break;
-              //   }
-            }}
-          />
-        </div> */}
-        <div className="flex items-center gap-x-2">
-          <AddButton onClick={() => {}} title="Add Visitor" />
-          <AddButton
-            onClick={() => {}}
-            icon={GoogleSheetIcon}
-            title="Export Sheet"
-            className="bg-primary-accent text-primary"
-          />
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={!rows.length}>
+            <FileSpreadsheet /> Export Sheet
+          </Button>
+          <Button variant="brand" onClick={() => setAdding(true)}>
+            <UserPlus /> Add Visitor
+          </Button>
         </div>
       </div>
-      <div className="bg-card rounded-3xl p-4 mt-3">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b-0">
-              {["Name", "Email Address", "Phone Number", "Purpose"].map(
-                (header) => (
-                  <TableHead
-                    key={header}
-                    className="text-primary-text font-bold text-base"
-                  >
-                    {header}
-                  </TableHead>
-                ),
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">Loading visitors...</p>
-                </TableCell>
-              </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="py-0">
-                  <EmptyState
-                    // icon={<UsersRound className="h-16 w-16 text-primary" />}
-                    title="No Visitors Added Yet"
-                    description={
-                      "There are no visitors added yet. Start by adding new visitors to manage and track them effectively."
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ) : (
-              items?.map((item) => (
-                <TableRow
-                  className="border-b-0 cursor-pointer hover:bg-neutral"
-                  key={item.id}
-                >
-                  <TableCell className="py-4 ">{item.visitorName}</TableCell>
-                  <TableCell>{item.visitorEmail}</TableCell>
-                  <TableCell>{item.visitorPhone}</TableCell>
 
-                  <TableCell>{item.purpose}</TableCell>
+      <div className="overflow-hidden rounded-2xl border bg-card">
+        {isLoading ? (
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon={<Users />}
+            title="No visitors yet"
+            description={
+              searchQuery
+                ? "No visitors match your search."
+                : "Visitors checked into this place will appear here."
+            }
+          />
+        ) : (
+          <Table className="min-w-[640px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email Address</TableHead>
+                <TableHead>Phone Number</TableHead>
+                <TableHead>Purpose</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-semibold text-foreground">
+                    <span className="flex items-center gap-2">
+                      {item.visitorName}
+                      {item.id.startsWith("manual_") && <SampleDataBadge label="Added" />}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{item.visitorEmail || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{item.visitorPhone || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{item.purpose || "—"}</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        {!isLoading && totalPages > 1 && (
+          <div className="border-t">
+            <PaginationButton currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          </div>
+        )}
       </div>
 
-      {!isLoading && totalPages > 0 && (
-        <PaginationButton
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
-
-      {/* <DeleteModal
-        isOpen={action === "delete"}
-        title={selectedItem?.name || "this item"}
-        onClose={() => setAction(null)}
-        onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
-        secondaryText="Cancel"
-        description="This product will be deleted permanently and cannot be recovered!"
-      />  */}
+      <Dialog open={adding} onOpenChange={setAdding}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Visitor</DialogTitle>
+            <DialogDescription>Record a visitor who checked into this place.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitVisitor} className="space-y-4">
+            <Field label="Name" htmlFor="visitor-name">
+              <Input
+                id="visitor-name"
+                required
+                value={draft.visitorName}
+                onChange={(e) => setDraft({ ...draft, visitorName: e.target.value })}
+                placeholder="Full name"
+              />
+            </Field>
+            <Field label="Email Address" htmlFor="visitor-email">
+              <Input
+                id="visitor-email"
+                type="email"
+                value={draft.visitorEmail}
+                onChange={(e) => setDraft({ ...draft, visitorEmail: e.target.value })}
+                placeholder="name@email.com"
+              />
+            </Field>
+            <Field label="Phone Number" htmlFor="visitor-phone">
+              <Input
+                id="visitor-phone"
+                type="tel"
+                value={draft.visitorPhone}
+                onChange={(e) => setDraft({ ...draft, visitorPhone: e.target.value })}
+                placeholder="0810 000 0000"
+              />
+            </Field>
+            <Field label="Purpose" htmlFor="visitor-purpose">
+              <Input
+                id="visitor-purpose"
+                value={draft.purpose}
+                onChange={(e) => setDraft({ ...draft, purpose: e.target.value })}
+                placeholder="e.g. Short let check-in"
+              />
+            </Field>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAdding(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="brand" disabled={!draft.visitorName.trim() || addVisitor.isPending}>
+                Add Visitor
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

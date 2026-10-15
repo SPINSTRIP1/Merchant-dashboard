@@ -93,31 +93,31 @@ export function UploadFile<T extends FieldValues>({
       <div
         onClick={handleClick}
         className={cn(
-          "!rounded-2xl cursor-pointer bg-[#F3F3F3] px-3 flex items-center justify-between !h-[49px] border transition-colors",
+          "!rounded-2xl cursor-pointer bg-muted px-3 flex items-center justify-between !h-[49px] border transition-colors",
           hasValue
             ? "border-green-500 bg-green-50"
-            : "border-neutral-accent hover:bg-gray-200",
+            : "border-neutral-accent hover:bg-muted",
           error && "border-red-500"
         )}
       >
         <div className="flex-1 min-w-0">
           {hasValue ? (
             <div className="flex flex-col">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {selectedFile
                   ? selectedFile.name
                   : isUrlString
                   ? getFileNameFromUrl(fieldValue as string)
                   : "File uploaded"}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {selectedFile
                   ? formatFileSize(selectedFile.size)
                   : "Click to replace"}
               </p>
             </div>
           ) : (
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Upload {type === "video" ? "video" : "document"}
             </p>
           )}
@@ -135,7 +135,7 @@ export function UploadFile<T extends FieldValues>({
         />
       </div>
       {description && !error && (
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       )}
       {error && (
         <p className="text-sm font-medium text-destructive">{error.message}</p>

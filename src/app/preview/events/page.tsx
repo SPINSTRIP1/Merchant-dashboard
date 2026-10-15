@@ -1,385 +1,247 @@
 "use client";
-import {
-  Calendar03Icon,
-  Call02Icon,
-  Globe02Icon,
-  Location01Icon,
-  StarIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
-import { formatDateDisplay } from "@/utils";
-import ImpressionsStack from "@/app/(dashboard)/apps-tools/event-planner/_components/impressions-stack";
-import MaxWidthWrapper from "@/components/max-width-wrapper";
-import { Button } from "@/components/ui/button";
-import ContainerWrapper from "@/components/container-wrapper";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { Textarea } from "@/components/ui/textarea";
-import CheckOutModal from "./_components/modals/checkout";
-import { useState } from "react";
-import EmptyState from "@/components/empty-state";
 import { useSearchParams } from "next/navigation";
-import { usePublicEvent } from "@/hooks/use-events";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+import { Bell, CalendarDays, Clock, Eye, Mail, MapPin, PartyPopper, Phone, Ticket, Users } from "lucide-react";
+import CheckOutModal from "./_components/modals/checkout";
+import EmptyState from "@/components/empty-state";
 import Loader from "@/components/loader";
+import { Button } from "@/components/ui/button";
+import { usePublicEvent } from "@/hooks/use-events";
+import { fmtDate, formatAmount } from "@/utils";
 
-export default function EventsPage() {
-  const posts: string[] = [];
-  const reviews: string[] = [];
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <h2 className="mb-4 font-display text-lg font-bold text-foreground">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function HeroChip({ icon: Icon, children }: { icon: typeof MapPin; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+      <Icon className="h-3.5 w-3.5" /> {children}
+    </span>
+  );
+}
+
+function PublicEventPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const id = useSearchParams().get("id");
   const { event, isLoading: loading } = usePublicEvent(id);
 
   if (loading) return <Loader />;
-  if (!event) return <p>No event found.</p>;
+  if (!event) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background p-4">
+        <EmptyState icon={<PartyPopper />} title="Event not found" description="This event may no longer be listed." />
+      </div>
+    );
+  }
+
+  const tiers = event.ticketTiers ?? [];
+  const fromPrice = tiers.length ? Math.min(...tiers.map((t) => t.price)) : 0;
+  const startTime = new Date(event.startDate).toLocaleTimeString("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const follow = () => toast.success(`You're now following ${event.name}`);
 
   return (
-    <section>
-      <MaxWidthWrapper className="space-y-4">
-        <div className="w-full h-[560px]">
-          <img
-            src={event?.images?.[0] || ""}
-            alt={event.name}
-            width={1200}
-            height={560}
-            className="w-full h-full object-cover rounded-2xl"
-          />
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur-lg">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <span className="truncate text-sm font-bold">{event.name}</span>
+          <Image src="/logo.svg" alt="SpinStrip" width={76} height={30} className="h-[30px] w-[76px]" />
         </div>
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-sm lg:text-[58px] leading-[100%] text-black mt-5 font-medium">
-              {event.name}
-            </h2>
+      </header>
 
-            <button className="flex mb-3 mt-2 items-center bg-primary gap-x-0.5 rounded-xl px-2.5 py-1.5">
-              <Image
-                src={"/logo-mark.svg"}
-                alt={event.name}
-                width={40}
-                height={40}
-                className="w-5 h-5 object-contain"
-              />
-              <p className="text-sm text-white">Follow</p>
-            </button>
-
-            <div className="flex items-center gap-x-3">
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon
-                  icon={Location01Icon}
-                  size={24}
-                  color="#6F6D6D"
-                />
-                <p className="text-sm">
-                  {event.city}, {event.state}
-                </p>
-              </div>
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon
-                  icon={Calendar03Icon}
-                  size={24}
-                  color="#6F6D6D"
-                />
-                <p className="text-sm">{formatDateDisplay(event.startDate)}</p>
-              </div>
-              <ImpressionsStack impressions={event.totalImpressions ?? 0} />
+      <main className="mx-auto max-w-5xl space-y-5 px-4 pb-28 pt-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative h-64 overflow-hidden rounded-3xl md:h-80"
+        >
+          {event.images?.[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element -- event images may come from hosts not in next.config
+            <img src={event.images[0]} alt={event.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="brand-gradient h-full w-full" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <button
+            type="button"
+            onClick={follow}
+            className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-gray-900 shadow"
+          >
+            <Bell className="h-3.5 w-3.5" /> Follow
+          </button>
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
+            <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+              {event.frequency === "RECURRING" ? "Recurring" : "One Off"}
+            </span>
+            <h1 className="mt-2 font-display text-3xl font-extrabold text-white md:text-5xl">{event.name}</h1>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <HeroChip icon={MapPin}>
+                {event.city}, {event.state}
+              </HeroChip>
+              <HeroChip icon={CalendarDays}>
+                {fmtDate(event.startDate)}
+                {event.endDate && event.endDate.slice(0, 10) !== event.startDate.slice(0, 10)
+                  ? ` — ${fmtDate(event.endDate)}`
+                  : ""}
+              </HeroChip>
+              <HeroChip icon={Clock}>
+                {startTime} ({event.timezone})
+              </HeroChip>
+              {event.expectedGuests > 0 && (
+                <HeroChip icon={Users}>{event.expectedGuests.toLocaleString()} expected</HeroChip>
+              )}
+              <HeroChip icon={Eye}>
+                {event.totalImpressions ? `${event.totalImpressions.toLocaleString()} views` : "No views yet"}
+              </HeroChip>
             </div>
           </div>
-          <div className="flex bg-primary-accent p-3 gap-x-5 items-center rounded-3xl">
-            <div>
-              <h2 className="font-bold text-primary-text">
-                {event.ticketTiers.length > 0
-                  ? `From ₦${Math.min(...event.ticketTiers.map((t) => t.price)).toLocaleString()}`
-                  : "Free"}
-              </h2>
-              <p>
-                {new Date(event.startDate).toLocaleString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                  timeZoneName: "short",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </p>
-            </div>
-            <Button onClick={() => setIsModalOpen(true)}>Reserve a Spot</Button>
-          </div>
-        </div>
-        <div>
-          <h1 className="font-bold text-primary-text">Overview</h1>
-          <p className="whitespace-pre-line">{event.description}</p>
-        </div>
-        <div className="space-y-4">
-          <h1 className="font-bold text-primary-text">Gallery</h1>
-          <div className="flex gap-4 overflow-x-auto">
-            {event.images?.map((image, index) => (
-              <div
-                key={index}
-                className="min-w-[253px]  max-w-[253px] flex-1 h-[206px]"
-              >
-                <img
-                  src={image}
-                  alt={event.name}
-                  width={400}
-                  height={600}
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-              </div>
+        </motion.div>
+
+        {event.images?.length > 1 && (
+          <div className="grid grid-cols-3 gap-3">
+            {event.images.slice(1, 4).map((image, index) => (
+              // eslint-disable-next-line @next/next/no-img-element -- event images may come from hosts not in next.config
+              <img key={index} src={image} alt="" className="h-28 w-full rounded-2xl object-cover md:h-36" />
             ))}
           </div>
-        </div>
-        <ContainerWrapper>
-          <div className="flex items-center mb-4 justify-between">
-            <div className="flex items-center gap-x-2">
-              <HugeiconsIcon icon={Location01Icon} size={24} color="#6F6D6D" />
-              <div>
-                <p className="text-sm font-bold text-primary-text">Address</p>
-                <p className="text-sm">{event.location}</p>
-              </div>
-            </div>
-            <ChevronRight />
-          </div>
-          <div className="flex items-center mb-4 justify-between">
-            <div className="flex items-center gap-x-2">
-              <HugeiconsIcon icon={Call02Icon} size={24} color="#6F6D6D" />
-              <div>
-                <p className="text-sm font-bold text-primary-text">Call</p>
-                <p className="text-sm">{event.contactPhone}</p>
-              </div>
-            </div>
-            <ChevronRight />
-          </div>
-          <div className="flex items-center mb-4 justify-between">
-            <div className="flex items-center gap-x-2">
-              <HugeiconsIcon icon={Globe02Icon} size={24} color="#6F6D6D" />
-              <div>
-                <p className="text-sm font-bold text-primary-text">Email</p>
-                <p className="text-sm">{event.contactEmail}</p>
-              </div>
-            </div>
-            <ChevronRight />
-          </div>
-          <div className="w-full border rounded-lg overflow-hidden border-neutral-accent flex-1 h-[183px]">
-            <iframe
-              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(event.location)}`}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </ContainerWrapper>
-        {/* <ContainerWrapper>
-          <div className="flex items-center mb-4 justify-between">
-            <div className="space-y-3">
-              <div>
-                <p className="text-lg font-bold text-primary-text">
-                 {event.name}
-                </p>
-                <div className="flex items-center gap-x-1">
-                  <div className="flex items-center gap-x-0.5">
-                    <HugeiconsIcon
-                      icon={StarIcon}
-                      size={14}
-                      color="#9E76F8"
-                      fill="#9E76F8"
-                    />
-                    <span className="text-sm font-bold text-primary-text">
-                      3
-                    </span>
-                  </div>
-                  <p className="text-sm">on SpinStrip ({reviews.length} reviews)</p>
-                </div>
-                <p className="text-sm">Media/Entertainment Company</p>
-              </div>
+        )}
 
-              <div className="flex items-center gap-x-2">
-                <div>
-                  <p className="text-sm font-bold text-primary-text">
-                    About 54.7 KM from you
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
+          <div>
+            <p className="font-display text-xl font-bold">
+              {tiers.length && fromPrice > 0 ? `From ${formatAmount(fromPrice)}` : "Free entry"}
+            </p>
+            <p className="text-xs text-muted-foreground">Starts {fmtDate(event.startDate)} · {startTime}</p>
+          </div>
+          <Button variant="brand" onClick={() => setIsModalOpen(true)}>
+            Reserve a Spot
+          </Button>
+        </div>
+
+        <Section title="Overview">
+          <p className="whitespace-pre-line text-sm text-muted-foreground">
+            {event.description ||
+              `${event.name} is happening in ${event.city}, ${event.state}. Reserve your spot before it sells out.`}
+          </p>
+        </Section>
+
+        <Section title="Tickets">
+          {tiers.length ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {tiers.map((tier) => (
+                <div key={tier.id} className="flex flex-col rounded-2xl border p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 font-display font-bold">
+                        <Ticket className="h-4 w-4 text-primary" /> {tier.name}
+                      </p>
+                      {tier.description && <p className="mt-0.5 text-xs text-muted-foreground">{tier.description}</p>}
+                    </div>
+                    <p className="font-display font-bold text-primary">
+                      {tier.price > 0 ? formatAmount(tier.price) : "Free"}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    {tier.quantityAvailable.toLocaleString()} available
                   </p>
-                  <p className="text-sm">1132, Lekki, Lagos, Nigeria</p>
+                  <Button variant="soft" size="sm" className="mt-3" onClick={() => setIsModalOpen(true)}>
+                    Get tickets
+                  </Button>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
+              <div>
+                <p className="font-display font-bold">General Admission</p>
+                <p className="text-xs text-muted-foreground">Free entry</p>
               </div>
-              <Button variant={"secondary"} className="px-3 py-px">
-                Suggest Edit
+              <Button variant="soft" size="sm" onClick={() => setIsModalOpen(true)}>
+                Reserve
               </Button>
             </div>
-            <div className="bg-primary-accent rounded-full p-3">
-              <HugeiconsIcon
-                icon={Navigation03Icon}
-                size={24}
-                color="#6932E2"
-              />
-            </div>
-          </div>
-        </ContainerWrapper> */}
-        <ContainerWrapper>
-          <div className="flex items-center justify-between">
-            <h1 className="font-bold text-primary-text">
-              Reviews({reviews.length})
-            </h1>
-            <Link href={"/"} className="flex text-xs items-center gap-x-1">
-              {" "}
-              See More <ChevronRight size={16} />
-            </Link>
-          </div>
-          <div className="mt-4">
-            {reviews && reviews.length > 0 ? (
-              reviews.map((item, i) => (
-                <div key={i} className="mb-3">
-                  <div className="flex items-center">
-                    <Image
-                      src={"/avatar.jpg"}
-                      alt={"Reviewer"}
-                      width={60}
-                      height={60}
-                      className="w-10 h-10 object-cover rounded-full"
-                    />
+          )}
+        </Section>
 
-                    <div className="ml-3">
-                      <p className="font-bold text-primary-text">Jane Doe</p>
-                      <div className="flex items-center gap-x-1">
-                        <div className="flex items-center gap-x-0.5">
-                          {[1, 2, 3, 4, 5].map((_, index) => (
-                            <HugeiconsIcon
-                              key={index}
-                              icon={StarIcon}
-                              size={14}
-                              color={index < 4 ? "#9E76F8" : "#C8C8C8"}
-                              fill={index < 4 ? "#9E76F8" : "#C8C8C8"}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm">Jun 10, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm">
-                    Amazing event! Had a great time learning and networking.
-                    Highly recommend to anyone interested in tech.
-                  </p>
-                </div>
-              ))
-            ) : (
-              <EmptyState
-                icon={
-                  <HugeiconsIcon icon={StarIcon} size={32} color="#6932E2" />
-                }
-                title="No Reviews Yet"
-                description="Be the first to share your experience at this event."
-              />
+        {event.images?.length > 0 && (
+          <Section title="Gallery">
+            <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1">
+              {event.images.map((image, index) => (
+                // eslint-disable-next-line @next/next/no-img-element -- event images may come from hosts not in next.config
+                <img key={index} src={image} alt={event.name} className="h-44 w-64 shrink-0 rounded-2xl object-cover" />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section title="Location & Contact">
+          <div className="space-y-2 text-sm text-muted-foreground">
+            {event.location && (
+              <p className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {[event.location, event.city, event.state].filter(Boolean).join(", ")}
+              </p>
+            )}
+            {event.contactPhone && (
+              <p className="flex items-start gap-2">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {event.contactPhone}
+              </p>
+            )}
+            {event.contactEmail && (
+              <p className="flex items-start gap-2 break-all">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {event.contactEmail}
+              </p>
             )}
           </div>
-          <div className="mt-4">
-            <h2 className="font-bold text-primary-text mb-1">
-              Review this event
-            </h2>
-            <div className="flex items-center">
-              <Image
-                src={"/avatar.jpg"}
-                alt={"Reviewer"}
-                width={60}
-                height={60}
-                className="w-10 h-10 object-cover rounded-full"
+          {event.location && (
+            <div className="mt-4 h-[200px] overflow-hidden rounded-2xl border">
+              <iframe
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(event.location)}`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Event location map"
               />
-
-              <div className="flex items-center ml-3 gap-x-0.5">
-                {[1, 2, 3, 4, 5].map((_, index) => (
-                  <HugeiconsIcon
-                    key={index}
-                    icon={StarIcon}
-                    size={20}
-                    color={"#C8C8C8"}
-                    fill={"#C8C8C8"}
-                  />
-                ))}
-              </div>
             </div>
-            <Textarea
-              placeholder="Share your thoughts on this event..."
-              className="bg-[#E0E0E0] border-none my-5"
-              rows={6}
-            />
-            <Button>Submit</Button>
-          </div>
-        </ContainerWrapper>
-        <ContainerWrapper>
-          <div className="flex mb-3 justify-between w-full items-center">
-            <h2 className="font-bold text-primary-text">Posts</h2>
-            <Link href={"/"} className="flex text-xs items-center gap-x-1">
-              See More <ChevronRight size={16} />
-            </Link>
-          </div>
-          <div className="flex overflow-x-auto gap-x-3">
-            {posts && posts.length > 0 ? (
-              posts.map((_, i) => (
-                <div
-                  key={i}
-                  className="flex min-w-[168px] max-w-[168px] flex-col gap-y-2"
-                >
-                  <Image
-                    src={"/events/1.jpg"}
-                    alt={"Post 1"}
-                    width={400}
-                    height={400}
-                    className="rounded-lg w-full h-[206px] object-cover"
-                  />
+          )}
+        </Section>
+      </main>
 
-                  <p className="text-xs text-primary-text">
-                    A day in my life as a lifestyle influencer in lagos
-                  </p>
+      <div className="fixed inset-x-0 bottom-4 z-30 mx-auto w-[calc(100%-2rem)] max-w-xl md:hidden">
+        <Button
+          variant="brand"
+          className="h-14 w-full justify-between px-6 shadow-2xl shadow-primary/40"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <span>{tiers.length && fromPrice > 0 ? `From ${formatAmount(fromPrice)}` : "Free entry"}</span>
+          <span>Reserve</span>
+        </Button>
+      </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-x-1">
-                      <Image
-                        src={"/avatar.jpg"}
-                        alt={"Reviewer"}
-                        width={60}
-                        height={60}
-                        className="w-5 h-5 object-cover rounded-full"
-                      />
-                      <p className="text-xxs">Jane Doe</p>
-                    </div>
+      <CheckOutModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} event={event} />
+    </div>
+  );
+}
 
-                    <div className="ml-3">
-                      <div className="flex items-center gap-x-1">
-                        <HugeiconsIcon
-                          icon={StarIcon}
-                          size={14}
-                          color={"#9E76F8"}
-                          fill={"#9E76F8"}
-                        />
-
-                        <p className="text-xxs">345 Likes</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState
-                icon={
-                  <HugeiconsIcon
-                    icon={Calendar03Icon}
-                    size={32}
-                    color="#6932E2"
-                  />
-                }
-                title="No Posts Yet"
-                description="There are no posts related to this event at the moment."
-              />
-            )}
-          </div>
-        </ContainerWrapper>
-      </MaxWidthWrapper>
-      <CheckOutModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        event={event}
-      />
-    </section>
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <PublicEventPage />
+    </Suspense>
   );
 }

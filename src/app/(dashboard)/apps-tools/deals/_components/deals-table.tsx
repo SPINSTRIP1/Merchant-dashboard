@@ -1,17 +1,6 @@
-import ContainerWrapper from "@/components/container-wrapper";
-import Dropdown from "@/components/dropdown";
 import PaginationButton from "@/components/pagination-button";
 import SearchBar from "@/components/search-bar";
-import {
-  ArrowRight02Icon,
-  Chart03Icon,
-  Delete02Icon,
-  Edit02Icon,
-  PlusSignSquareIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronRight, X, Gift } from "lucide-react";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import PerformingDeals from "./perfoming-deals";
 import Link from "next/link";
 import DealsModal from "./modals/deals-modal";
@@ -27,10 +16,40 @@ import { Deal } from "../_schemas";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import { toast } from "react-hot-toast";
 import api from "@/lib/api/axios-client";
-import { formatDateDisplay, formatDateForInput } from "@/utils";
-import AddButton from "@/app/(dashboard)/_components/add-button";
+import { fmtDate, formatDateForInput } from "@/utils";
 import EmptyState from "@/components/empty-state";
 import SubscribeModal from "./modals/subscribe-modal";
+import { Archive, BarChart3, ChevronDown, Gift, MoreVertical, Pause, Pencil, Play, Plus, Star, Trash2 } from "lucide-react";
+import StatusPill from "@/components/status-pill";
+import SampleDataBadge from "@/components/sample-data-badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useDealCampaigns } from "@/hooks/use-deals";
+import { useDealsPerformance } from "@/hooks/use-deal-extras";
+
+const STATUS_FILTERS = [
+  { value: "ACTIVE", label: "Active" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "PAUSED", label: "Paused" },
+  { value: "EXPIRED", label: "Expired" },
+];
+const SORT_OPTIONS = [
+  { value: "none", label: "Sort by" },
+  { value: "name", label: "Name" },
+  { value: "startDate", label: "Start Date" },
+  { value: "endDate", label: "End Date" },
+  { value: "updated", label: "Date Updated" },
+  { value: "created", label: "Date Created" },
+];
 
 export default function DealsTable() {
   const [selectedItem, setSelectedItem] = useState<Deal | null>(null);
@@ -75,300 +94,287 @@ export default function DealsTable() {
       await api.patch(`${SERVER_URL}/deals/${id}/status`, {
         status: "PAUSED",
       });
-      toast.success("Item archived successfully");
+      toast.success("Deal deactivated and moved to Archives");
       queryClient.invalidateQueries({ queryKey: ["deals"] });
     } catch (error) {
       console.log(error);
-      toast.error("Failed to archive item");
+      toast.error("Failed to deactivate deal");
     }
   };
-  // console.log(items);
+
+  // Same status endpoint the Archives page uses to reactivate a deal.
+  const handleActivate = async (id: string) => {
+    try {
+      await api.patch(`${SERVER_URL}/deals/${id}/status`, {
+        status: "ACTIVE",
+      });
+      toast.success("Deal activated");
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to activate deal");
+    }
+  };
+
+  const openEdit = (deal: Deal) => {
+    form.reset({
+      campaignId: deal.campaignId,
+      name: deal.name,
+      description: deal.description,
+      discountPercentage: deal.discountPercentage,
+      maximumThreshold: deal.maximumThreshold,
+      startDate: formatDateForInput(deal.startDate),
+      endDate: formatDateForInput(deal.endDate),
+      isFeatured: deal.isFeatured,
+      productIds: deal.productIds,
+      id: deal.id,
+    });
+    setAction("edit");
+  };
+
+  const openCreate = () => {
+    form.reset();
+    setAction("add");
+  };
+
+  const { campaigns } = useDealCampaigns();
+  const campaignName = useMemo(
+    () => new Map(campaigns.map((c) => [c.id, c.name])),
+    [campaigns]
+  );
+  const performance = useDealsPerformance(items);
+
   return (
-    <section className="grid gap-5 grid-cols-[1fr_293px]">
-      <div>
-        <div className="flex flex-col md:flex-row md:items-center flex-wrap gap-y-3 justify-between w-full">
-          <h1 className="text-sm lg:text-base font-bold">Deals</h1>
+    <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="min-w-0">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <SearchBar
-            placeholder="Search deals"
-            className="bg-[#F3F3F3]"
+            placeholder="Search deals…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="flex items-center gap-x-2">
-            <Dropdown
-              header=""
-              options={["All Status", "Draft", "Active", "Paused", "Ended"]}
-              placeholder="All Status"
-              onSelect={(value) => {
-                if (value === "All Status") {
-                  setStatusFilter("");
-                } else if (value === "Draft") {
-                  setStatusFilter("DRAFT");
-                } else if (value === "Active") {
-                  setStatusFilter("ACTIVE");
-                } else if (value === "Paused") {
-                  setStatusFilter("PAUSED");
-                } else if (value === "Ended") {
-                  setStatusFilter("ENDED");
-                }
-              }}
-            />
-            <Dropdown
-              header=""
-              options={[
-                "Name",
-                "Start Date",
-                "End Date",
-                "Date Updated",
-                "Date Created",
-              ]}
-              placeholder="Sort by"
-              onSelect={(value) => {
-                switch (value) {
-                  case "Name":
-                    setSortBy("name");
-                    break;
-                  case "Start Date":
-                    setSortBy("startDate");
-                    break;
-                  case "End Date":
-                    setSortBy("endDate");
-                    break;
-                  case "Date Updated":
-                    setSortBy("updated");
-                    break;
-                  case "Date Created":
-                    setSortBy("created");
-                    break;
-                }
-              }}
-            />
-          </div>
-          <div className="flex justify-end w-full lg:w-fit items-center gap-x-2">
-            <AddButton
-              onClick={() => {
-                form.reset();
-                setAction("add");
-              }}
-              title="Create Deal"
-            />
-            <AddButton
-              onClick={() => setShowModal(true)}
-              title="Create Campaign"
-              className="bg-primary-accent text-primary"
-            />
-
-            <Link
-              href={"/apps-tools/deals/archives"}
-              className="rounded-2xl bg-primary-accent h-12 md:h-10 text-primary flex justify-center items-center gap-2 px-4"
-            >
-              <p className="font-normal text-sm">Archives</p>
-              <HugeiconsIcon
-                icon={ArrowRight02Icon}
-                size={22}
-                color="#6932E2"
-              />
-            </Link>
+          <Select value={statusFilter || "ACTIVE"} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-11 w-[130px] rounded-full text-xs font-semibold">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTERS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortBy || "none"} onValueChange={(v) => setSortBy(v === "none" ? "" : v)}>
+            <SelectTrigger className="h-11 w-[150px] rounded-full text-xs font-semibold">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/apps-tools/deals/archives">
+                <Archive /> Archives
+              </Link>
+            </Button>
+            <Button variant="soft" onClick={() => setShowModal(true)}>
+              <Plus /> Create Campaign
+            </Button>
+            <Button variant="brand" onClick={openCreate}>
+              <Plus /> Create Deal
+            </Button>
           </div>
         </div>
-        {isLoading ? (
-          <div className="space-y-3 mt-5">
-            {[1, 2, 3, 4].map((i) => (
-              <ContainerWrapper key={i}>
-                <div className="animate-pulse">
-                  <div className="flex gap-x-4 justify-between mb-3 w-full">
-                    <div className="flex-shrink-0 space-y-2">
-                      <div className="h-5 bg-gray-200 rounded w-32"></div>
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
-                    </div>
-                    <div className="max-w-[435px] w-full">
-                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                    <div className="min-w-6 min-h-6 max-h-6 max-w-6 bg-gray-200 rounded-full"></div>
-                  </div>
-                  <div className="flex justify-between w-full">
-                    <div className="flex items-center gap-x-2">
-                      <div className="h-[35px] w-20 bg-gray-200 rounded-xl"></div>
-                      <div className="h-[35px] w-28 bg-gray-200 rounded-xl"></div>
-                      <div className="h-[35px] w-24 bg-gray-200 rounded-xl"></div>
-                    </div>
-                    <div className="h-[35px] w-24 bg-gray-200 rounded-xl"></div>
-                  </div>
-                </div>
-              </ContainerWrapper>
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={<Gift className="h-16 w-16 text-primary" />}
-            title="No Deals Found"
-            description={
-              searchQuery
-                ? "No deals match your search criteria. Try adjusting your filters."
-                : "You haven't created any deals yet. Create your first deal to get started!"
-            }
-            action={
-              !searchQuery ? (
-                <button
-                  onClick={() => {
-                    form.reset();
-                    setAction("add");
-                  }}
-                  className="rounded-2xl bg-primary h-10 text-white flex justify-center items-center gap-2 px-4"
-                >
-                  <HugeiconsIcon
-                    icon={PlusSignSquareIcon}
-                    size={20}
-                    color="#FFFFFF"
-                  />
-                  <p className="font-normal">Create Your First Deal</p>
-                </button>
-              ) : undefined
-            }
-          />
-        ) : (
-          items.map((deal, index) => (
-            <ContainerWrapper key={index} className="mt-5">
-              <div className="flex gap-x-4 justify-between mb-3 w-full">
-                <div className="flex-shrink-0">
-                  <h2 className="font-bold text-primary-text">{deal.name}</h2>
-                  {/* <p className="text-[#34C759] text-xs">
-                    {deal.status === "ACTIVE"
-                      ? "Active"
-                      : deal.status === "PAUSED"
-                      ? "Paused"
-                      : "Draft"}
-                  </p> */}
-                </div>
-                <p className="max-w-[435px] w-full">{deal.description}</p>
-                <button
-                  onClick={() =>
-                    setSelectedItem((prev) => (prev === deal ? null : deal))
-                  }
-                  className="min-w-6 min-h-6 max-h-6 max-w-6 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <ChevronRight size={20} className="text-secondary-text" />
-                </button>
-              </div>
-              <div className="flex justify-between w-full">
-                <div className="flex items-center gap-x-2">
-                  <button
-                    onClick={() => {
-                      form.reset({
-                        campaignId: deal.campaignId,
-                        name: deal.name,
-                        description: deal.description,
-                        discountPercentage: deal.discountPercentage,
-                        maximumThreshold: deal.maximumThreshold,
-                        startDate: formatDateForInput(deal.startDate),
-                        endDate: formatDateForInput(deal.endDate),
-                        isFeatured: deal.isFeatured,
-                        productIds: deal.productIds,
-                        id: deal.id,
-                      });
-                      setAction("edit");
-                    }}
-                    className="rounded-xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2"
-                  >
-                    <HugeiconsIcon
-                      icon={Edit02Icon}
-                      size={16}
-                      color="#FFFFFF"
-                    />
-                    <p className="font-normal text-sm">Edit</p>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedItem(deal);
-                      setAction("deactivate");
-                    }}
-                    className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
-                  >
-                    <X color="#6932E2" size={16} />
-                    <p className="font-normal text-sm">Deactivate</p>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedItem(deal);
-                      setAction("insights");
-                    }}
-                    className="rounded-xl text-primary bg-primary-accent h-[35px] px-2 flex justify-center items-center gap-2"
-                  >
-                    <HugeiconsIcon
-                      icon={Chart03Icon}
-                      color="#6932E2"
-                      size={16}
-                    />
-                    <p className="font-normal text-sm">Insights</p>
-                  </button>
-                </div>
 
-                <button
-                  onClick={() => [setSelectedItem(deal), setAction("delete")]}
-                  className="rounded-xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2"
-                >
-                  <HugeiconsIcon
-                    icon={Delete02Icon}
-                    color="#FF383C"
-                    size={16}
-                  />
-                  <p className="font-normal text-sm">Delete</p>
-                </button>
-              </div>
-              {selectedItem === deal && !action && (
-                <div className="border-t mt-4">
-                  <div className="flex items-center justify-between my-2 w-full">
-                    <h2 className="font-bold mb-1">Discount</h2>
-                    <p>{selectedItem.discountPercentage}% </p>
-                  </div>
-                  <div className="flex items-center justify-between my-2 w-full">
-                    <h2 className="font-bold mb-1">Menu Items</h2>
-                    <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
-                      {selectedItem.products.map((item) => (
-                        <div
-                          key={item.name}
-                          className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1"
-                        >
-                          <p className="text-sm">{item.name}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between my-2 w-full">
-                    <h2 className="font-bold mb-1">Validity period</h2>
-                    <p>
-                      {formatDateDisplay(selectedItem.startDate)} -{" "}
-                      {formatDateDisplay(selectedItem.endDate)}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between my-2 w-full">
-                    <h2 className="font-bold mb-1">Maximum Threshold</h2>
-                    <p>{selectedItem.maximumThreshold} Orders</p>
-                  </div>
-                </div>
-              )}
-            </ContainerWrapper>
-          ))
-        )}
-        {!isLoading && totalPages > 0 && (
-          <PaginationButton
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        )}
+        <div className="overflow-hidden rounded-2xl border bg-card">
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <EmptyState
+              icon={<Gift />}
+              title="No deals found"
+              description={
+                searchQuery
+                  ? "No deals match your search. Try adjusting your filters."
+                  : "Create your first deal to offer discounts on your products."
+              }
+              action={
+                !searchQuery ? (
+                  <Button variant="brand" onClick={openCreate}>
+                    <Plus /> Create Your First Deal
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <Table className="min-w-[900px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Deal</TableHead>
+                  <TableHead>Campaign</TableHead>
+                  <TableHead>Discount</TableHead>
+                  <TableHead>Threshold</TableHead>
+                  <TableHead>Validity</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Redemptions <SampleDataBadge label="Sample" />
+                    </span>
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((deal) => {
+                  const isActive = deal.status === "ACTIVE";
+                  return (
+                    <TableRow key={deal.id}>
+                      <TableCell>
+                        <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                          {deal.name}
+                          {deal.isFeatured && (
+                            <span className="brand-gradient inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-white">
+                              <Star className="h-2.5 w-2.5" /> Featured
+                            </span>
+                          )}
+                        </p>
+                        {deal.description && (
+                          <p className="line-clamp-1 max-w-[260px] text-xs text-muted-foreground">
+                            {deal.description}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {campaignName.get(deal.campaignId) ?? "—"}
+                      </TableCell>
+                      <TableCell className="font-display font-bold text-primary">
+                        {deal.discountPercentage}% off
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {deal.maximumThreshold ? `${deal.maximumThreshold} Orders` : "—"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {fmtDate(deal.startDate)} → {fmtDate(deal.endDate)}
+                      </TableCell>
+                      <TableCell className="font-semibold text-foreground">
+                        {(performance[deal.id ?? ""]?.redemptions ?? 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {isActive || deal.status === "PAUSED" ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="inline-flex items-center gap-1 rounded-full outline-none"
+                              aria-label="Change status"
+                            >
+                              <StatusPill status={deal.status} />
+                              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-40 rounded-xl">
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                disabled={isActive}
+                                onClick={() => deal.id && handleActivate(deal.id)}
+                              >
+                                <Play className="mr-2 h-4 w-4" /> Active
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                disabled={!isActive}
+                                onClick={() => {
+                                  setSelectedItem(deal);
+                                  setAction("deactivate");
+                                }}
+                              >
+                                <Pause className="mr-2 h-4 w-4" /> Paused
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <StatusPill status={deal.status} />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            aria-label={`Manage ${deal.name}`}
+                            className="inline-flex min-h-[36px] items-center gap-1 rounded-full border px-3 text-xs font-semibold outline-none hover:bg-muted"
+                          >
+                            Manage <MoreVertical className="h-3.5 w-3.5" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(deal)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            {isActive ? (
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setSelectedItem(deal);
+                                  setAction("deactivate");
+                                }}
+                              >
+                                <Pause className="mr-2 h-4 w-4" /> Deactivate
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => deal.id && handleActivate(deal.id)}
+                              >
+                                <Play className="mr-2 h-4 w-4" /> Activate
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setSelectedItem(deal);
+                                setAction("insights");
+                              }}
+                            >
+                              <BarChart3 className="mr-2 h-4 w-4" /> Insights
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="cursor-pointer text-rose-500 focus:text-rose-500"
+                              onClick={() => {
+                                setSelectedItem(deal);
+                                setAction("delete");
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+          {!isLoading && totalPages > 1 && (
+            <div className="border-t">
+              <PaginationButton currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
+          )}
+        </div>
       </div>
-      <PerformingDeals />
+
+      <PerformingDeals deals={items} performance={performance} />
+
       <DealsModal
         isOpen={action === "add" || action === "edit"}
-        //@ts-expect-error: there is no issue here
-        action={action}
+        action={action === "edit" ? "edit" : "add"}
         onClose={() => setAction(null)}
-        onUpdate={() => {
-          setAction(null);
-          setShowSuccessModal(true);
-        }}
       />
       <SuccessModal
         isOpen={showSuccessModal}
@@ -393,6 +399,7 @@ export default function DealsTable() {
         isOpen={action === "insights"}
         onClose={() => setAction(null)}
         deal={selectedItem}
+        campaignName={selectedItem ? campaignName.get(selectedItem.campaignId) : undefined}
       />
       <SubscribeModal
         isOpen={showModal}

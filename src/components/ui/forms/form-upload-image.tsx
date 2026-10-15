@@ -229,7 +229,7 @@ export function FormUploadImage<T extends FieldValues>({
       {label && <Label htmlFor={name}>{label}</Label>}
       <div
         className={cn(
-          "rounded-2xl h-[169px] w-full bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
+          "rounded-2xl h-[169px] w-full bg-muted border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
           isDragOver && "border-primary bg-primary-accent/20",
           displayError && "border-red-500 bg-red-50",
           hasValue && !displayError && "border-green-500 bg-green-50",
@@ -313,7 +313,7 @@ export function FormUploadImage<T extends FieldValues>({
       {description && !displayError && (
         <div className="flex items-center justify-center flex-col pt-2">
           <p className="text-sm text-secondary-text">{description}</p>
-          <span className="text-[9px] font-semibold text-gray-500">
+          <span className="text-[9px] font-semibold text-muted-foreground">
             {acceptedFormats.join(", ")} formats supported (Max: {maxSizeInMB}
             MB)
           </span>

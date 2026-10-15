@@ -133,7 +133,7 @@ export function FormArrayInput<TFieldValues extends FieldValues>({
                     <HugeiconsIcon
                       icon={PlusSignIcon}
                       size={24}
-                      color={"#6F6D6D"}
+                      color="currentColor" className="text-muted-foreground"
                     />
                   </button>
                   <Input

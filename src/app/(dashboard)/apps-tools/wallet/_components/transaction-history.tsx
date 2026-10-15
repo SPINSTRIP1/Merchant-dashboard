@@ -1,203 +1,200 @@
-import Dropdown from "@/components/dropdown";
+import { useMemo, useState } from "react";
+import { Download, Receipt } from "lucide-react";
 import SearchBar from "@/components/search-bar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  CancelSquareIcon,
-  DownloadSquare01Icon,
-  PlusSignSquareIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Package } from "lucide-react";
-import { formatAmount } from "@/utils";
-
 import EmptyState from "@/components/empty-state";
+import StatusPill from "@/components/status-pill";
+import PaginationButton from "@/components/pagination-button";
+import SampleDataBadge from "@/components/sample-data-badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { WalletPeriod, WalletTransaction } from "@/hooks/use-wallet-extras";
+import { fmtDateTime, formatAmount } from "@/utils";
 
-import { useState } from "react";
+const PAGE_SIZE = 10;
+const STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "success", label: "Successful" },
+  { value: "settled", label: "Settled" },
+  { value: "pending", label: "Pending" },
+  { value: "failed", label: "Failed" },
+];
+const PERIOD_OPTIONS: { value: WalletPeriod; label: string }[] = [
+  { value: "year", label: "This Year" },
+  { value: "month", label: "This Month" },
+  { value: "week", label: "This Week" },
+];
 
-type Status = "SUCCESSFUL" | "PENDING" | "FAILED";
-
-interface Transaction {
-  id: string;
-  amount: number;
-  status: Status;
-  paymentMethod: string;
-  date: string;
-  available: boolean;
+/** Downloads a plain-text receipt for one transaction. */
+function downloadReceipt(tx: WalletTransaction) {
+  const lines = [
+    "SpinStrip payment receipt",
+    "",
+    `Reference: ${tx.ref}`,
+    `Date: ${fmtDateTime(tx.createdAt)}`,
+    `Customer: ${tx.customerName}`,
+    `Item: ${tx.itemLabel}`,
+    `Amount: ${formatAmount(tx.amount)}`,
+    `Payment method: ${tx.paymentMethod}`,
+    `Status: ${tx.settled ? "Settled" : tx.status}`,
+  ];
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `receipt-${tx.ref}.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
-export const statusColors: Record<Status, string> = {
-  SUCCESSFUL: "text-[#34C759] bg-[#34C75926]",
-  PENDING: "text-[#FF8D28] bg-[#F6E9DD]",
-  FAILED: "text-red-600 bg-red-100",
-};
-
-export default function TransactionHistory() {
+export default function TransactionHistory({
+  transactions,
+  period,
+  onPeriodChange,
+}: {
+  transactions: WalletTransaction[];
+  period: WalletPeriod;
+  onPeriodChange: (period: WalletPeriod) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
-  const items: Transaction[] = [
-    // {
-    //   id: "TXN001",
-    //   amount: 150.0,
-    //   status: "SUCCESSFUL",
-    //   paymentMethod: "Credit Card",
-    //   date: "12/01/2025",
-    //   available: true,
-    // },
-    // {
-    //   id: "TXN002",
-    //   amount: 150.0,
-    //   status: "SUCCESSFUL",
-    //   paymentMethod: "Credit Card",
-    //   date: "12/01/2025",
-    //   available: true,
-    // },
-    // {
-    //   id: "TXN003",
-    //   amount: 150.0,
-    //   status: "SUCCESSFUL",
-    //   paymentMethod: "Credit Card",
-    //   date: "12/01/2025",
-    //   available: false,
-    // },
-  ];
-  const isLoading = false;
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return transactions.filter((tx) => {
+      const matchesStatus =
+        status === "all" ||
+        (status === "settled" ? tx.settled : tx.status === status && (status !== "success" || !tx.settled));
+      const matchesQuery =
+        !query ||
+        tx.ref.toLowerCase().includes(query) ||
+        tx.customerName.toLowerCase().includes(query) ||
+        tx.itemLabel.toLowerCase().includes(query);
+      return matchesStatus && matchesQuery;
+    });
+  }, [transactions, searchQuery, status]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <section>
-      <div className="flex flex-col md:flex-row md:items-center gap-y-3 justify-between w-full">
-        <h1 className="text-sm lg:text-base font-bold text-primary-text">
-          Transaction History
-        </h1>
+    <section className="mt-6">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h2 className="mr-2 flex items-center gap-2 font-display text-base font-bold text-foreground">
+          Transaction History <SampleDataBadge />
+        </h2>
         <SearchBar
-          placeholder="Search transactions"
-          className="bg-[#F3F3F3] w-full max-w-full"
+          placeholder="Search ref, customer, item…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+          }}
         />
-        <div className="flex items-center gap-x-2">
-          <Dropdown
-            header=""
-            options={["All Status", "In Stock", "Low Stock", "Out of Stock"]}
-            placeholder="All"
-            onSelect={() => {}}
-          />
-          <Dropdown
-            header=""
-            options={["This Year", "This Month", "This Week"]}
-            placeholder="This Year"
-            onSelect={() => {}}
-          />
-        </div>
-      </div>
-      <div className="bg-card rounded-3xl p-5 mt-8">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b-0">
-              {[
-                "Date",
-                "Amount",
-
-                "Status",
-                "Payment Method",
-                "Transaction ID",
-                "Action",
-              ].map((header) => (
-                <TableHead
-                  key={header}
-                  className="text-primary-text font-bold text-base"
-                >
-                  {header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">Loading inventory...</p>
-                </TableCell>
-              </TableRow>
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="py-0">
-                  <EmptyState
-                    icon={<Package className="h-16 w-16 text-primary" />}
-                    title="No Transactions Yet"
-                    description={
-                      searchQuery
-                        ? "No items match your search criteria. Try adjusting your filters."
-                        : "Transactions will appear here when customers make purchases from your business."
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ) : (
-              items?.map((item) => (
-                <TableRow
-                  className="border-b-0 cursor-pointer hover:bg-neutral"
-                  key={item.id}
-                >
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{formatAmount(item.amount)}</TableCell>
-                  <TableCell className="w-[140px]">
-                    <div
-                      className={`${
-                        statusColors[item.status as Status] ||
-                        statusColors["SUCCESSFUL"]
-                      } w-[80px] flex items-center justify-center py-1 rounded-lg`}
-                    >
-                      <p className="font-semibold uppercase text-xxs">
-                        {item.status}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.paymentMethod}</TableCell>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>
-                    {item.available ? (
-                      <button className="border flex items-center gap-x-1 border-secondary-text px-1 py-0.5 rounded-lg text-sm">
-                        <p className="text-secondary-text"> Download</p>
-                        <HugeiconsIcon
-                          icon={DownloadSquare01Icon}
-                          size={16}
-                          color={"#6F6D6D"}
-                          strokeWidth={2.2}
-                        />
-                      </button>
-                    ) : (
-                      <button className="border flex items-center gap-x-1 border-neutral-accent px-1 py-0.5 rounded-lg text-sm">
-                        <p className="text-neutral-accent"> Unavailable</p>
-                        <HugeiconsIcon
-                          icon={CancelSquareIcon}
-                          size={16}
-                          color={"#C8C8C8"}
-                          strokeWidth={2.2}
-                        />
-                      </button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <Select
+          value={status}
+          onValueChange={(value) => {
+            setStatus(value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="h-11 w-[140px] rounded-full text-xs font-semibold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={period}
+          onValueChange={(value) => {
+            onPeriodChange(value as WalletPeriod);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="h-11 w-[130px] rounded-full text-xs font-semibold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PERIOD_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Pagination Component */}
-      {/* {!isLoading && totalPages > 0 && (
-        <PaginationButton
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )} */}
+      <div className="overflow-hidden rounded-2xl border bg-card">
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={<Receipt />}
+            title="No transactions yet"
+            description={
+              searchQuery || status !== "all"
+                ? "No transactions match your search or filters."
+                : "Transactions will appear here when customers pay your business."
+            }
+          />
+        ) : (
+          <Table className="min-w-[860px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Payment Method</TableHead>
+                <TableHead>Transaction ID</TableHead>
+                <TableHead className="text-right">Receipt</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((tx) => {
+                const available = tx.status === "success";
+                return (
+                  <TableRow key={tx.id}>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {fmtDateTime(tx.createdAt)}
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium text-foreground">{tx.itemLabel}</p>
+                      <p className="text-[11px] text-muted-foreground">{tx.customerName}</p>
+                    </TableCell>
+                    <TableCell className="font-semibold text-foreground">{formatAmount(tx.amount)}</TableCell>
+                    <TableCell>
+                      <StatusPill
+                        status={tx.settled ? "settled" : tx.status}
+                        label={tx.settled ? "Settled" : tx.status === "success" ? "Successful" : undefined}
+                      />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{tx.paymentMethod}</TableCell>
+                    <TableCell className="font-mono text-[11px] text-muted-foreground">{tx.ref}</TableCell>
+                    <TableCell className="text-right">
+                      <button
+                        type="button"
+                        disabled={!available}
+                        onClick={() => downloadReceipt(tx)}
+                        className="inline-flex min-h-[32px] items-center gap-1 rounded-full border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-60"
+                      >
+                        <Download className="h-3.5 w-3.5" /> {available ? "Download" : "Unavailable"}
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+        {totalPages > 1 && (
+          <div className="border-t">
+            <PaginationButton currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

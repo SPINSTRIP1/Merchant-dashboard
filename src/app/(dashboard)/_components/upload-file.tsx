@@ -216,7 +216,7 @@ export default function UploadFile({
     <div className="space-y-2.5 w-full ">
       <div
         className={cn(
-          "rounded-2xl h-[169px] w-full  bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
+          "rounded-2xl h-[169px] w-full  bg-muted border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200 cursor-pointer",
           isDragOver && "border-primary bg-primary-accent/20",
           error && "border-red-500 bg-red-50",
           selectedFile && "border-green-500 bg-green-50",
@@ -285,7 +285,7 @@ export default function UploadFile({
               <p
                 className={cn(
                   "text-sm",
-                  error ? "text-red-500" : "text-gray-700",
+                  error ? "text-red-500" : "text-foreground",
                 )}
               >
                 {error}

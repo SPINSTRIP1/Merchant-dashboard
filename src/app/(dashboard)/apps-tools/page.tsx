@@ -1,21 +1,21 @@
 "use client";
 
-import { Modal } from "@/components/modal";
 import SearchBar from "@/components/search-bar";
+import PageHeader from "@/components/page-header";
+import EmptyState from "@/components/empty-state";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useReduxApps } from "@/hooks/use-redux-apps";
 import { useAppSelector } from "@/hooks/redux";
 import { selectFilteredApps } from "@/store/selectors";
-import React from "react";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { ArrowUpRight, Blocks, LayoutGrid } from "lucide-react";
 import Image from "next/image";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import { RadioGroup, RadioGroupItem } from "./_components/primary-radio-group";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import React from "react";
+import toast from "react-hot-toast";
 
 // Type for app with status
 type AppWithStatus = {
@@ -25,214 +25,191 @@ type AppWithStatus = {
   isActive: boolean;
   default?: boolean;
   icon: string;
-  integrated?: boolean;
+  route?: string;
   publisher?: string;
 };
 
-export default function Apps() {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [selectedApp, setSelectedApp] = React.useState<AppWithStatus | null>(
-    null,
+const filters = [
+  { label: "All Apps", value: "all" },
+  { label: "Free", value: "free" },
+  { label: "Paid", value: "paid" },
+  { label: "Default Apps", value: "default" },
+  { label: "Community Apps", value: "community" },
+];
+
+const priceLabel = (app: AppWithStatus) => (app.amount ? `₦${app.amount.toLocaleString()}/month` : "Free");
+
+function StatusBadge({ app }: { app: AppWithStatus }) {
+  const active = app.default || app.isActive;
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide",
+        active ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"
+      )}
+    >
+      {app.default ? "Default" : app.isActive ? "Integrated" : "Available"}
+    </span>
   );
+}
+
+export default function Apps() {
+  const [selectedName, setSelectedName] = React.useState<string | null>(null);
 
   // Redux state and actions
-  const {
-    toggleAppState,
-    searchQuery,
-    updateSearchQuery,
-    categoryFilter,
-    updateCategoryFilter,
-  } = useReduxApps();
-  const filteredApps = useAppSelector(selectFilteredApps);
-  const filters = [
-    { label: "All Apps", value: "" },
-    { label: "Free", value: "free" },
-    { label: "Paid", value: "paid" },
-    { label: "Default Apps", value: "default" },
-    { label: "Community Apps", value: "community" },
-  ];
+  const { toggleAppState, searchQuery, updateSearchQuery, categoryFilter, updateCategoryFilter } = useReduxApps();
+  const filteredApps = useAppSelector(selectFilteredApps) as AppWithStatus[];
+  const selectedApp = filteredApps.find((app) => app.name === selectedName) ?? null;
+
+  const handleToggle = (app: AppWithStatus) => {
+    toggleAppState(app.name);
+    if (app.isActive) toast.success(`${app.name} deactivated`);
+    else toast.success(`${app.name} activated — find it in your sidebar`);
+  };
+
+  const activationControl = (app: AppWithStatus) =>
+    app.default ? null : (
+      <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        Activate
+        <Switch checked={app.isActive} onCheckedChange={() => handleToggle(app)} aria-label={`Activate ${app.name}`} />
+      </label>
+    );
+
+  const openLink = (app: AppWithStatus) =>
+    (app.default || app.isActive) && app.route ? (
+      <Link
+        href={app.route}
+        className="inline-flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline"
+      >
+        Open <ArrowUpRight className="h-3.5 w-3.5" />
+      </Link>
+    ) : null;
+
   return (
     <section>
-      <div className="h-[120px] md:h-[161px] 2xl:h-[200px] rounded-[32px] !p-0 overflow-hidden mb-6">
-        <img
-          src={"/apps-tools.png"}
-          alt={"Apps Background"}
-          width={900}
-          height={900}
-          className="w-full h-full object-cover"
-        />
+      <div className="mb-6 h-[120px] overflow-hidden rounded-2xl md:h-[161px] 2xl:h-[200px]">
+        <img src="/apps-tools.png" alt="Apps Background" className="h-full w-full object-cover" />
       </div>
-      <div className="flex items-center gap-x-3 justify-between w-full">
-        <h1 className="text-sm lg:text-base font-bold">Apps</h1>
+
+      <PageHeader title="Apps & Tools" subtitle="Powerful tools to supercharge your business or brand on SpinStrip." />
+
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <SearchBar
           placeholder="Search Apps"
-          className="bg-[#F3F3F3] w-full"
           value={searchQuery}
           onChange={(e) => updateSearchQuery(e.target.value)}
         />
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none flex items-center border p-1 rounded-lg">
-              <p className="text-sm">
-                {filters.find((item) => item.value === categoryFilter)?.label ||
-                  "All Apps"}
-              </p>
-              <ChevronDown
-                className="inline-block text-secondary-text ml-1"
-                size={18}
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[149px] py-3 px-1 mr-5 bg-neutral border rounded-2xl shadow-none border-neutral-accent">
-              <RadioGroup
-                value={categoryFilter}
-                onValueChange={updateCategoryFilter}
-              >
-                {filters.map((item) => (
-                  <DropdownMenuItem
-                    key={item.label}
-                    onClick={() => updateCategoryFilter(item.value)}
-                    className="flex items-center cursor-pointer gap-2"
-                  >
-                    <RadioGroupItem value={item.value} />
-                    <span className="text-xs text-secondary-text">
-                      {item.label}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </RadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <Select
+          value={categoryFilter || "all"}
+          onValueChange={(value) => updateCategoryFilter(value === "all" ? "" : value)}
+        >
+          <SelectTrigger className="h-11 w-[170px] rounded-full text-xs font-semibold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {filters.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="grid my-5 gap-5 md:grid-cols-2">
-        {filteredApps.length > 0 ? (
-          filteredApps.map((app: AppWithStatus, index: number) => (
-            <div
-              key={app.name}
-              className={`p-4 cursor-pointer rounded-xl ${
-                index % 2 === 0
-                  ? "lg:justify-self-start"
-                  : "lg:justify-self-end"
-              } md:max-w-[487px]  w-full flex items-center gap-x-3 bg-card`}
-            >
-              <Image
-                src={app.icon}
-                alt={app.name}
-                width={100}
-                height={100}
-                className="size-16 md:size-20 object-contain flex-shrink-0"
-              />
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm lg:text-base font-bold text-primary-text">
-                    {app.name}
-                  </h2>
-                  <div className="flex items-center gap-x-2">
-                    {app.default ? (
-                      <div className="bg-primary-accent flex-shrink-0 border-primary text-primary border px-2.5 py-0.5 rounded-3xl">
-                        <p className="text-xs">DEFAULT</p>
-                      </div>
-                    ) : (
-                      <Switch
-                        checked={app.isActive}
-                        disabled={app.default}
-                        onCheckedChange={() => toggleAppState(app.name)}
-                      />
-                    )}
 
-                    {app.integrated && (
-                      <div className="bg-green-100 flex-shrink-0 border border-green-800 text-green-800 px-2.5 py-0.5 rounded-3xl">
-                        <p className="text-xs">INTEGRATED</p>
-                      </div>
-                    )}
+      {filteredApps.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {filteredApps.map((app, i) => (
+            <motion.div
+              key={app.name}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="card-hover flex gap-4 rounded-2xl border bg-card p-5"
+            >
+              <div
+                className={cn(
+                  "grid h-14 w-14 shrink-0 place-items-center rounded-2xl p-1.5",
+                  app.default || app.isActive ? "bg-primary/10" : "bg-muted"
+                )}
+              >
+                <Image src={app.icon} alt="" width={56} height={56} className="h-full w-full object-contain" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-display font-bold text-foreground">{app.name}</p>
+                  <StatusBadge app={app} />
+                </div>
+                <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">{app.description}</p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedName(app.name)}
+                  className="mt-1 text-xs font-medium text-primary hover:underline"
+                >
+                  Read more
+                </button>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-bold text-foreground">{priceLabel(app)}</span>
+                  <div className="flex items-center gap-3">
+                    {openLink(app)}
+                    {activationControl(app)}
                   </div>
                 </div>
-                <p className="text-sm text-secondary-text line-clamp-3">
-                  {app.description}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border bg-card">
+          <EmptyState
+            icon={<LayoutGrid />}
+            title="No apps found"
+            description={
+              searchQuery
+                ? `Nothing matches “${searchQuery}”. Try a different app name or description.`
+                : "No apps in this category."
+            }
+          />
+        </div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="mt-8 flex items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 text-sm text-muted-foreground"
+      >
+        <Blocks className="h-5 w-5 shrink-0 text-primary" />
+        More integrations are on the way — payroll, reservations and marketing automation.
+      </motion.div>
+
+      <Dialog open={!!selectedApp} onOpenChange={(open) => !open && setSelectedName(null)}>
+        <DialogContent className="max-w-[535px]">
+          {selectedApp && (
+            <div className="flex gap-4">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary/10 p-2">
+                <Image src={selectedApp.icon} alt="" width={64} height={64} className="h-full w-full object-contain" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 pr-6">
+                  <DialogTitle className="font-display text-base font-bold">{selectedApp.name}</DialogTitle>
+                  <StatusBadge app={selectedApp} />
+                </div>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  {selectedApp.description}
+                </DialogDescription>
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-sm font-bold text-foreground">{priceLabel(selectedApp)}</span>
+                  {" · "}Published by <span className="font-semibold">{selectedApp.publisher || "SpinStrip"}</span>
                 </p>
-                <div className="flex items-center justify-between">
-                  <p className="text-base text-primary-text font-bold">
-                    {app.amount ? `N${app.amount}/month` : "Free"}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSelectedApp(app);
-                      setIsModalOpen(true);
-                    }}
-                    className="text-sm text-primary underline"
-                  >
-                    Read More
-                  </button>
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+                  {openLink(selectedApp)}
+                  {activationControl(selectedApp)}
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-span-2 text-center py-8">
-            <p className="text-secondary-text text-base">
-              No apps found matching &ldquo;{searchQuery}&rdquo;
-            </p>
-            <p className="text-sm text-secondary-text mt-1">
-              Try searching for a different app name or description
-            </p>
-          </div>
-        )}
-      </div>
-      <Modal
-        className="max-w-[535px] flex gap-x-4"
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      >
-        <Image
-          src={selectedApp?.icon || ""}
-          alt={selectedApp?.name || ""}
-          width={100}
-          height={100}
-          className="size-[80px] mx-auto mb-3 md:size-[100px] object-contain"
-        />
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-x-1">
-              <h2 className="text-sm lg:text-base font-bold text-primary-text">
-                {selectedApp?.name}
-              </h2>
-              {selectedApp?.default ? (
-                <>
-                  <div className="w-1 h-1 rounded-full bg-neutral-accent" />
-                  <p className="text-[10px] text-neutral-accent">DEFAULT</p>
-                </>
-              ) : null}
-            </div>
-
-            <Switch
-              checked={selectedApp?.isActive || false}
-              disabled={selectedApp?.default}
-              onCheckedChange={() => {
-                if (selectedApp?.name) {
-                  setSelectedApp((prev) =>
-                    prev ? { ...prev, isActive: !prev.isActive } : prev,
-                  );
-                  toggleAppState(selectedApp.name);
-                }
-              }}
-            />
-          </div>
-          <p className="text-sm text-secondary-text">
-            {selectedApp?.description}
-          </p>
-          <div className="flex items-center gap-x-1.5">
-            <p className="text-sm text-primary-text font-bold">
-              {selectedApp?.amount ? `N${selectedApp.amount}/month` : "Free"}
-            </p>
-            <p className="text-secondary-text text-xs">
-              Published by{" "}
-              <span className="font-bold">
-                {selectedApp?.publisher || "SpinStrip"}
-              </span>
-            </p>
-          </div>
-        </div>
-      </Modal>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

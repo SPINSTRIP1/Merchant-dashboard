@@ -7,6 +7,7 @@ import FileUpload from "@/components/file-upload";
 import { Input } from "@/components/ui/input";
 import CountrySelectDropdown from "@/components/country-select-dropdown";
 import { Textarea } from "@/components/ui/textarea";
+import { subCategoriesFor } from "../../_constants";
 export default function AboutBusiness() {
   const {
     form: {
@@ -19,11 +20,14 @@ export default function AboutBusiness() {
   return (
     <div className="space-y-5">
       <ContainerWrapper className="space-y-2.5">
-        <Label>Business Sub-category under -Hospitality-</Label>
+        <Label>
+          Business Sub-category
+          {getValues("businessCategory") ? ` under ${getValues("businessCategory")}` : ""}
+        </Label>
         <SelectDropdown
           className="!rounded-2xl border border-neutral-accent"
           placeholder="Choose your business sub-category"
-          options={["Retail", "Food & Beverage", "Healthcare", "Technology"]}
+          options={subCategoriesFor(getValues("businessCategory"))}
           value={getValues("businessSubCategory")}
           onValueChange={(value) => {
             handleFieldChange("businessSubCategory", value);
@@ -63,6 +67,7 @@ export default function AboutBusiness() {
           <CountrySelectDropdown
             className="!rounded-2xl border border-neutral-accent"
             placeholder="Select Country"
+            value={getValues("countryOfIncorporation")}
             onValueChange={(value) =>
               handleFieldChange("countryOfIncorporation", value)
             }

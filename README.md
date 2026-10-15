@@ -1,6 +1,8 @@
 # SpinStrip Merchant Dashboard
 
-The web app merchants use to run their business on the SpinStrip platform. Merchants sign up, complete KYC, then turn on modular "Apps/Tools" (Wallet, Event Planner, Menu, Inventory, Places, Deals, Customers). It also serves the public, consumer-facing event and place pages, including event ticket checkout.
+The web app merchants use to run their business on the SpinStrip platform. Merchants sign up, complete KYC, then turn on modular "Apps/Tools" (Wallet, Event Planner, Menu, Inventory, Places, Deals, Customers). It also has a business overview, settlement and billing pages, team roles, a phone-sized waiter app, and the public, consumer-facing pages: Discover, events (with ticket checkout), places and the table-QR menu.
+
+> **Some features run on sample data.** Everything the backend supports is wired to it. Features from the product prototype that have no backend endpoint yet are fully built but use generated sample data, marked on screen with a "Sample" badge. See [Sample data](#sample-data) and [docs/backend-endpoints-needed.md](docs/backend-endpoints-needed.md).
 
 - **Production URL:** https://merchant.spinstrip.com
 - **Repository:** https://github.com/SPINSTRIP1/Merchant-dashboard
@@ -21,12 +23,14 @@ The web app merchants use to run their business on the SpinStrip platform. Merch
 6. [Service and API keys](#service-and-api-keys)
 7. [Dependencies on other services](#dependencies-on-other-services)
 8. [Configuration](#configuration)
-9. [Deployment](#deployment)
-10. [Production considerations](#production-considerations)
-11. [Project structure](#project-structure)
-12. [Development conventions](#development-conventions)
-13. [Troubleshooting](#troubleshooting)
-14. [Known gaps](#known-gaps)
+9. [Roles and permissions](#roles-and-permissions)
+10. [Sample data](#sample-data)
+11. [Deployment](#deployment)
+12. [Production considerations](#production-considerations)
+13. [Project structure](#project-structure)
+14. [Development conventions](#development-conventions)
+15. [Troubleshooting](#troubleshooting)
+16. [Known gaps](#known-gaps)
 
 ---
 
@@ -34,19 +38,29 @@ The web app merchants use to run their business on the SpinStrip platform. Merch
 
 ### Merchant dashboard (needs login)
 
+"Sample" marks parts that run on [sample data](#sample-data) until the backend supports them.
+
 | Area | Route | What merchants can do |
 |---|---|---|
-| Apps/Tools catalogue | `/apps-tools` | Browse, search, filter and turn apps on or off |
-| Wallet | `/apps-tools/wallet` | Create a wallet, deposit/withdraw, POS, settlement bank accounts, transaction history, revenue chart |
-| Event Planner | `/apps-tools/event-planner` | Create and manage events, ticket tiers, media |
-| Event sales | `/apps-tools/event-planner/sales-registrations` | Registrations, revenue and ticket-tier stats |
-| Menu | `/apps-tools/menu` | Menu items, pricing, availability schedules, add-ons, allergens |
-| Inventory | `/apps-tools/inventory` | Products, catalogues, stock levels, variants, slot booking |
-| Places | `/apps-tools/places`, `/apps-tools/places/[id]` | Create or claim a place; facilities, operating hours, bookings, visitors |
-| Deals | `/apps-tools/deals` | Subscription-gated discount campaigns and performance |
-| Customers | `/apps-tools/customers` | Customer list with search, filter and pagination |
-| Settings / KYC | `/settings`, `/settings/compliance` | Account settings and the 4-step KYC wizard |
-| Overview, Billing | `/`, `/billing` | Placeholders ("coming soon") |
+| Overview | `/` | KPIs for a date range, revenue and customer charts, product performance, recent transactions and events. Counts of menu items, inventory, places, deals and events are live; money and customer analytics are sample |
+| Apps & Tools | `/apps-tools` | Browse, search and filter apps; turn them on or off; open active apps |
+| Menu | `/apps-tools/menu` | Menu items, pricing, availability, add-ons, allergens, featured items, configuration. Tables & QR, Table Analytics and Top Menus order counts are sample |
+| Places | `/apps-tools/places`, `/apps-tools/places/[id]` | Create or claim a place; facilities, operating hours, bookings, visitors, activities. Taglines, reviews, manual visitors and booking status changes are sample |
+| Event Planner | `/apps-tools/event-planner`, `…/sales-registrations` | Create and manage events and ticket tiers; registrations, revenue and tier stats with CSV export. Delete and via-deal counts are sample |
+| Deals | `/apps-tools/deals`, `…/archives` | Subscription-gated campaigns and deals, activate/pause. Redemption and revenue insights are sample |
+| Inventory | `/apps-tools/inventory`, `…/item?id=` | Products, catalogues, stock levels, restock, visibility, low-stock warnings. Item history is sample |
+| Wallet | `/apps-tools/wallet` | Create a wallet, deposit details, POS, settlement accounts. Balance (when the API doesn't return one), revenue, transactions and withdrawals are sample |
+| Customers | `/apps-tools/customers` | Customer list with service filter, sort, search, CSV export. Spend per service is sample |
+| Settlement | `/settlement` | Daily settlement batches and settled transactions with CSV export (sample) |
+| Billing | `/billing` | Monthly bill from the active paid apps; invoices and card on file are sample |
+| Admin & Roles | `/admin` | Owner only. Add team members (Admin Ops or Waiter) and set their permissions (sample) |
+| Settings | `/settings/*` | Compliance (KYC wizard and status), Preferences (theme; sample notifications), Security (sample change password), Payments (real settlement accounts), Integrations, Legal |
+
+### Waiter app (needs login)
+
+| Route | Purpose |
+|---|---|
+| `/waiter` | Phone-sized app for staff with the waiter role: live floor plan, seat guests, read-only menu. Tables and seatings are sample |
 
 ### Public pages (no login)
 
@@ -55,6 +69,8 @@ The web app merchants use to run their business on the SpinStrip platform. Merch
 | `/preview/events?id=<eventId>` | Public event page and ticket checkout |
 | `/preview/events/success` | Return page after Paystack payment; verifies the payment |
 | `/preview/places?id=<placeId>` | Public place page |
+| `/preview/menu?table=<qrToken>` | Public menu opened from a table QR code (the merchant's real menu when they are signed in, otherwise a sample menu) |
+| `/discover` | SpinStrip Discover: places and events across merchants (sample listings) |
 
 ### Auth pages
 
@@ -71,7 +87,9 @@ The web app merchants use to run their business on the SpinStrip platform. Merch
 - Client-side route protection for the dashboard.
 - Client-side form validation (zod schemas) before data is sent to the API.
 - Starting the Paystack checkout for public event tickets and showing the verification result.
-- Per-browser app on/off state in the Apps/Tools catalogue.
+- Per-browser app on/off state in the Apps/Tools catalogue, and the light/dark theme choice.
+- Hiding dashboard sections a team member's role doesn't allow (the backend must still enforce access).
+- Generating sample data for features the backend doesn't support yet (see [Sample data](#sample-data)).
 
 **This app is not responsible for (handled by backend services):**
 
@@ -97,14 +115,17 @@ The web app merchants use to run their business on the SpinStrip platform. Merch
 | Concern | Choice |
 |---|---|
 | Framework | Next.js 15 (App Router), React 19, TypeScript 5 |
-| Styling | Tailwind CSS 3.4, shadcn-style Radix UI primitives |
+| Styling | Tailwind CSS 3.4 with CSS-variable design tokens, shadcn-style Radix UI primitives (dialog, sheet, tabs, select, popover, …) |
+| Theme | `next-themes`: light, dark or system |
+| Animation | framer-motion |
 | Server state | TanStack React Query v5 |
 | Client state | Redux Toolkit + redux-persist (localStorage) |
 | Forms | react-hook-form + zod v4 |
 | HTTP | axios (one configured instance in `src/lib/api/axios-client.ts`) |
 | Charts | chart.js + react-chartjs-2 |
 | Toasts | react-hot-toast |
-| Fonts | Self-hosted SF Pro Display (`public/fonts`) |
+| Fonts | Plus Jakarta Sans (body) and Outfit (headings, totals) through `next/font/google` |
+| QR codes | qrcode.react (table QR codes) |
 
 ---
 
@@ -181,7 +202,7 @@ All backend responses use the envelope `{ status, message, data }`. Paginated li
 | Service | Base URL | Used for | Auth |
 |---|---|---|---|
 | **Merchant gateway** (`SERVER_URL`) | `https://spinstrip-merchant-gateway.fly.dev/api/v1` | Login, registration, OTP, password reset, token refresh, KYC, events, places, inventory, menu, deals, customers, media uploads | Bearer token (except auth endpoints and `/events/public/*`, `/places/public/*`) |
-| **User account** (`USER_ACCOUNT_URL`) | `https://spinstrip-user-account.fly.dev/api/v1` | Wallets, banks, bank account resolution, settlement bank accounts | Bearer token |
+| **User account** (`USER_ACCOUNT_URL`) | `https://spinstrip-user-account.fly.dev/api/v1` | Current user (`/auth/me`), wallets, banks, bank account resolution, settlement bank accounts | Bearer token |
 | **Events** (`EVENTS_SERVER_URL`) | `https://spinstrip-events.fly.dev/api/v1` | Public ticket registration (`/events/public/{id}/register`) and payment verification (`/events/payments/verify/{reference}`) | None (public) |
 | **Paystack** | Hosted checkout | Ticket payments. Paystack redirects back to `/preview/events/success?reference=...` | Handled by the events service |
 | **Google Maps Embed API** | `https://www.google.com/maps/embed/v1/place` | Maps on public event and place pages | API key |
@@ -204,11 +225,40 @@ The full endpoint list is in [SPEC.md, section 4](SPEC.md#4-backend-services).
 | Build checks | `next.config.ts` | `eslint.ignoreDuringBuilds: true` and `typescript.ignoreBuildErrors: true` (see [Production considerations](#production-considerations)) |
 | Site metadata / SEO | `src/app/layout.tsx` | `metadataBase` is `https://merchant.spinstrip.com`; title template `"%s \| SpinStrip Merchant"` |
 | Apps catalogue | `src/constants/index.ts` (`apps`) | Which apps exist, prices, default on/off, routes. Several future apps are commented out. |
-| Sidebar navigation | `src/constants/sidebar.tsx` | |
-| Theme and colours | `tailwind.config.ts`, `src/app/globals.css` | Primary `#6932E2`. Light theme only. |
+| Sidebar navigation | `src/constants/sidebar.tsx` | Sections General / Apps / Business. App links show only when the app is on and the user has the permission. |
+| Theme and colours | `tailwind.config.ts`, `src/app/globals.css`, `src/providers/theme-provider.tsx` | Primary `#6932E2`. Colours are tokens in `globals.css` with light (`:root`) and dark (`.dark`) values. Dark mode covers the dashboard, `/waiter` and `/discover`; sign-in screens and `/preview/*` are forced to light. |
+| Chart colours | `src/lib/chart-theme.ts` | Charts read the colour tokens; `useChartThemeKey` redraws them when the theme changes |
+| Roles and permissions | `src/lib/permissions.ts` | See [Roles and permissions](#roles-and-permissions) |
 | UI component generator | `components.json` | shadcn config (`new-york` style) |
 | Path alias | `tsconfig.json` | `@/*` → `src/*` |
 | Persisted client state | `src/store/index.ts` | redux-persist key `root`, whitelist `auth`, `apps` |
+
+---
+
+## Roles and permissions
+
+`src/lib/permissions.ts`, used through `usePermissions()` and `<PermissionGate>`.
+
+| Role | Access |
+|---|---|
+| `owner` | Everything, including Admin & Roles |
+| `admin_ops` | Only the sections in `user.dashboardPermissions` (overview, menu, places, events, inventory, deals, customers, wallet, settlement, billing, settings) |
+| `waiter` | Only the waiter app at `/waiter` |
+
+The role comes from `user.role`. **Today every account is treated as the owner**: the backend doesn't have merchant team accounts yet, and the platform profiles (`USER`, `MERCHANT`, `ADMIN`) are not merchant roles. After login, users land on the first page their role allows. Hiding pages is a convenience only. The backend must enforce access on every request.
+
+---
+
+## Sample data
+
+Features from the product prototype that the backend can't serve yet are fully built, but read generated data instead of calling an API:
+
+- **Where:** fixtures in `src/mocks/`, always reached through a hook in `src/hooks/` (for example `use-overview.ts`, `use-settlements.ts`, `use-team.ts`, `use-menu-tables.ts` and the `use-*-extras.ts` files).
+- **On screen:** marked with a "Sample" badge (`SampleDataBadge`, or `sample` on `StatCard`).
+- **Stability:** generated from fixed seeds, so the numbers stay the same across reloads. Changes made to sample data, such as adding a table or a team member, last until the page is reloaded; a few (preferences, taglines, booking status) are kept in `localStorage`.
+- **Existing calls untouched:** sample features sit alongside the real API calls and never replace them.
+
+To connect one to the backend, change only its hook. The list of endpoints needed, with suggested shapes, is in [docs/backend-endpoints-needed.md](docs/backend-endpoints-needed.md).
 
 ---
 
@@ -298,7 +348,8 @@ Build with `docker build --build-arg NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=... -t spin
 
 **State**
 
-- App on/off choices in the catalogue are stored only in the browser (Redux + localStorage) and are not synced to the server. Clearing site data or changing device resets them.
+- App on/off choices in the catalogue, the theme and the sample Preferences are stored only in the browser and are not synced to the server. Clearing site data or changing device resets them.
+- Sample data is generated in the browser. It is clearly labelled, but merchants can see it in production until the matching endpoints exist. Decide before launch whether any sample-only page (Settlement, Billing, Admin & Roles, Discover, the waiter app) should be hidden.
 
 ---
 
@@ -309,18 +360,24 @@ src/
   app/
     (auth)/          Login, register, OTP, forgot/reset password (no auth guard)
     (dashboard)/     Merchant dashboard, wrapped in React Query + AuthProvider
+      page.tsx       Overview
       apps-tools/    One folder per module (_components, _schemas, _context, _constants, _types)
-      settings/      Settings and the KYC wizard
-    preview/         Public event and place pages
-    layout.tsx       Root layout: Redux provider, toaster, metadata
+      settlement/, billing/, admin/
+      settings/      Settings hub, compliance (KYC), preferences, security, payments, integrations, legal
+    waiter/          Waiter app (signed in, no sidebar)
+    discover/        Public Discover page
+    preview/         Public event, place and menu pages
+    layout.tsx       Root layout: Redux and theme providers, toaster, fonts, metadata
   components/        Shared components; ui/ holds design-system primitives and form inputs
   constants/         API base URLs, apps catalogue, sidebar
-  hooks/             All data-fetching hooks (use-<domain>.ts)
-  lib/               axios client, error handler, form-context factory, upload helpers
-  providers/         Redux, React Query and auth providers
+  hooks/             All data-fetching hooks (use-<domain>.ts; use-*-extras.ts for sample features)
+  lib/               axios client, permissions, chart theme, form-context factory, upload helpers
+  mocks/             Sample-data fixtures (only imported by hooks)
+  providers/         Redux, React Query, auth and theme providers
   store/             Redux store, slices (auth, apps), selectors
   utils/             Formatting, token obfuscation helpers
-public/              Images, icons, fonts
+public/              Images, icons
+docs/                Port plan and the backend endpoints list
 SPEC.md              Full technical specification
 ```
 
@@ -334,8 +391,9 @@ The full rules are in [SPEC.md, section 14](SPEC.md#14-rules-for-new-code). The 
 2. Export response types from the hook file; components import them from there.
 3. Always use `api` from `@/lib/api/axios-client` (it adds the token and handles refresh). Pass an absolute URL to reach a non-default service, e.g. `` api.get(`${USER_ACCOUNT_URL}/wallet`) ``.
 4. Forms use react-hook-form + zod; multi-step flows use `createFormContext`.
-5. Use the Tailwind design tokens, not ad-hoc hex colours.
+5. Use the Tailwind design tokens, not ad-hoc hex colours, so dark mode keeps working.
 6. Files are kebab-case; route-private folders start with `_`.
+7. Never change an existing, working API call to add a feature. A feature without a backend endpoint gets its own hook backed by `src/mocks/`, a "Sample" badge, and an entry in `docs/backend-endpoints-needed.md`.
 
 ---
 
@@ -350,13 +408,20 @@ The full rules are in [SPEC.md, section 14](SPEC.md#14-rules-for-new-code). The 
 | Requests fail with CORS errors | The backend does not allow the current origin. Ask the backend owner to add it. |
 | Lists show empty states everywhere | A backend service is down or unreachable. Check the base URLs and the Fly.io services. |
 | App opens on port 3001 locally but 3000 in production | Expected: `dev` uses `-p 3001`, `start` uses the default. |
+| A number has a "Sample" badge | Expected: that feature has no backend endpoint yet. See [Sample data](#sample-data). |
+| `npm run dev` starts returning 500s after a build | `next build` and `next dev` share `.next`. Stop the dev server before building in the same folder, or build in a copy. |
 
 ---
 
 ## Known gaps
 
-- Overview (`/`) and Billing are placeholders. Chat, Groups, Socials, Reviews, Payment Method, Memberships and Ads are commented out of the catalogue.
-- Settings links to `/settings/preferences`, which does not exist yet.
+- The features listed in [docs/backend-endpoints-needed.md](docs/backend-endpoints-needed.md) run on sample data.
+- Merchant team accounts and roles are not supported by the backend yet, so everyone signs in as the owner.
+- Known bugs left as they are, because fixing them needs a backend decision or would change a working integration:
+  - Places: editing doesn't send operating hours, metadata or the video URL; the "Other" place type fails validation.
+  - The public place checkout shows a fixed ₦200,000.
+  - Inventory's "Indefinite" option sends `INFINITE`, but validation expects `INDEFINITE`.
+  - Wallet's POS popup shows a static QR, and Withdraw doesn't call an API.
+- Chat, Groups, Socials, Reviews, Payment Method, Memberships and Ads are commented out of the catalogue.
 - Pagination response shapes are not consistent across endpoints (see [SPEC.md, section 15](SPEC.md#15-known-gaps--caveats)).
-- `darkMode` is configured in Tailwind but there is no dark theme.
-- SPEC.md was written before the Customers and bank account features; their endpoints (`/places/customers`, `/banks`, `/banks/resolve`, `/bank-accounts`) are listed in this README but not yet in SPEC.md.
+- Pre-existing TypeScript errors remain in `inventory/_components/steps/upload-images.tsx`, `places/_context/index.tsx` and `components/ui/forms/form-array-input.tsx` (the build ignores type errors).

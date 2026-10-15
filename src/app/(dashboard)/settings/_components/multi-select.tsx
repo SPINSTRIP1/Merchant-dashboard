@@ -26,7 +26,7 @@ export function MultiSelect({
         <label
           htmlFor={`${id}-${index}`}
           className={cn(
-            "flex bg-[#E0E0E0] w-full lg:w-[170px] h-[44px] px-3 rounded-full items-center gap-x-2 cursor-pointer",
+            "flex bg-muted w-full lg:w-[170px] h-[44px] px-3 rounded-full items-center gap-x-2 cursor-pointer",
             radioClassName,
           )}
           key={index}

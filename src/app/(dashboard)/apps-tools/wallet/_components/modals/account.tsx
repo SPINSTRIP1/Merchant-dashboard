@@ -1,35 +1,64 @@
+import toast from "react-hot-toast";
+import { Copy, Landmark } from "lucide-react";
 import { Modal } from "@/components/modal";
 import { Button } from "@/components/ui/button";
-import { Copy02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import React from "react";
 
+/**
+ * Deposit details. Shows the wallet's account number and bank when the wallet response includes
+ * them; otherwise explains that funding details aren't available yet.
+ */
 export default function Account({
   isOpen,
   onClose,
+  accountNumber,
+  bankName,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  accountNumber?: string;
+  bankName?: string;
 }) {
+  const copy = async () => {
+    if (!accountNumber) return;
+    try {
+      await navigator.clipboard.writeText(accountNumber);
+      toast.success("Account number copied");
+    } catch {
+      toast.error("Couldn't copy — please copy it manually.");
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[400px]">
-      <p className="text-center text-sm">Transfer the sum of N30,000.00 to</p>
-      <div className="flex justify-center mt-4 mb-2 items-center gap-x-2">
-        <h2 className="font-bold text-2xl text-primary-text">0021003201</h2>
-        <HugeiconsIcon icon={Copy02Icon} size={24} color={"#6F6D6D"} />
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[420px]">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+          <Landmark className="h-5 w-5" />
+        </span>
+        <h2 className="font-display text-lg font-bold text-foreground">Fund your wallet</h2>
+        {accountNumber ? (
+          <>
+            <p className="text-sm text-muted-foreground">Transfer any amount to this account</p>
+            <button
+              type="button"
+              onClick={copy}
+              className="mt-2 inline-flex items-center gap-2 font-display text-2xl font-bold tracking-wide text-foreground"
+              aria-label="Copy account number"
+            >
+              {accountNumber} <Copy className="h-5 w-5 text-muted-foreground" />
+            </button>
+            {bankName && (
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{bankName}</p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Your wallet&apos;s funding account isn&apos;t available yet. Check back shortly.
+          </p>
+        )}
       </div>
-      <div className="flex justify-center mb-4 items-center gap-x-1">
-        <div className="size-4 bg-neutral-accent rounded-full" />
-        <p className="uppercase font-bold text-xxs text-center text-secondary-text">
-          SPINSTRIP BANK
-        </p>
-      </div>
-      <Button size={"lg"} className="w-full mt-4">
-        I have paid
+      <Button variant="brand" className="mt-6 w-full" onClick={onClose}>
+        Done
       </Button>
-      <p className="uppercase text-xxs text-center mt-3 text-secondary-text">
-        time left <span className="font-bold">00:04:59</span>
-      </p>
     </Modal>
   );
 }

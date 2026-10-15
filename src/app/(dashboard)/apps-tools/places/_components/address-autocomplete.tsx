@@ -191,9 +191,9 @@ export function AddressAutocomplete<T extends FieldValues>({
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {showLoading ? (
-            <Loader2Icon className="h-4 w-4 animate-spin text-gray-400" />
+            <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : (
-            <MapPinIcon className="h-4 w-4 text-gray-400" />
+            <MapPinIcon className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
       </div>
@@ -205,19 +205,19 @@ export function AddressAutocomplete<T extends FieldValues>({
 
       {/* Suggestions dropdown */}
       {isOpen && suggestions.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+        <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-border bg-popover shadow-lg">
           {suggestions.map((suggestion, index) => (
             <li
               key={suggestion.place_id}
               onClick={() => handleSelectSuggestion(suggestion)}
               className={cn(
                 "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors",
-                index === selectedIndex ? "bg-gray-100" : "hover:bg-gray-50",
-                index !== suggestions.length - 1 && "border-b border-gray-100",
+                index === selectedIndex ? "bg-muted" : "hover:bg-muted",
+                index !== suggestions.length - 1 && "border-b border-border",
               )}
             >
-              <MapPinIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span className="text-sm text-gray-700 truncate">
+              <MapPinIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              <span className="text-sm text-foreground truncate">
                 {suggestion.formatted_address}
               </span>
             </li>
@@ -230,8 +230,8 @@ export function AddressAutocomplete<T extends FieldValues>({
         query.length >= 3 &&
         !showLoading &&
         suggestions.length === 0 && (
-          <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
-            <p className="text-sm text-gray-500 text-center">
+          <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-popover p-3 shadow-lg">
+            <p className="text-sm text-muted-foreground text-center">
               No addresses found
             </p>
           </div>

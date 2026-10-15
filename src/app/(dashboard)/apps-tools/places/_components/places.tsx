@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Building2, Clock, Eye, Globe, Hourglass, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SinglePlace } from "./claim-places-steps/find-place";
+import { usePlaceTaglines } from "@/hooks/use-place-extras";
 import { cn } from "@/lib/utils";
 import { getOperatingHoursDisplay, getPlaceType } from "../_utils";
 
@@ -19,11 +20,13 @@ const STATUS = {
 
 function PlaceCard({
   place,
+  tagline,
   index,
   onEdit,
   onDelete,
 }: {
   place: SinglePlace;
+  tagline?: string;
   index: number;
   onEdit: (place: SinglePlace) => void;
   onDelete: (place: SinglePlace) => void;
@@ -76,6 +79,7 @@ function PlaceCard({
             </Link>
           </Button>
         </div>
+        {tagline && <p className="mt-1.5 truncate text-xs italic text-muted-foreground">&ldquo;{tagline}&rdquo;</p>}
 
         <div className="mt-3 flex-1 space-y-1.5 text-xs text-muted-foreground">
           <p className="flex items-center gap-1.5">
@@ -168,6 +172,7 @@ export default function Places({
   onDelete: (place: SinglePlace) => void;
   onAdd: () => void;
 }) {
+  const taglines = usePlaceTaglines();
   return (
     <section>
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -183,7 +188,7 @@ export default function Places({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {places.map((place, i) => (
-            <PlaceCard key={place.id} place={place} index={i} onEdit={onEdit} onDelete={onDelete} />
+            <PlaceCard key={place.id} place={place} tagline={taglines[place.id ?? ""]} index={i} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </div>
       )}

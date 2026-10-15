@@ -1,198 +1,192 @@
 "use client";
-import {
-  AffiliateIcon,
-  AlignBoxTopLeftIcon,
-  ArrowRight02Icon,
-  CreditCardPosIcon,
-  MoneyReceive02Icon,
-  MoneySend02Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowDownToLine, ArrowUpFromLine, CalendarClock, ChevronRight, CreditCard, Landmark, TrendingUp, Wallet as WalletIcon } from "lucide-react";
 import TransactionHistory from "./_components/transaction-history";
 import RevenueChart from "./_components/revenue-chart";
-
-import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 import PointOfSale from "./_components/modals/point-of-sale";
-import { useState } from "react";
 import Account from "./_components/modals/account";
 import SettlementAccount from "./_components/modals/settlement-account";
 import Withdrawal from "./_components/modals/withdraw";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/loader";
+import Breadcrumb from "@/components/breadcrumb";
+import PageHeader from "@/components/page-header";
+import StatCard from "@/components/stat-card";
+import EmptyState from "@/components/empty-state";
+import SampleDataBadge from "@/components/sample-data-badge";
 import { useKyc } from "@/hooks/use-kyc";
 import { useWallet } from "@/hooks/use-wallet";
 import { useBankAccounts } from "@/hooks/use-bank-accounts";
+import { SAMPLE_WALLET_BALANCE, useWalletActivity, type WalletPeriod } from "@/hooks/use-wallet-extras";
+import { formatNaira } from "@/utils";
+
+/** Reads a number from the first of several possible fields on the wallet response. */
+function pickNumber(source: Record<string, unknown> | undefined, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = Number(source?.[key]);
+    if (source?.[key] !== undefined && source?.[key] !== null && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function pickString(source: Record<string, unknown> | undefined, keys: string[]): string | undefined {
+  for (const key of keys) {
+    if (typeof source?.[key] === "string" && source[key]) return source[key] as string;
+  }
+  return undefined;
+}
 
 export default function Wallet() {
-  const router = useRouter();
   const [action, setAction] = useState<
     "pos" | "account" | "settlement" | "withdraw" | null
   >(null);
+  const [period, setPeriod] = useState<WalletPeriod>("year");
 
   const { wallets, isLoading, createWallet, isCreating } = useWallet();
   const { kyc } = useKyc();
   const { defaultAccount } = useBankAccounts();
+  const activity = useWalletActivity(period);
 
   if (isLoading) return <Loader />;
 
+  // The wallet response shape isn't typed yet: use its balance/account fields when present.
+  const wallet = (Array.isArray(wallets) ? wallets[0] : wallets) as Record<string, unknown> | undefined;
+  const realBalance = pickNumber(wallet, ["balance", "availableBalance", "available_balance", "ledgerBalance"]);
+  const balance = realBalance ?? SAMPLE_WALLET_BALANCE;
+  const accountNumber = pickString(wallet, ["accountNumber", "account_number", "virtualAccountNumber"]);
+  const bankName = pickString(wallet, ["bankName", "bank_name"]);
+
   return (
     <div>
-      <div className="flex items-center mb-6 gap-x-2">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft /> <p className="font-bold">Tools</p>
-        </button>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft /> <p className="font-bold text-primary-text">Wallet</p>
-        </button>
-      </div>
+      <Breadcrumb parent={{ label: "Tools", href: "/apps-tools" }} current="Wallet" />
+      <PageHeader title="Wallet" subtitle="Accept payments, split bills and settle to your bank." />
       {wallets?.length === 0 ? (
-        <div className="flex items-center justify-center flex-col gap-y-1.5 flex-1 mt-52">
-          <Image
-            src={"/icons/work-in-progress.svg"}
-            width={600}
-            height={400}
-            className="w-[174px] h-[106px]"
-            alt="Empty state"
+        <div className="rounded-2xl border bg-card">
+          <EmptyState
+            icon={<WalletIcon />}
+            title="Welcome to Wallet"
+            description="Set up your wallet to start accepting payments and managing your finances."
+            action={
+              <Button variant="brand" onClick={() => createWallet(kyc)} disabled={isCreating}>
+                {isCreating ? "Creating Wallet..." : "Create Wallet"}
+              </Button>
+            }
           />
-          <h1 className="font-bold text-primary-text">Welcome to Wallet</h1>
-          <p className="text-sm">
-            Quickly set up your wallet to start accepting payments and managing
-            your finances.
-          </p>
-          <Button
-            onClick={() => createWallet(kyc)}
-            disabled={isCreating}
-            size={"lg"}
-            className="w-[368px] mt-2 h-[51px]"
-          >
-            {isCreating ? "Creating Wallet..." : "Create Wallet"}
-          </Button>
         </div>
       ) : (
         <>
-          <div className="bg-card h-[165px] mb-5 w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
-            <div className="flex items-center justify-between">
-              <div className="rounded-full p-2 bg-primary-accent w-fit">
-                <HugeiconsIcon
-                  icon={AlignBoxTopLeftIcon}
-                  size={24}
-                  color={"#6932E2"}
-                />
-              </div>
-              <div className="flex items-center gap-x-5">
-                <button
-                  onClick={() => setAction("account")}
-                  className="flex items-center gap-x-2"
-                >
-                  <div className="size-12 rounded-full flex items-center bg-primary justify-center">
-                    <HugeiconsIcon
-                      icon={MoneyReceive02Icon}
-                      size={24}
-                      color={"#F8F8F8"}
-                    />
-                  </div>
-                  <p className="text-primary-text">Deposit</p>
-                </button>
-                <button
-                  onClick={() => setAction("withdraw")}
-                  className="flex items-center gap-x-2"
-                >
-                  <div className="size-12 rounded-full flex items-center bg-primary justify-center">
-                    <HugeiconsIcon
-                      icon={MoneySend02Icon}
-                      size={24}
-                      color={"#F8F8F8"}
-                    />
-                  </div>
-                  <p className="text-primary-text">Withdraw</p>
-                </button>
-                <button
-                  onClick={() => setAction("pos")}
-                  className="flex items-center gap-x-2"
-                >
-                  <div className="size-12 rounded-full flex items-center bg-primary justify-center">
-                    <HugeiconsIcon
-                      icon={CreditCardPosIcon}
-                      size={24}
-                      color={"#F8F8F8"}
-                    />
-                  </div>
-                  <p className="text-primary-text">POS</p>
-                </button>
-              </div>
-            </div>
-            <div className="flex w-full items-center justify-between">
-              <div>
-                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
-                <h3 className="text-secondary-text text-lg">Balance</h3>
-              </div>
-              <button
-                onClick={() => setAction("settlement")}
-                className="flex items-center w-fit bg-primary-accent py-2 px-2.5 rounded-3xl gap-x-2"
-              >
-                <HugeiconsIcon
-                  icon={AffiliateIcon}
-                  size={21}
-                  color={"#6932E2"}
-                />
-                <p className="text-primary line-clamp-1">
-                  {defaultAccount
-                    ? `${defaultAccount.bankName} • ${defaultAccount.accountNumber}`
-                    : "Add Settlement Account"}
-                </p>
-                <div className="p-1.5 rounded-full bg-primary">
-                  <HugeiconsIcon
-                    icon={ArrowRight02Icon}
-                    size={16}
-                    color={"white"}
-                  />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="brand-gradient relative overflow-hidden rounded-2xl p-6 text-white lg:col-span-2"
+            >
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+              <div className="absolute -bottom-16 -left-6 h-40 w-40 rounded-full bg-black/10" />
+              <div className="relative">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-sm text-white/80">
+                    <WalletIcon className="h-4 w-4" /> Available Balance
+                  </span>
+                  {realBalance === null && (
+                    <SampleDataBadge className="border-white/40 bg-white/15 text-white" />
+                  )}
                 </div>
-              </button>
+                <p className="mt-3 font-display text-4xl font-extrabold tracking-tight">{formatNaira(balance)}</p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAction("account")}
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-primary transition-transform hover:scale-[1.02]"
+                  >
+                    <ArrowDownToLine className="h-4 w-4" /> Deposit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAction("withdraw")}
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-white/15 px-5 text-sm font-semibold text-white backdrop-blur hover:bg-white/25"
+                  >
+                    <ArrowUpFromLine className="h-4 w-4" /> Withdraw
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAction("pos")}
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-white/15 px-5 text-sm font-semibold text-white backdrop-blur hover:bg-white/25"
+                  >
+                    <CreditCard className="h-4 w-4" /> POS
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAction("settlement")}
+                  className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full bg-black/15 px-3.5 py-2 text-xs font-medium text-white/90 hover:bg-black/25"
+                >
+                  <Landmark className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    {defaultAccount
+                      ? `Settles to ${defaultAccount.bankName} • ${defaultAccount.accountNumber}`
+                      : "Add Settlement Account"}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                </button>
+              </div>
+            </motion.div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="rounded-2xl border bg-card p-5">
+                <p className="flex items-center justify-between text-sm text-muted-foreground">
+                  Wallet inflow <SampleDataBadge label="Sample" />
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-foreground">{formatNaira(activity.inflow, true)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">top-ups · bill splits · cashbacks</p>
+              </div>
+              <div className="rounded-2xl border bg-card p-5">
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <CalendarClock className="h-4 w-4 text-primary" /> Settlement Cadence
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-foreground">T+1</p>
+                <p className="mt-1 text-xs text-muted-foreground">next business day, automatic</p>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap mb-5 gap-4">
-            <div className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
-              <div className="rounded-full p-2 bg-primary-accent w-fit">
-                <HugeiconsIcon
-                  icon={AlignBoxTopLeftIcon}
-                  size={24}
-                  color={"#6932E2"}
-                />
-              </div>
-              <div>
-                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
-                <h3 className="text-secondary-text text-lg">Revenue</h3>
-              </div>
-            </div>
-            <div className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2">
-              <div className="rounded-full p-2 bg-primary-accent w-fit">
-                <HugeiconsIcon
-                  icon={AlignBoxTopLeftIcon}
-                  size={24}
-                  color={"#6932E2"}
-                />
-              </div>
-              <div>
-                <p className="text-2xl text-primary-text font-bold">₦0.00</p>
-                <h3 className="text-secondary-text text-lg">Withdrawal</h3>
-              </div>
-            </div>
+
+          <div className="my-6 grid grid-cols-2 gap-3">
+            <StatCard
+              index={0}
+              sample
+              label="Revenue"
+              value={formatNaira(activity.revenue, true)}
+              sub="successful payments"
+              icon={<TrendingUp />}
+            />
+            <StatCard
+              index={1}
+              sample
+              label="Withdrawals"
+              value={formatNaira(activity.withdrawn, true)}
+              sub="settled to your bank"
+              icon={<ArrowUpFromLine />}
+            />
           </div>
-          <RevenueChart />
-          <TransactionHistory />
+
+          <RevenueChart
+            series={activity.series}
+            total={activity.revenue}
+            period={period}
+            onPeriodChange={setPeriod}
+          />
+          <TransactionHistory transactions={activity.transactions} period={period} onPeriodChange={setPeriod} />
         </>
       )}
 
       <PointOfSale isOpen={action === "pos"} onClose={() => setAction(null)} />
-      <Account isOpen={action === "account"} onClose={() => setAction(null)} />
+      <Account
+        isOpen={action === "account"}
+        onClose={() => setAction(null)}
+        accountNumber={accountNumber}
+        bankName={bankName}
+      />
       <SettlementAccount
         isOpen={action === "settlement"}
         onClose={() => setAction(null)}

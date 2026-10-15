@@ -14,7 +14,7 @@ export default function PointOfSale({
   const { user } = useReduxAuth();
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-[400px]">
-      <div className="flex border border-[#E0E0E0] py-4 rounded-xl items-center justify-center flex-col">
+      <div className="flex border border-border py-4 rounded-xl items-center justify-center flex-col">
         <div className="flex items-center gap-x-2">
           <Image
             src={user?.profilePicture || "/avatar.jpg"}

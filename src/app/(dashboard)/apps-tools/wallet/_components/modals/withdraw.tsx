@@ -92,12 +92,12 @@ export default function Withdrawal({
       onClose={handleClose}
       className="max-w-[760px] flex flex-col items-center gap-y-1.5 justify-center"
     >
-      <div className="bg-white relative overflow-hidden p-3 mb-2 rounded-full shadow-md">
+      <div className="bg-card relative overflow-hidden p-3 mb-2 rounded-full shadow-md">
         <HugeiconsIcon
           icon={step === 3 ? CheckmarkCircle01Icon : BankIcon}
           size={24}
-          color={"#6932E2"}
-          className="z-[999]"
+          color="currentColor"
+          className="text-primary z-[999]"
         />
         <Image
           src={"/icons/check.svg"}
@@ -162,7 +162,7 @@ export default function Withdrawal({
                     value={selectedAccount.id}
                     onValueChange={setSelectedAccountId}
                   >
-                    <SelectTrigger className="w-full !rounded-2xl border bg-[#F3F3F3] border-neutral-accent !h-[49px]">
+                    <SelectTrigger className="w-full !rounded-2xl border bg-muted border-neutral-accent !h-[49px]">
                       <SelectValue placeholder="Select an account" />
                     </SelectTrigger>
                     <SelectContent>

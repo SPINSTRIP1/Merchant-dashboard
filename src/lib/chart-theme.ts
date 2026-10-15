@@ -15,6 +15,7 @@ import {
   type ChartOptions,
   type ScriptableContext,
 } from "chart.js";
+import { useTheme } from "next-themes";
 
 // Register everything the dashboard's charts use, once.
 ChartJS.register(
@@ -201,4 +202,13 @@ export function doughnutData(
       },
     ],
   };
+}
+
+/**
+ * The resolved theme ("light" / "dark"). Call it in a chart component and pass it as the chart's
+ * `key` so colours read from CSS variables are recomputed when the theme changes.
+ */
+export function useChartThemeKey() {
+  const { resolvedTheme } = useTheme();
+  return resolvedTheme ?? "light";
 }

@@ -104,10 +104,10 @@ export default function UploadImages() {
       }
 
       <div className="flex items-center justify-center flex-col pt-2">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Click to upload or drag and drop images
         </p>
-        <span className="text-[9px] font-semibold text-gray-500">
+        <span className="text-[9px] font-semibold text-muted-foreground">
           JPG, JPEG, PNG, WEBP formats supported (Max 10MB per image)
         </span>
       </div>

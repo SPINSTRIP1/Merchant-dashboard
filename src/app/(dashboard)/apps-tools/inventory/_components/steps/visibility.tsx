@@ -77,7 +77,7 @@ export default function Visibility() {
           }}
         />
         {menus && menus?.length ? null : (
-          <p className="text-[#000000E5] flex items-center gap-x-2 mt-7 text-sm">
+          <p className="text-foreground flex items-center gap-x-2 mt-7 text-sm">
             Menu app is not turned ON.
             <Switch
               showLabel={false}
@@ -123,7 +123,7 @@ export default function Visibility() {
           }}
           category="Deals"
         />
-        <p className="text-[#000000E5] mt-7 text-sm">
+        <p className="text-foreground mt-7 text-sm">
           Want to give a discount?{" "}
           <Link
             className="font-bold text-primary"

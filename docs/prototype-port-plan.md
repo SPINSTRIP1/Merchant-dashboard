@@ -11,13 +11,14 @@ we don't have yet, and the features our existing sections are missing.
 - **Keep what we already do better.** Several of our modules are ahead of the prototype (Paystack
   checkout, claim-a-place, recurring events, campaigns, server pagination, KYC wizard, confirm
   modals). Nothing gets removed to match the prototype.
-- **Mock data only for brand-new sections.** Overview analytics, Settlement, Billing, Admin &
-  Roles, the waiter app and Discover use fixtures from `src/mocks/` behind hooks in `src/hooks`.
-- **Integrated modules use real data only (decided 2026-10-14).** Places, Events, Deals, Inventory,
-  Wallet, Customers and Settings get the redesign, bug fixes and features the existing endpoints
-  support. Prototype features with no endpoint are **left out** and listed under "Backend requests"
-  at the end of this file. Every `[MOCK]` item in Phase 4 below is therefore out of scope until
-  the backend adds the endpoint.
+- **Existing integrations are never changed (decided 2026-10-14).** In modules already connected
+  to the backend, existing calls (create/get/update/delete/claim/publish…), payloads, hooks and
+  submit logic stay exactly as they are; the backend won't change those endpoints. Integration
+  bugs spotted along the way are reported, not fixed.
+- **Upgrade the UI and add the missing features on dummy data.** Every prototype feature the
+  module lacks (exports, taglines, reviews, add visitor, booking status changes…) is added through
+  new hooks in `src/hooks` backed by fixtures in `src/mocks/`, and labelled as sample data. When
+  the backend adds an endpoint, only that hook changes.
 - **Don't copy prototype bugs.** Notably: plain-text staff passwords, deletes with no confirmation,
   no page-level permission checks, billing totals that don't add up.
 - Legend: **[BE]** backend already supports it · **[MOCK]** needs mock data · **[FIX]** existing bug.
@@ -179,7 +180,7 @@ Nothing visible changes much yet; everything after this builds on it.
 
 ## Phase 4 — Other existing modules
 
-- [ ] **4.1 Places**
+- [x] **4.1 Places**
   - Fixes:
     - [FIX] Claim never stores which place was picked.
     - [FIX] Only page 1 of the list is shown.
@@ -206,7 +207,31 @@ Nothing visible changes much yet; everything after this builds on it.
     - Type, tagline, views and hours table.
     - Reviews. [MOCK]
     - Booking bar driven by facilities and their real fees, replacing the hardcoded ₦200,000.
-- [ ] **4.2 Events**
+  > Done 2026-10-14. UI upgraded: list, card, chooser, add/edit form, claim form, detail page
+  > with tabs, facilities, visitors, bookings, activities, reviews, and the public place page.
+  > Existing API calls were left exactly as they were. Fixed on request: claim now stores the
+  > selected place id.
+  >
+  > New features on sample data (`src/hooks/use-place-extras.ts`):
+  > - tagline (edit on the detail page)
+  > - remove facility
+  > - add visitor
+  > - booking status change
+  > - reviews
+  >
+  > New features on real data:
+  > - CSV export for visitors and bookings
+  > - Activities tab (the merchant's events linked to the place)
+  > - booking table shows real facility names and fees
+  >
+  > Reported, not changed (existing integration):
+  > - The "Other" place type fails the form's zod enum.
+  > - Edit PATCH doesn't send operating hours, amenities or the video URL.
+  > - The public checkout shows a fixed ₦200,000 and its "Register" button does nothing.
+  >
+  > Still to wire: "Add Event" passes `?create=1&placeId=`. The Events page handles it in 4.2.
+
+- [x] **4.2 Events**
   - Fixes:
     - [FIX] Insights Edit, Delete and Form Builder buttons do nothing.
     - [FIX] Sort options don't match their handlers.
@@ -226,7 +251,30 @@ Nothing visible changes much yet; everything after this builds on it.
     - Revenue badge and monthly sales chart.
     - CSV export.
   - Public page: kind, expected guests, views, end date, and a ticket card per tier that opens checkout.
-- [ ] **4.3 Deals**
+  > Done 2026-10-14. UI upgraded across the Event Planner: header and stats, event cards
+  > (fallback image, featured/cancelled/draft badges, date and time, views), filters and sort,
+  > pagination, Insights popup (Edit wired, Form Builder "coming soon"), the create/edit form, the
+  > sales page and the public event page. Existing API calls are unchanged.
+  >
+  > New features on real data:
+  > - Upcoming/Past filter
+  > - editable and removable ticket tiers
+  > - active-only deal picker with discount label
+  > - more timezones
+  > - Nigeria / Africa/Lagos defaults for new events
+  > - `?create=1&placeId=` deep link from Places
+  > - sales CSV export
+  > - Public Page link and revenue badge
+  > - per-tier ticket cards on the public page
+  >
+  > New features on sample data (`src/hooks/use-event-extras.ts`):
+  > - delete event (only offered once an event is cancelled)
+  > - ticket sales via deal
+  >
+  > The public page dropped the review form and the Posts section; neither had a backend, and the
+  > form did nothing.
+
+- [x] **4.3 Deals**
   - Fixes:
     - [FIX] Insights charts show fixed fake data.
     - [FIX] Top/Poor Performing panels are always empty.
@@ -239,7 +287,19 @@ Nothing visible changes much yet; everything after this builds on it.
     - Top/Poor Performing panels. [MOCK]
     - Insights with redemptions, revenue and per-deal charts. [MOCK]
     - Download Report (CSV).
-- [ ] **4.4 Inventory**
+  > Done 2026-10-14. UI upgraded: header and stats, subscription screen, deals as a table, inline
+  > Active/Paused status change, Manage menu, the deal form, Insights and Archives. Existing calls are
+  > unchanged. Activate reuses the existing status endpoint (as Archives' reactivate already did).
+  >
+  > Fixed: the "Ended" filter value → "Expired"; the deactivate toast said "archived"; Archives showed
+  > hard-coded menu items (now the deal's real products).
+  >
+  > Sample data (`src/hooks/use-deal-extras.ts`): redemptions, revenue, monthly performance charts,
+  > Top/Poor Performing panels and the Download Report CSV. "Analyse with AI" shows "coming soon".
+  >
+  > Removed the old static charts (`performance-chart.tsx`, `revenue-chart.tsx`).
+
+- [x] **4.4 Inventory**
   - Fixes:
     - [FIX] "Indefinite" sends `INFINITE`.
     - [FIX] Restock and Hide do nothing.
@@ -253,7 +313,26 @@ Nothing visible changes much yet; everything after this builds on it.
     - Default sort "Recently Updated"; "Stock: Low to High".
     - "Visible in storefront" toggle in the wizard.
   - Item page: real or [MOCK] data for each panel.
-- [ ] **4.5 Wallet**
+  > Done 2026-10-14. UI upgraded: header, stats, onboarding, table (thumbnail, SKU, time-ago,
+  > visibility switch, Manage menu), the item form in the side panel, and the item detail page.
+  > Existing calls are unchanged.
+  >
+  > New features on existing endpoints:
+  > - Restock +50 / +500: the product update call with `quantity` (current + N)
+  > - Show/Hide on the item page: the same status update the table already used
+  > - low-stock warning: products list with `stockStatus=lowStock`
+  > - related items: the products list filtered by category
+  > - real rating, stock and pricing on the item page (the 4.2 rating and the hard-coded panels are gone)
+  >
+  > Sample data (`src/hooks/use-inventory-extras.ts`): item activity log, price history and monthly
+  > units sold. Removed the old static `inventory-chart.tsx` and `item/_components/table.tsx`.
+  >
+  > Reported, not changed:
+  > - "Indefinite" product type sends `INFINITE`, but the schema expects `INDEFINITE`.
+  > - `upload-images.tsx` passes a `fileName` prop the upload component doesn't accept (an existing
+  >   type error).
+
+- [x] **4.5 Wallet**
   - Fixes:
     - [FIX] Balance, revenue and withdrawal show hardcoded N0.00.
     - [FIX] Transaction filter shows inventory options.
@@ -267,13 +346,38 @@ Nothing visible changes much yet; everything after this builds on it.
     - Recent activity list and transaction history. [MOCK]
     - Settled status.
     - Withdraw submits to the mock.
-- [ ] **4.6 Customers**
+  > Done 2026-10-14. UI upgraded: gradient balance card (Deposit / Withdraw / POS, settlement
+  > account chip), inflow and T+1 cadence cards, revenue/withdrawal stats, revenue chart and transaction
+  > history. Wallet creation, settlement accounts and the withdraw flow are unchanged.
+  >
+  > The balance, deposit account number and bank name are read from the `GET /wallet` response when
+  > present (`balance`/`availableBalance`, `accountNumber`, `bankName`). Otherwise the balance falls
+  > back to a labelled sample, and the deposit popup says details aren't available. The old deposit
+  > popup's fake ₦30,000, account number and timer are gone.
+  >
+  > Sample data (`src/hooks/use-wallet-extras.ts`, the same ledger as Overview/Settlement): revenue,
+  > inflow, withdrawals, the revenue chart (week/month/year) and transaction history with working
+  > filters, search, pagination and receipt download.
+  >
+  > Not changed: the POS popup still shows a static QR image; Withdraw still doesn't call an API
+  > (as before).
+
+- [x] **4.6 Customers**
   - Add:
     - ₦ spend per service and total spent, alongside the visit counts. [MOCK]
     - Initials avatars.
     - CSV export.
   - Note: search stays page-only until the backend adds a search parameter.
-- [ ] **4.7 Apps & Tools**
+
+  > Done. `useCustomers` and `GET /places/customers` are unchanged (service filter, sort, server
+  > pagination). The page now has a breadcrumb, a header with the real total, Select filters, a
+  > restyled table with initials avatars, a skeleton while loading and an "Export Sheet" CSV of
+  > the rows shown (real data).
+  >
+  > Sample data (`src/hooks/use-customer-extras.ts`): a Visits / Spend toggle. Spend is the
+  > customer's real visit counts multiplied by a stable per-customer amount, labelled
+  > "Sample spend".
+- [x] **4.7 Apps & Tools**
   - Add:
     - "Open" link on active apps.
     - Default / Integrated / Available badge based on the app's real state.
@@ -287,7 +391,15 @@ Nothing visible changes much yet; everything after this builds on it.
     `canCreateInventory`, `canCreateDeal`, …), now stored on `user.capabilities`. They may be the
     persisted app toggles, possibly updated with `PUT /profile`, but they may also be KYC-gated
     permissions. Confirm with the backend team before wiring app activation to them.
-- [ ] **4.8 Settings**
+
+  > Done. App on/off still uses the existing Redux `apps` slice, which redux-persist already saves,
+  > so no mock was needed. Deals' `GET /deals/subscriptions` is untouched. The page has the
+  > prototype's cards: a Default / Integrated / Available badge from the app's real state, an "Open"
+  > link on active apps, an "Activate" switch with toasts, a Select category filter, an empty state
+  > and the "More integrations" banner. "Read more" is now a Dialog with the same controls. The
+  > "John Doe" publisher on Deals is removed, so it shows "SpinStrip". The open question about
+  > capability flags is still open.
+- [x] **4.8 Settings**
   - Turn the 5 "coming soon" cards into working pages:
     - Preferences: notification and auto-settlement switches. [MOCK]
     - Security: change password. [MOCK]; the backend only has OTP reset.
@@ -302,28 +414,76 @@ Nothing visible changes much yet; everything after this builds on it.
     - [FIX] Hardcoded sub-category list.
     - [FIX] Country dropdown not wired up.
 
+  > Done. The KYC submit (`POST /kyc/merchant`), the status query and the wizard logic are unchanged.
+  > - Hub: cards for all six sections (none "coming soon"), showing compliance status and progress.
+  >   Sub-pages share a pill tab bar (`settings/layout.tsx`).
+  > - Compliance: status card (progress, milestones, verified / in-review / rejected with
+  >   `adminNotes`) and "Why compliance matters". The wizard is hidden once verified and titled
+  >   "resubmit" when rejected. "Sucessful" typo fixed.
+  > - Sub-category options follow the chosen business category (`subCategoriesFor` in
+  >   `settings/_constants`); the country dropdown now shows the form's value (new optional `value`
+  >   prop on `CountrySelectDropdown`).
+  > - Payments: the real settlement accounts (list, make default, remove, add via the existing
+  >   wallet modal).
+  > - Sample data (`src/hooks/use-settings-extras.ts`): Preferences saved in the browser; Change
+  >   Password simulated, with a link to the real OTP reset.
+  > - Integrations and Legal: informational pages (link to Apps & Tools; documents "published soon").
+
 ## Phase 5 — Extra public pages and the waiter app (confirm scope)
 
-- [ ] **5.1 Discover** (`/discover`, public). Hero, published places, live events, merchant CTA. [MOCK]
-- [ ] **5.2 Waiter app** (`/waiter`, waiter role only). Floor plan (refreshes every 15s, guests
+- [x] **5.1 Discover** (`/discover`, public). Hero, published places, live events, merchant CTA. [MOCK]
+- [x] **5.2 Waiter app** (`/waiter`, waiter role only). Floor plan (refreshes every 15s, guests
       today, open orders), seat-guests stepper, read-only menu. Shares Menu's table data. [MOCK]
-- [ ] **5.3 Login.** Redirect by role; optional visual refresh.
+- [x] **5.3 Login.** Redirect by role; optional visual refresh.
+
+> Done 2026-10-15.
+> - Discover (`src/app/discover`, public, own QueryProvider): hero with search, city pills, place
+>   and event cards with a detail dialog, merchant CTA ("Back to Dashboard" / "List a Place" when
+>   signed in). Listings are sample data (`src/hooks/use-discover.ts`, `src/mocks/discover.ts`).
+>   Overview now has the "View on SpinStrip Discover" tile.
+> - Waiter app (`src/app/waiter`, signed in, no sidebar): floor plan from `useWaiterFloor`
+>   (sample tables shared with Menu → Tables & QR; refreshes every 15s; guests today, occupied,
+>   open orders), seat-guests stepper via `useSeatGuests`, and a read-only menu from the existing
+>   `usePublicMenu` (the real menu when signed in). Owners and admins see a "back to dashboard"
+>   button; waiters are still sent here by `PermissionGate`.
+> - Login: role redirect was done in Phase 1; no visual refresh.
 
 ## Phase 6 — Dark mode
 
-- [ ] Move the ~507 remaining hex colours and ~120 `color="#…"` icon props onto tokens (most are
+- [x] Move the ~507 remaining hex colours and ~120 `color="#…"` icon props onto tokens (most are
       done along the way in Phases 1–4).
-- [ ] Add `next-themes`, the topbar toggle and the Preferences switch.
+- [x] Add `next-themes`, the topbar toggle and the Preferences switch.
+
+> Done 2026-10-15.
+> - `next-themes` (`src/providers/theme-provider.tsx`): light / dark / system, saved per browser.
+>   Dark mode covers the dashboard, the waiter app and Discover. The sign-in screens and the
+>   public `/preview/*` pages are forced to light (they keep their light brand styling).
+> - Toggles: sun/moon button in the topbar, the waiter header and Discover; Light / Dark / System
+>   in Settings → Preferences.
+> - Remaining hard-coded greys, whites and hex colours in the dashboard and shared components
+>   were moved to tokens (class names only; no logic changed). Left as is: status tints in Room
+>   Inventory, white buttons on gradient cards, and the white background behind table QR codes
+>   (needed for scanning).
+> - Charts re-read their colours on theme change (`useChartThemeKey` in `src/lib/chart-theme.ts`).
+> - Not verified in a browser by me: please click through in dark mode and send screenshots of
+>   anything that looks off.
 
 ## Phase 7 — Wrap-up
 
-- [ ] Update README.md and SPEC.md (new routes, mock layer, permissions model, what's mocked).
-- [ ] List of endpoints the backend team needs to build to replace each mock.
+- [x] Update README.md and SPEC.md (new routes, mock layer, permissions model, what's mocked).
+- [x] List of endpoints the backend team needs to build to replace each mock.
 
-## Backend requests
+> Done 2026-10-15. README and SPEC.md describe every route, the roles model, the sample-data layer,
+> dark mode and the known bugs. The endpoints list is now its own document for the backend team:
+> [docs/backend-endpoints-needed.md](backend-endpoints-needed.md) (it supersedes the list below,
+> and adds Overview, Settlement, Billing, Admin & Roles and Menu tables).
 
-Prototype features left out of integrated modules because no endpoint exists yet. Each one can be
-built as soon as the backend adds it.
+## Endpoints needed by mocked features
+
+> Superseded by [docs/backend-endpoints-needed.md](backend-endpoints-needed.md), which is the maintained version.
+
+Features added on dummy data in already-integrated modules. Each needs a backend endpoint before its
+mock hook can be swapped for the real call.
 
 **Places**
 - Place tagline (field on create/update and in GET responses)
@@ -334,4 +494,44 @@ built as soon as the backend adds it.
 - Reviews for a place (list, and on the public page)
 - Follow a place (public page)
 - Public booking request for a facility (the checkout's "Register" currently does nothing)
+
+**Events**
+- Delete an event
+- Ticket sales via deal (count per event, or a `viaDeal` flag on registrations)
+- Event reviews / posts on the public page
+- Form Builder
+
+**Deals**
+- Redemptions and revenue per deal (totals and per month)
+- Archive as a status separate from Paused, if the product needs both
+- AI analysis
+
+**Inventory**
+- Stock activity log per item (restocks, sales, adjustments, who made them)
+- Price history per item
+- Units sold per month per item
+- A dedicated restock endpoint, if the backend prefers one over updating `quantity`
+
+**Wallet**
+- Wallet balance and funding account fields documented on `GET /wallet` (confirm field names)
+- Wallet transactions / payment history (with receipts)
+- Revenue and withdrawal totals per period
+- Withdrawal submission (with transaction PIN)
+- A merchant POS payment QR / payment link
+
+**Customers**
+- Spend per service (menu, events, places) and total spent per customer
+- A search parameter on `GET /places/customers` (search currently filters only the loaded page)
+
+**Settings**
+- Notification / auto-settlement preferences (get and update)
+- Change password while signed in (current + new password)
+- Business sub-categories per category (currently a static list)
+- Legal documents (URLs, versions, acceptance history)
+
+**Discover**
+- Public listing of published places and live events across merchants (with city and search filters)
+
+**Waiter app**
+- Dining tables, seat guests and open orders per table (shared with Menu → Tables & QR)
 

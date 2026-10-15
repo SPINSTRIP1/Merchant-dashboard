@@ -15,15 +15,19 @@ import Image from "next/image";
 export default function CountrySelectDropdown({
   className,
   placeholder = "Select Country",
+  value,
   onValueChange,
 }: {
   className?: string;
   placeholder?: string;
+  /** Controlled value (country name). Falls back to internal state when omitted. */
+  value?: string;
   onValueChange?: (value: string) => void;
 }) {
-  const [selectedValue, setSelectedValue] = useState<string>(
+  const [internalValue, setSelectedValue] = useState<string>(
     countries[0]?.name || ""
   );
+  const selectedValue = value ?? internalValue;
 
   const handleValueChange = (value: string) => {
     setSelectedValue(value);

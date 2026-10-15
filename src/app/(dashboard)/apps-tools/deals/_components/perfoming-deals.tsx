@@ -1,109 +1,93 @@
-import ContainerWrapper from "@/components/container-wrapper";
-import { ChevronRight, TrendingUp, TrendingDown } from "lucide-react";
 import React from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
+import SampleDataBadge from "@/components/sample-data-badge";
+import type { DealPerformance } from "@/hooks/use-deal-extras";
+import { formatNaira } from "@/utils";
+import { cn } from "@/lib/utils";
 import { Deal } from "../_schemas";
 
-export default function PerformingDeals() {
-  const isLoading = false;
-  const deals: Deal[] = [
-    // {
-    //   title: "Family Feast Deal",
-    //   percentageIncrease: "+30%",
-    //   totalOrders: 520,
-    // },
-  ];
-
-  const poorDeals: Deal[] = [];
-
-  const renderDealsContent = (
-    dealsArray: typeof deals,
-    type: "top" | "poor"
-  ) => {
-    if (isLoading) {
-      return (
-        <div className="space-y-3 mt-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between w-full animate-pulse"
-            >
-              <div className="space-y-2 flex-1">
-                <div className="h-5 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (dealsArray.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          {type === "top" ? (
-            <TrendingUp className="w-12 h-12 text-gray-300 mb-3" />
-          ) : (
-            <TrendingDown className="w-12 h-12 text-gray-300 mb-3" />
+function Panel({
+  title,
+  tone,
+  rows,
+  emptyText,
+}: {
+  title: string;
+  tone: "good" | "poor";
+  rows: { deal: Deal; perf: DealPerformance }[];
+  emptyText: string;
+}) {
+  const Icon = tone === "good" ? TrendingUp : TrendingDown;
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className={cn(
+            "grid h-8 w-8 place-items-center rounded-xl",
+            tone === "good" ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-500"
           )}
-          <p className="text-secondary-text text-sm">
-            {type === "top"
-              ? "No top performing deals yet"
-              : "No poor performing deals"}
-          </p>
-          <p className="text-secondary-text text-xs mt-1">
-            {type === "top"
-              ? "Your best deals will appear here"
-              : "Keep up the good work!"}
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3 mt-3">
-        {dealsArray.map((item, index) => (
-          <div key={index} className="flex items-center justify-between w-full">
-            <div>
-              <h2 className="font-bold text-primary-text">{item.name}</h2>
-              <div className="flex gap-x-1">
-                <p className="text-sm">{item.maximumThreshold} Orders</p>
-                <p
-                  className={`mt-px font-semibold text-xxs ${
-                    type === "top" ? "text-[#34C759]" : "text-[#FF383C]"
-                  }`}
-                >
-                  {item.discountPercentage} Today
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <h3 className="font-display text-sm font-bold text-foreground">{title}</h3>
+      </div>
+      {rows.length === 0 ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">{emptyText}</p>
+      ) : (
+        <ul className="space-y-3">
+          {rows.map(({ deal, perf }) => (
+            <li key={deal.id} className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">{deal.name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {deal.discountPercentage}% off · {perf.redemptions.toLocaleString()} redemptions
                 </p>
               </div>
-            </div>
-            <button className="w-5 h-5 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200">
-              <ChevronRight size={16} className="text-secondary-text" />
-            </button>
-          </div>
-        ))}
-      </div>
-    );
-  };
+              <span className="shrink-0 font-display text-sm font-bold text-primary">
+                {formatNaira(perf.revenue, true)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Best and worst active deals by redemptions (sample performance data). */
+export default function PerformingDeals({
+  deals,
+  performance,
+}: {
+  deals: Deal[];
+  performance: Record<string, DealPerformance>;
+}) {
+  const ranked = deals
+    .filter((d) => d.status === "ACTIVE" && d.id && performance[d.id])
+    .map((deal) => ({ deal, perf: performance[deal.id!] }))
+    .sort((a, b) => b.perf.redemptions - a.perf.redemptions);
+
+  const top = ranked.filter((r) => r.perf.redemptions > 0).slice(0, 3);
+  const poor = ranked
+    .filter((r) => !top.includes(r))
+    .slice(-3)
+    .reverse();
 
   return (
-    <div className="space-y-4">
-      <ContainerWrapper className=" h-fit">
-        <div className="bg-[#DDF6E2]  py-3 px-3 rounded-2xl">
-          <h2 className="font-bold text-lg text-primary-text">
-            Top Performing Deals
-          </h2>
-        </div>
-        {renderDealsContent(deals, "top")}
-      </ContainerWrapper>
-      <ContainerWrapper className=" h-fit">
-        <div className="bg-[#F6DDDD]  py-3 px-3 rounded-2xl">
-          <h2 className="font-bold text-lg text-primary-text">
-            Poor Performing Deals
-          </h2>
-        </div>
-        {renderDealsContent(poorDeals, "poor")}
-      </ContainerWrapper>
-    </div>
+    <aside className="space-y-4">
+      <SampleDataBadge label="Sample performance" />
+      <Panel
+        title="Top Performing Deals"
+        tone="good"
+        rows={top}
+        emptyText="No top performing deals yet — redemptions will rank your deals here."
+      />
+      <Panel
+        title="Poor Performing Deals"
+        tone="poor"
+        rows={poor}
+        emptyText="No poor performing deals — nice work."
+      />
+    </aside>
   );
 }

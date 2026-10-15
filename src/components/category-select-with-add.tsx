@@ -73,7 +73,7 @@ export function CategorySelectWithAdd({
         {allOptions.map((option, index) => (
           <div
             className={cn(
-              "flex bg-[#E0E0E0] w-full lg:w-[150px] h-[44px] px-3 rounded-full items-center gap-x-2",
+              "flex bg-muted w-full lg:w-[150px] h-[44px] px-3 rounded-full items-center gap-x-2",
               radioClassName
             )}
             key={index}

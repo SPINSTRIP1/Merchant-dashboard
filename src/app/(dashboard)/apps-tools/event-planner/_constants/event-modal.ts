@@ -23,10 +23,15 @@ export const RECURRENCE_OPTIONS = [
 
 export const TIMEZONE_OPTIONS = [
   { label: "Africa/Lagos (GMT+1)", value: "Africa/Lagos" },
+  { label: "Africa/Accra (GMT+0)", value: "Africa/Accra" },
   { label: "Africa/Cairo (GMT+2)", value: "Africa/Cairo" },
   { label: "Africa/Johannesburg (GMT+2)", value: "Africa/Johannesburg" },
   { label: "Africa/Nairobi (GMT+3)", value: "Africa/Nairobi" },
   { label: "Europe/London (GMT+0)", value: "Europe/London" },
+  { label: "Europe/Paris (GMT+1)", value: "Europe/Paris" },
+  { label: "Asia/Dubai (GMT+4)", value: "Asia/Dubai" },
+  { label: "America/New_York (GMT-5)", value: "America/New_York" },
+  { label: "America/Los_Angeles (GMT-8)", value: "America/Los_Angeles" },
 ];
 
 export const FEATURED_OPTIONS = [

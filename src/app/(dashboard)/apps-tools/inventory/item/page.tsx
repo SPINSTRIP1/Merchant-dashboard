@@ -1,40 +1,57 @@
 "use client";
-import Item from "@/components/item";
-import {
-  ArrangeByNumbers19Icon,
-  CoinsDollarIcon,
-  DiscountTag02Icon,
-  EyeIcon,
-  StarIcon,
-  Copy01Icon,
-  Delete02Icon,
-  Edit02Icon,
-  Exchange01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronDown, ChevronLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { statusColors } from "../_components/inventory-table";
-import ContainerWrapper from "@/components/container-wrapper";
 import Image from "next/image";
-import { useState } from "react";
-import InventoryChart from "./_components/inventory-chart";
-import InventoryItemTable from "./_components/table";
+import Link from "next/link";
+import { Suspense, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Line } from "react-chartjs-2";
+import {
+  Coins,
+  Copy,
+  Eye,
+  EyeOff,
+  Hash,
+  Package,
+  PackagePlus,
+  Pencil,
+  ShoppingBag,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import InventoryModal from "../_components/modals/inventory-modal";
+import { STOCK_LABELS, productSku } from "../_components/inventory-table";
 import DeleteModal from "@/components/modals/delete-modal";
 import DuplicateModal from "@/components/modals/delete-modal";
-import { useQueryClient } from "@tanstack/react-query";
-import { useInventoryItem } from "@/hooks/use-inventory";
+import { useInventoryItem, useInventoryProducts } from "@/hooks/use-inventory";
+import { useItemHistory, useRestockItem } from "@/hooks/use-inventory-extras";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
-import { InventoryProduct } from "../_schemas";
+import { InventoryProduct, StockStatus } from "../_schemas";
 import Loader from "@/components/loader";
+import Breadcrumb from "@/components/breadcrumb";
+import StatCard from "@/components/stat-card";
+import ChartCard from "@/components/chart-card";
+import StatusPill from "@/components/status-pill";
+import EmptyState from "@/components/empty-state";
+import SampleDataBadge from "@/components/sample-data-badge";
+import { Button } from "@/components/ui/button";
 import { useInventoryForm } from "../_context";
 import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
-import toast from "react-hot-toast";
-import { capitalizeFirstLetter, formatAmount } from "@/utils";
+import { areaDataset, lineChartOptions, useChartThemeKey } from "@/lib/chart-theme";
+import { capitalizeFirstLetter, fmtDate, fmtDateTime, formatAmount } from "@/utils";
 
-export default function InventoryItem() {
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground">{children}</span>
+    </div>
+  );
+}
+
+function InventoryItemContent() {
+  const chartKey = useChartThemeKey();
   const { form, setAction, action } = useInventoryForm();
   // Optimistic delete hook
 
@@ -56,396 +73,295 @@ export default function InventoryItem() {
       toast.error("Failed to duplicate item");
     }
   };
+
+  // Show/hide uses the same product update call as the inventory table's visibility switch.
+  const handleVisibility = async (id: string, newStatus: "ACTIVE" | "INACTIVE") => {
+    try {
+      await api.patch(`${SERVER_URL}/inventory/products/${id}`, { status: newStatus });
+      queryClient.invalidateQueries({ queryKey: ["inventory-item"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-products"] });
+      toast.success(newStatus === "ACTIVE" ? "Item is visible again" : "Item hidden");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to change item visibility");
+    }
+  };
+
   const router = useRouter();
   const params = useSearchParams();
   const itemId = params.get("id");
-  const [showlogs, setShowlogs] = useState(false);
-  const [showPrices, setShowPrices] = useState(false);
   const { item: data, isLoading } = useInventoryItem(itemId);
-  const stats = [
-    {
-      title: "Total Sales",
-      value: data?.totalSales || 0,
-      icon: DiscountTag02Icon,
-    },
-    {
-      title: "Stock Quantity",
-      value: data?.inventory.quantity || 0,
-      icon: ArrangeByNumbers19Icon,
-    },
-    {
-      title: "Current Price",
-      value: formatAmount(data?.sellingPrice || 0),
-      icon: CoinsDollarIcon,
-    },
-    {
-      title: "Avg. Rating",
-      value: data?.averageRating || 0,
-      icon: StarIcon,
-      ratings: 4.2,
-    },
-    {
-      title: "Total Views",
-      value: data?.totalViews || 0,
-      icon: EyeIcon,
-    },
-  ];
+  const restock = useRestockItem();
+  const { products } = useInventoryProducts();
+  const history = useItemHistory(itemId, Number(data?.sellingPrice) || 0);
+
+  const related = useMemo(
+    () => products.filter((p) => p.id !== data?.id && p.categoryId === data?.categoryId).slice(0, 4),
+    [products, data?.id, data?.categoryId]
+  );
+
+  const openEdit = () => {
+    form.reset({
+      id: data?.id,
+      name: data?.name,
+      description: data?.description || "",
+      categoryId: data?.categoryId,
+      catalogId: data?.catalogId,
+      tags: data?.tags || [],
+      brand: data?.brand || "",
+      productType: data?.productType,
+      sellingPrice: Number(data?.sellingPrice) || 0,
+      costPrice: Number(data?.costPrice) || 0,
+      taxPercentage: Number(data?.taxPercentage) || 0,
+      quantity: data?.inventory.quantity || 0,
+      maxStockLevel: data?.inventory.maxStockLevel || 0,
+      showInMenu: data?.showInMenu,
+      isFeatured: data?.isFeatured,
+      variant: data?.variant || undefined,
+      slotConfig: data?.slotConfig || undefined,
+      dealIds: data?.dealIds || [],
+      media: data?.media || [],
+    });
+    setAction("edit");
+  };
+
   if (isLoading) return <Loader />;
+  if (!data) {
+    return (
+      <div className="rounded-2xl border bg-card">
+        <EmptyState
+          icon={<Package />}
+          title="Item not found"
+          description="This item may have been deleted."
+          action={
+            <Button variant="brand" asChild>
+              <Link href="/apps-tools/inventory">Back to Inventory</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  const stockStatus = (data.inventory.stockStatus as StockStatus) || "IN_STOCK";
+  const visible = data.status === "ACTIVE";
+  const variants = data.variant
+    ? Object.entries(data.variant).filter(([, value]) => value)
+    : [];
+
   return (
     <div>
-      <div className="flex items-center mb-6 gap-x-2">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft /> <p className="font-bold">Inventory</p>
-        </button>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft />{" "}
-          <p className="font-bold text-primary-text">{data?.name}</p>
-        </button>
-      </div>
-      <div className="flex flex-col md:flex-row gap-x-5 md:items-center gap-y-4 justify-between">
-        <div className="flex gap-x-2.5">
-          <Item
-            item={{
-              name: data?.name || "",
-              id: `ID: ${itemId?.slice(0, 8).toUpperCase()}`,
-              img: data?.media?.[0] || "/item.jpg",
-            }}
-          />
-          <div
-            className={`${
-              statusColors[data?.inventory.stockStatus || "IN_STOCK"]
-            } h-fit w-[80px] flex items-center justify-center py-1 rounded-lg`}
-          >
-            <p className="font-semibold uppercase text-xxs">
-              {" "}
-              {data?.inventory.stockStatus === "IN_STOCK"
-                ? "In Stock"
-                : data?.inventory.stockStatus === "LOW_STOCK"
-                  ? "Low Stock"
-                  : "Out of Stock"}
+      <Breadcrumb parent={{ label: "Inventory", href: "/apps-tools/inventory" }} current={data.name} />
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {data.media?.[0] ? (
+            <Image src={data.media[0]} alt="" width={56} height={56} className="h-14 w-14 rounded-2xl object-cover" />
+          ) : (
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Package className="h-6 w-6" />
+            </div>
+          )}
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">{data.name}</h1>
+            <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-mono">{productSku(data.id)}</span>
+              <StatusPill status={stockStatus} label={STOCK_LABELS[stockStatus]} />
+              {!visible && <StatusPill status="draft" label="Hidden" />}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap item-center gap-3">
-          {[
-            {
-              icon: Edit02Icon,
-              label: "Edit Item",
-              onClick: (e: React.MouseEvent) => {
-                e.stopPropagation();
-                form.reset({
-                  id: data?.id,
-                  name: data?.name,
-                  description: data?.description || "",
-                  categoryId: data?.categoryId,
-                  catalogId: data?.catalogId,
-                  tags: data?.tags || [],
-                  brand: data?.brand || "",
-                  productType: data?.productType,
-                  sellingPrice: Number(data?.sellingPrice) || 0,
-                  costPrice: Number(data?.costPrice) || 0,
-                  taxPercentage: Number(data?.taxPercentage) || 0,
-                  quantity: data?.inventory.quantity || 0,
-                  maxStockLevel: data?.inventory.maxStockLevel || 0,
-                  showInMenu: data?.showInMenu,
-                  isFeatured: data?.isFeatured,
-                  variant: data?.variant || undefined,
-                  slotConfig: data?.slotConfig || undefined,
-                  dealIds: data?.dealIds || [],
-                  media: data?.media || [],
-                });
-                setAction("edit");
-              },
-            },
-            {
-              icon: Copy01Icon,
-              label: "Duplicate Item",
-              onClick: (e: React.MouseEvent) => {
-                e.stopPropagation();
-
-                setAction("duplicate");
-              },
-            },
-            {
-              icon: Exchange01Icon,
-              label: "Restock Item",
-              onClick: (e: React.MouseEvent) => {
-                e.stopPropagation();
-              },
-            },
-            {
-              icon: EyeIcon,
-              label: "Hide Item",
-              onClick: (e: React.MouseEvent) => {
-                e.stopPropagation();
-              },
-            },
-            {
-              icon: Delete02Icon,
-              label: "Delete Item",
-              color: "#FF5F57",
-              onClick: (e: React.MouseEvent) => {
-                e.stopPropagation();
-
-                setAction("delete");
-              },
-            },
-          ].map(({ icon, label, color, onClick }) => (
-            <button
-              key={label}
-              onClick={onClick}
-              className="flex bg-white px-3 py-2 items-center gap-x-2 rounded-md"
-            >
-              <HugeiconsIcon icon={icon} size={16} color={color || "#6F6D6D"} />
-              <p style={{ color: color || "#6F6D6D" }} className=" text-sm">
-                {" "}
-                {label}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="md:flex grid grid-cols-2 flex-wrap my-7 gap-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className="bg-card h-[165px] md:max-w-[210px] w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="brand" onClick={openEdit}>
+            <Pencil /> Edit Item
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setAction("duplicate")}>
+            <Copy /> Duplicate
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={restock.isPending}
+            onClick={() => restock.mutate({ id: data.id, currentQuantity: data.inventory.quantity || 0, add: 50 })}
           >
-            <div className="rounded-full p-2 bg-primary-accent w-fit">
-              <HugeiconsIcon icon={stat.icon} size={24} color={"#6932E2"} />
-            </div>
-            <div>
-              {stat.ratings ? (
-                <div className="flex items-center gap-x-1">
-                  <HugeiconsIcon
-                    icon={StarIcon}
-                    size={22}
-                    fill="#9E76F8"
-                    color={"#9E76F8"}
-                  />
-
-                  <p className="text-2xl text-primary-text font-bold">
-                    {stat.ratings}
-                  </p>
-
-                  <p className="text-2xl text-primary-text">({stat.value})</p>
-                </div>
-              ) : (
-                <p className="text-2xl text-primary-text font-bold">
-                  {stat.value}
-                </p>
-              )}
-
-              <h3 className="text-secondary-text text-lg">{stat.title}</h3>
-            </div>
-          </div>
-        ))}
+            <PackagePlus /> Restock +50
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleVisibility(data.id, visible ? "INACTIVE" : "ACTIVE")}>
+            {visible ? <EyeOff /> : <Eye />} {visible ? "Hide Item" : "Show Item"}
+          </Button>
+          <Button size="sm" variant="outline" className="text-rose-500 hover:text-rose-600" onClick={() => setAction("delete")}>
+            <Trash2 /> Delete
+          </Button>
+        </div>
       </div>
-      <ContainerWrapper className="space-y-5">
-        <div>
-          {" "}
-          <h2 className="font-bold text-primary-text mb-1">Description</h2>
-          <p>
-            {data?.description || "No description available for this item."}
-          </p>
-        </div>
-        <div>
-          <h2 className="font-bold text-primary-text mb-1">Tags</h2>
-          {data?.tags && data.tags.length > 0 ? (
-            <div className="flex items-center gap-x-2">
-              {data?.tags.map((item) => (
-                <div
-                  key={item}
-                  className="border border-neutral-accent rounded-lg w-fit py-0.5 px-1.5"
-                >
-                  <p className="text-sm capitalize">{item}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm">No tags available for this item.</p>
-          )}
-        </div>
-        <div>
-          <h2 className="font-bold text-primary-text mb-1">Category</h2>
-          <p>
-            {data?.category?.name || "No category available for this item."}
-          </p>
-        </div>
-        <div>
-          <h2 className="font-bold text-primary-text mb-1">Brand</h2>
-          <p>{data?.brand || "No brand available for this item."}</p>
-          <div className="md:flex grid grid-cols-2 gap-5 mt-4 items-center flex-wrap">
-            {data?.media?.map((img, index) => (
-              <div
-                key={index}
-                className="w-full h-[150px] md:w-[253px] md:h-[206px] rounded-lg overflow-hidden"
-              >
-                <Image
-                  src={img}
-                  width={253}
-                  height={206}
-                  alt="Images"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h2 className="font-bold text-primary-text mb-1">Variants</h2>
-          {data?.variant ? (
-            <p>
-              {Object.keys(data.variant)
-                .map(
-                  (key) =>
-                    `${capitalizeFirstLetter(key)} (${
-                      data.variant
-                        ? capitalizeFirstLetter(
-                            data.variant[key as keyof typeof data.variant],
-                          )
-                        : ""
-                    })`,
-                )
-                .join(", ")}
+
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <StatCard index={0} label="Total Sales" value={(data.totalSales || 0).toLocaleString()} icon={<ShoppingBag />} />
+        <StatCard
+          index={1}
+          label="Stock Quantity"
+          value={(data.inventory.quantity || 0).toLocaleString()}
+          icon={<Hash />}
+        />
+        <StatCard index={2} accent label="Current Price" value={formatAmount(data.sellingPrice || 0)} icon={<Coins />} />
+        <StatCard
+          index={3}
+          label="Avg. Rating"
+          value={data.averageRating ? Number(data.averageRating).toFixed(1) : "—"}
+          icon={<Star />}
+        />
+        <StatCard index={4} label="Total Views" value={(data.totalViews || 0).toLocaleString()} icon={<Eye />} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="space-y-4">
+          <div className="rounded-2xl border bg-card p-5">
+            <h2 className="mb-2 font-display text-base font-bold text-foreground">About this item</h2>
+            <p className="text-sm text-muted-foreground">
+              {data.description || "No description available for this item."}
             </p>
-          ) : (
-            <p>No variants available</p>
-          )}
-        </div>
-      </ContainerWrapper>
-      <div className="mt-5 lg:mt-9 grid lg:grid-cols-[454px_1fr] gap-4">
-        <ContainerWrapper>
-          <div className="bg-[#D9EDFF] py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">
-              Stock Inventory
-            </h2>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold text-primary-text mb-1">Current Stock</h2>
-            <p>200 Plates</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold text-primary-text mb-1">Reorder Alert</h2>
-            <p>Trigger alert below 20 plates</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold text-primary-text mb-1">Supplier</h2>
-            <p>In-house Kitchen</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold text-primary-text mb-1">
-              Inventory Activity Log
-            </h2>
-            <button
-              onClick={() => setShowlogs((prev) => !prev)}
-              className="bg-background-light p-1 rounded-full"
-            >
-              <ChevronDown size={15} />
-            </button>
-          </div>
-          {showlogs &&
-            [
-              { action: "+30 added by Manager", date: "Oct 25 10:11" },
-              { action: "-16 sold", date: "Oct 25 10:11" },
-              { action: "+40 restocked", date: "Oct 25 10:11" },
-              { action: "+30 added by Manager", date: "Oct 25 10:11" },
-            ].map((log, index) => (
-              <div
-                key={index}
-                className="flex items-center border-l-[1.5px] border-secondary-text pl-1.5 justify-between mt-1.5 mb-2 w-full"
-              >
-                <p>{log.action}</p>
-                <p>{log.date}</p>
+            {!!data.tags?.length && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {data.tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold capitalize text-primary">
+                    {tag}
+                  </span>
+                ))}
               </div>
-            ))}
-        </ContainerWrapper>
-        <ContainerWrapper className="text-primary-text">
-          <div className="bg-[#DDF6E2]  py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg">Pricing and Discounts</h2>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Base Price</h2>
-            <p>N16,000</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Cost Price</h2>
-            <p>N3,250</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Active Deal</h2>
-            <p>Sunday Buffet Special (10% Off) </p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">VAT</h2>
-            <p>7.5% Applied </p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Price History</h2>
-            <button
-              onClick={() => setShowPrices((prev) => !prev)}
-              className="bg-background-light p-1 rounded-full"
-            >
-              <ChevronDown size={15} />
-            </button>
-          </div>
-          {showPrices &&
-            [{ action: "N8,000 to 16,000", date: "Oct 25 10:11" }].map(
-              (log, index) => (
-                <div
-                  key={index}
-                  className="flex items-center text-secondary-text justify-between my-2 w-full"
-                >
-                  <p>{log.action}</p>
-                  <p>{log.date}</p>
-                </div>
-              ),
             )}
-        </ContainerWrapper>
+            <div className="mt-4 divide-y rounded-xl border px-4">
+              <Row label="Catalog">{data.catalog?.name ?? "—"}</Row>
+              <Row label="Category">{data.category?.name ?? "—"}</Row>
+              <Row label="Brand">{data.brand || "—"}</Row>
+              <Row label="Product type">{capitalizeFirstLetter(data.productType) || "—"}</Row>
+              <Row label="Variants">
+                {variants.length
+                  ? variants.map(([key, value]) => `${capitalizeFirstLetter(key)}: ${value}`).join(" · ")
+                  : "—"}
+              </Row>
+            </div>
+            {!!data.media?.length && (
+              <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto">
+                {data.media.map((img, index) => (
+                  <div key={index} className="relative h-36 w-48 shrink-0 overflow-hidden rounded-xl">
+                    <Image src={img} alt="" fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <ChartCard title="Sales and Performance" subtitle="Units sold per month" action={<SampleDataBadge />}>
+            <div className="h-56">
+              {history && (
+                <Line key={chartKey}
+                  data={{
+                    labels: history.monthlySales.map((m) => m.label),
+                    datasets: [areaDataset("Units sold", history.monthlySales.map((m) => m.units), "chart-1")],
+                  }}
+                  options={lineChartOptions({ integerTicks: true, tooltipLabel: (v) => `${v} units sold` })}
+                />
+              )}
+            </div>
+          </ChartCard>
+
+          <section className="overflow-hidden rounded-2xl border bg-card">
+            <div className="flex items-center justify-between gap-2 border-b px-5 py-4">
+              <h2 className="font-display text-base font-bold text-foreground">Inventory Activity Log</h2>
+              <SampleDataBadge />
+            </div>
+            <ul className="divide-y">
+              {history?.activity.map((entry) => (
+                <li key={entry.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+                  <div className="min-w-0">
+                    <p className={entry.change >= 0 ? "font-semibold text-emerald-600" : "font-semibold text-rose-500"}>
+                      {entry.action}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {entry.staff.name} · {entry.staff.role}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">{fmtDateTime(entry.date)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-2xl border bg-card p-5">
+            <h2 className="mb-2 font-display text-base font-bold text-foreground">Stock Inventory</h2>
+            <div className="divide-y">
+              <Row label="Current stock">{(data.inventory.quantity || 0).toLocaleString()}</Row>
+              <Row label="Max stock level">{(data.inventory.maxStockLevel || 0).toLocaleString()}</Row>
+              <Row label="Reorder alert">
+                {data.reorderThreshold ? `Below ${data.reorderThreshold}` : "Not set"}
+              </Row>
+              <Row label="Status">
+                <StatusPill status={stockStatus} label={STOCK_LABELS[stockStatus]} />
+              </Row>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-5">
+            <h2 className="mb-2 font-display text-base font-bold text-foreground">Pricing and Discounts</h2>
+            <div className="divide-y">
+              <Row label="Selling price">{formatAmount(data.sellingPrice || 0)}</Row>
+              <Row label="Cost price">{formatAmount(data.costPrice || 0)}</Row>
+              <Row label="Discount">{data.discountPercentage ? `${data.discountPercentage}%` : "None"}</Row>
+              <Row label="Tax">{data.taxPercentage ? `${data.taxPercentage}% applied` : "None"}</Row>
+              <Row label="Linked deals">{data.dealIds?.length ? data.dealIds.length : "None"}</Row>
+            </div>
+            {!!history?.priceHistory.length && (
+              <div className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-semibold text-foreground">Price history</span>
+                  <SampleDataBadge label="Sample" />
+                </div>
+                {history.priceHistory.map((change) => (
+                  <p key={change.date} className="flex justify-between gap-2">
+                    <span>
+                      {formatAmount(change.from)} → {formatAmount(change.to)}
+                    </span>
+                    <span>{fmtDate(change.date)}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border bg-card p-5">
+            <h2 className="mb-3 font-display text-base font-bold text-foreground">Related Items</h2>
+            {related.length ? (
+              <ul className="space-y-3">
+                {related.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={`/apps-tools/inventory/item?id=${item.id}`}
+                      className="flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-muted"
+                    >
+                      {item.media?.[0] ? (
+                        <Image src={item.media[0]} alt="" width={40} height={40} className="h-10 w-10 rounded-xl object-cover" />
+                      ) : (
+                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                          <Package className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{item.name}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">{productSku(item.id)}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">No other items in this category yet.</p>
+            )}
+          </div>
+        </aside>
       </div>
-      <div className="mt-5 lg:mt-9 grid lg:grid-cols-[1fr_294px] gap-4">
-        <ContainerWrapper>
-          <div className="bg-[#F6DDDD] py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">
-              Sales and Performance
-            </h2>
-          </div>
-          <InventoryChart />
-        </ContainerWrapper>
-        <ContainerWrapper className="text-primary-text h-fit">
-          <div className="bg-[#F6E9DD]  py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg">Related Items</h2>
-          </div>
-          <div className="space-y-3 mt-3">
-            {[
-              {
-                name: "Fried Rice and Chicken",
-                img: "/item.jpg",
-                id: "SKU: 00146",
-              },
-              {
-                name: "Fried Rice and Turkey",
-                img: "/item.jpg",
-                id: "SKU: 00146",
-              },
-              {
-                name: "Ofada Rice with Sauce",
-                img: "/item.jpg",
-                id: "SKU: 00146",
-              },
-            ].map((item, index) => (
-              <Item key={index} item={item} />
-            ))}
-          </div>
-        </ContainerWrapper>
-      </div>
-      <InventoryItemTable />
+
       <InventoryModal
         isOpen={action === "add" || action === "edit"}
         action={action}
@@ -473,5 +389,13 @@ export default function InventoryItem() {
         }?`}
       />
     </div>
+  );
+}
+
+export default function InventoryItem() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <InventoryItemContent />
+    </Suspense>
   );
 }

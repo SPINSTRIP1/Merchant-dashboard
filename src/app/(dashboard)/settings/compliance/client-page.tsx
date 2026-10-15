@@ -15,9 +15,12 @@ import AboutBusiness from "./_components/about-business";
 import UploadDocuments from "./_components/upload-documents";
 import UBO from "./_components/ubo";
 import Loader from "@/components/loader";
+import Breadcrumb from "@/components/breadcrumb";
+import PageHeader from "@/components/page-header";
+import ComplianceSummary from "./_components/compliance-summary";
 
 export default function ClientPage() {
-  const { data, isLoading } = useComplianceStatus();
+  const { data, steps: milestones, percent, adminNotes, isLoading } = useComplianceStatus();
   const {
     steps,
     currentStep,
@@ -46,6 +49,10 @@ export default function ClientPage() {
   if (isLoading) return <Loader />;
 
   return (
+    <div>
+      <Breadcrumb parent={{ label: "Settings", href: "/settings" }} current="Compliance" />
+      <PageHeader title="Compliance" subtitle="Verify your business to unlock payouts and public pages." />
+      <ComplianceSummary status={data} steps={milestones} percent={percent} adminNotes={adminNotes} />
     <div className="overflow-hidden lg:max-w-[760px] mx-auto w-full">
       {/* <button
         onClick={() => router.back()}
@@ -54,14 +61,14 @@ export default function ClientPage() {
         <ChevronLeft /> <p className="font-bold">Back</p>
       </button> */}
 
-      {data === "PENDING" ? (
-        <div className="flex flex-col mt-10 bg-card px-5 py-20 rounded-3xl gap-y-2 items-center justify-center">
-          <div className="bg-white relative overflow-hidden p-3 rounded-full shadow-md">
+      {data === "ACTIVE" ? null : data === "PENDING" ? (
+        <div className="flex flex-col mt-6 bg-card border px-5 py-16 rounded-2xl gap-y-2 items-center justify-center">
+          <div className="bg-card relative overflow-hidden p-3 rounded-full shadow-md">
             <HugeiconsIcon
               icon={CheckmarkCircle01Icon}
               size={24}
-              color={"#6932E2"}
-              className="z-[999]"
+              color="currentColor"
+              className="text-primary z-[999]"
             />
             <Image
               src={"/icons/check.svg"}
@@ -72,7 +79,7 @@ export default function ClientPage() {
             />
           </div>
           <h2 className="text-lg font-bold text-primary-text">
-            Submission Sucessful
+            Submission Successful
           </h2>
           <p className="text-sm text-center">
             Your documents have been received. Our team will review your
@@ -81,7 +88,10 @@ export default function ClientPage() {
           </p>
         </div>
       ) : (
-        <>
+        <div className="mt-6 rounded-2xl border bg-card px-4 pb-6 pt-1 sm:px-6">
+          <h3 className="mt-4 font-display text-lg font-bold text-foreground">
+            {data === "REJECTED" ? "Update and resubmit your documents" : "Complete your verification"}
+          </h3>
           <StepIndicator currentStep={currentStep} steps={steps} />
           {renderContent()}
           <div className="mt-5 space-y-5">
@@ -107,7 +117,7 @@ export default function ClientPage() {
               </Button>
             )}
           </div>
-        </>
+        </div>
       )}
       <Modal
         isOpen={isOpen}
@@ -118,12 +128,12 @@ export default function ClientPage() {
         }}
       >
         <div className="flex flex-col gap-y-2 items-center justify-center">
-          <div className="bg-white relative overflow-hidden p-3 rounded-full shadow-md">
+          <div className="bg-card relative overflow-hidden p-3 rounded-full shadow-md">
             <HugeiconsIcon
               icon={CheckmarkCircle01Icon}
               size={24}
-              color={"#6932E2"}
-              className="z-[999]"
+              color="currentColor"
+              className="text-primary z-[999]"
             />
             <Image
               src={"/icons/check.svg"}
@@ -134,7 +144,7 @@ export default function ClientPage() {
             />
           </div>
           <h2 className="text-lg font-bold text-primary-text">
-            Submission Sucessful
+            Submission Successful
           </h2>
           <p className="text-sm text-center">
             Your documents have been received. Our team will review your
@@ -143,6 +153,7 @@ export default function ClientPage() {
           </p>
         </div>
       </Modal>
+    </div>
     </div>
   );
 }

@@ -249,7 +249,7 @@ export default function FileUpload({
 
       <div
         className={cn(
-          "rounded-2xl h-[169px] bg-[#F3F3F3] border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200",
+          "rounded-2xl h-[169px] bg-muted border border-neutral-accent flex gap-y-2.5 flex-col items-center justify-center transition-all duration-200",
           !isUploading && "cursor-pointer",
           isDragOver && !isUploading && "border-primary bg-primary-accent/20",
           error && "border-red-500 bg-red-50",
@@ -278,7 +278,7 @@ export default function FileUpload({
               Uploading file...
             </p>
             {selectedFile && (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 {selectedFile.name} ({fileSizeDisplay})
               </p>
             )}
@@ -297,7 +297,7 @@ export default function FileUpload({
             <p className="text-xs text-green-600">
               {fileSizeDisplay || "File uploaded"}
             </p>
-            <p className="text-xs text-gray-500">File uploaded successfully</p>
+            <p className="text-xs text-muted-foreground">File uploaded successfully</p>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -320,12 +320,12 @@ export default function FileUpload({
             <p
               className={cn(
                 "text-sm",
-                error ? "text-red-500" : "text-gray-700"
+                error ? "text-red-500" : "text-foreground"
               )}
             >
               {error || placeholder}
             </p>
-            <span className="text-[9px] font-semibold text-gray-500">
+            <span className="text-[9px] font-semibold text-muted-foreground">
               {acceptedFormats.join(", ")} formats supported (Max {maxSizeInMB}
               MB)
             </span>

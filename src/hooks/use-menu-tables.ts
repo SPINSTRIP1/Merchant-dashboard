@@ -122,3 +122,48 @@ export function useTableByToken(token: string | null) {
   });
   return { table: data ?? null };
 }
+
+export interface FloorTable extends DiningTable {
+  guestsToday: number;
+  /** Menu orders from this table today that haven't completed yet. */
+  openOrders: number;
+  /** Seated within the last 90 minutes. */
+  occupied: boolean;
+  lastSeatedAt: string | null;
+}
+
+const OCCUPIED_FOR_MS = 90 * 60 * 1000;
+
+/**
+ * The waiter's live floor plan: today's guests and open orders per table, refreshed every 15s.
+ * SAMPLE DATA (see `useMenuTables`); shares the same tables and seatings.
+ */
+export function useWaiterFloor() {
+  const { data, isLoading, dataUpdatedAt } = useQuery<FloorTable[]>({
+    queryKey: [...TABLES_KEY, "floor"],
+    queryFn: async () => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const now = Date.now();
+      const seatings = seatingsCollection.snapshot();
+      const todaysOrders = mockLedger().transactions.filter(
+        (t) => t.type === "menu" && new Date(t.createdAt) >= startOfDay
+      );
+      return (await tablesCollection.list()).map((table) => {
+        const tableSeatings = seatings.filter((s) => s.tableId === table.id);
+        const today = tableSeatings.filter((s) => new Date(s.seatedAt) >= startOfDay);
+        const last = tableSeatings[0]?.seatedAt ?? null;
+        return {
+          ...table,
+          guestsToday: today.reduce((sum, s) => sum + s.guests, 0),
+          openOrders: todaysOrders.filter((t) => t.tableId === table.id && t.status === "pending").length,
+          occupied: !!last && now - new Date(last).getTime() < OCCUPIED_FOR_MS,
+          lastSeatedAt: last,
+        };
+      });
+    },
+    refetchInterval: 15_000,
+  });
+
+  return { tables: data ?? [], isLoading, updatedAt: dataUpdatedAt };
+}

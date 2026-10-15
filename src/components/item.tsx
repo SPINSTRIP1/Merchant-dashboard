@@ -8,7 +8,7 @@ export default function Item({
 }) {
   return (
     <div className="flex items-center">
-      <div className="w-12 h-12 bg-gray-300 rounded-2xl overflow-hidden flex items-center justify-center mr-2">
+      <div className="w-12 h-12 bg-muted rounded-2xl overflow-hidden flex items-center justify-center mr-2">
         {item.img ? (
           <Image
             src={item.img}

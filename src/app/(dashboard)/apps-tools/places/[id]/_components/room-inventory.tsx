@@ -34,7 +34,7 @@ type Availability = "Available" | "Blocked" | "Occupied" | "Maintenance";
 
 export const statusColors: Record<Availability, string> = {
   Available: "text-[#34C759] bg-[#34C75926]",
-  Maintenance: "text-[#FF8D28] bg-[#F6E9DD]",
+  Maintenance: "text-[#FF8D28] bg-orange-500/10",
   Blocked: "text-[#FF383C] bg-[#FF383C26]",
   Occupied: "text-[#0088FF] bg-[#0088FF26]",
 };
@@ -118,7 +118,7 @@ export default function RoomInventory() {
         <h1 className="text-sm lg:text-base font-bold">Room Inventory</h1>
         <SearchBar
           placeholder="Search"
-          className="bg-[#F3F3F3] w-full max-w-full"
+          className="bg-muted w-full max-w-full"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -189,7 +189,7 @@ export default function RoomInventory() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-gray-500">Loading inventory...</p>
+                  <p className="text-muted-foreground">Loading inventory...</p>
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

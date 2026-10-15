@@ -1,13 +1,13 @@
-import { MultiSelect } from "@/app/(dashboard)/settings/_components/multi-select";
 import { Label } from "@/components/ui/label";
-import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Check } from "lucide-react";
+import PillGroup from "@/components/pill-group";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useDealsForm } from "../../_context";
 import { useInventoryProducts } from "@/hooks/use-inventory";
 import { useDealCampaigns } from "@/hooks/use-deals";
 import { FormInput } from "@/components/ui/forms/form-input";
-import SideModal from "@/app/(dashboard)/_components/side-modal";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { FormSelect } from "@/components/ui/forms/form-select";
 
 export default function DealsModal({
@@ -56,153 +56,106 @@ export default function DealsModal({
   };
 
   return (
-    <SideModal isOpen={isOpen} onClose={onClose}>
-      <div className="space-y-7 pt-16 pb-5">
-        <FormInput
-          control={control}
-          label="Deal Name"
-          name="name"
-          placeholder="Enter Deal Name"
-        />
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{action === "edit" ? "Edit Deal" : "Create Deal"}</SheetTitle>
+          <SheetDescription>Discount selected products for a campaign period.</SheetDescription>
+        </SheetHeader>
 
-        <FormSelect
-          control={control}
-          name="campaignId"
-          label="Select Campaign"
-          placeholder="Select Campaign"
-          options={campaigns?.map((cat) => ({
-            label: cat.name,
-            value: cat.id,
-          }))}
-          category="Campaigns"
-        />
-        <div>
-          <Label>Menu items</Label>
-          <div className="!rounded-2xl my-2 !h-[49px] border bg-neutral border-neutral-accent flex flex-col justify-center px-4">
-            <p className="text-secondary-text text-sm">
+        <div className="space-y-5 pb-2">
+          <FormInput
+            control={control}
+            label="Deal Name"
+            name="name"
+            placeholder="e.g. Buy 1 get 1 free"
+          />
+
+          <FormSelect
+            control={control}
+            name="campaignId"
+            label="Select Campaign"
+            placeholder="Select Campaign"
+            options={campaigns?.map((cat) => ({
+              label: cat.name,
+              value: cat.id,
+            }))}
+            category="Campaigns"
+          />
+
+          <div className="space-y-2">
+            <Label>Products</Label>
+            <p className="text-xs text-muted-foreground">
               {productIds.length > 0
-                ? menuItems
+                ? `${productIds.length} selected: ${menuItems
                     ?.filter((item) => productIds.includes(item.id))
                     .map((item) => item.name)
-                    .join(", ")
+                    .join(", ")}`
                 : "No items selected"}
             </p>
+            {isLoading ? (
+              <p className="py-3 text-sm text-muted-foreground">Loading products…</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {menuItems?.map((item) => {
+                  const isSelected = productIds.includes(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => toggleMenuItem(item.id)}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "inline-flex min-h-[34px] items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {isSelected && <Check className="h-3.5 w-3.5" />}
+                      {item.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {isLoading ? (
-            <div className="text-center py-4 text-gray-500">
-              Loading menu items...
-            </div>
-          ) : (
-            <div className="flex flex-wrap mt-4 items-center gap-3">
-              {menuItems?.map((item) => {
-                const isSelected = productIds.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleMenuItem(item.id)}
-                    className={`flex items-center py-0.5 px-1.5 gap-x-2 rounded-3xl border w-fit transition-all duration-200 ${
-                      isSelected
-                        ? "border-primary bg-primary-accent"
-                        : "border-gray-300 bg-gray-100 hover:bg-gray-200"
-                    }`}
-                  >
-                    <p
-                      className={`text-sm ${
-                        isSelected ? "text-primary" : "text-gray-500"
-                      }`}
-                    >
-                      {item.name}
-                    </p>
-                    {isSelected && (
-                      <HugeiconsIcon
-                        icon={CheckmarkCircle01Icon}
-                        size={16}
-                        color="#6932E2"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        <FormInput
-          control={control}
-          label="Deal Description"
-          name="description"
-          placeholder="Enter description"
-          type="textarea"
-        />
+          <FormInput
+            control={control}
+            label="Deal Description"
+            name="description"
+            placeholder="e.g. Get a free item for every item you buy during this festive season"
+            type="textarea"
+          />
 
-        <div className="grid grid-cols-2 gap-5">
-          <FormInput
-            control={control}
-            label="Discount"
-            name="discountPercentage"
-            placeholder="10%"
-            type="number"
-          />
-          <FormInput
-            control={control}
-            label="Maximum Threshold"
-            name="maximumThreshold"
-            placeholder="500 Orders"
-            type="number"
-          />
-          <FormInput
-            control={control}
-            label="Start Date"
-            name="startDate"
-            placeholder="MM/DD/YYYY"
-            type="date"
-          />
-          <FormInput
-            control={control}
-            label="End Date"
-            name="endDate"
-            placeholder="MM/DD/YYYY"
-            type="date"
-          />
-        </div>
-        {/* <div className="space-y-1.5">
-            <Label>Quantity</Label>
-            <Input
-              className="!rounded-2xl border border-neutral-accent"
-              placeholder="50 Portions"
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput
+              control={control}
+              label="Discount (%)"
+              name="discountPercentage"
+              placeholder="10"
+              type="number"
             />
-          </div> */}
+            <FormInput
+              control={control}
+              label="Maximum Threshold"
+              name="maximumThreshold"
+              placeholder="500 orders"
+              type="number"
+            />
+            <FormInput control={control} label="Start Date" name="startDate" type="date" />
+            <FormInput control={control} label="End Date" name="endDate" type="date" />
+          </div>
 
-        {/* <div className="space-y-1.5">
-            <Label>Show in Menu</Label>
-            <MultiSelect
-                      value={showInMenu ? "YES" : "NO"}
-                      options={[
-                        { label: "Yes", value: "YES" },
-                        { label: "No", value: "NO" },
-                      ]}
-                      className="lg:grid"
-                      radioClassName="lg:w-full"
-                      onValueChange={(value) => {
-                        setValue("showInMenu", value === "YES", {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }}
-                    />
-          </div> */}
-        <div className="space-y-1.5">
-          <Label>Mark as Featured</Label>
-          <MultiSelect
-            value={isFeatured ? "YES" : "NO"}
+          <PillGroup
+            label="Mark as Featured"
             options={[
               { label: "Yes", value: "YES" },
               { label: "No", value: "NO" },
             ]}
-            className="lg:grid"
-            radioClassName="lg:w-full"
-            onValueChange={(value) => {
+            value={isFeatured ? "YES" : "NO"}
+            onChange={(value) => {
               setValue("isFeatured", value === "YES", {
                 shouldDirty: true,
                 shouldValidate: true,
@@ -211,23 +164,15 @@ export default function DealsModal({
           />
         </div>
 
-        <div className="flex mt-6 gap-x-3 items-center">
-          <Button
-            variant={"secondary"}
-            className="w-full h-[51px] py-3"
-            onClick={onClose}
-          >
+        <div className="flex items-center justify-between gap-3 border-t pt-4">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            className="w-full h-[51px] py-3"
-            disabled={loading}
-            onClick={submitDeal}
-          >
+          <Button variant="brand" disabled={loading} onClick={submitDeal}>
             {getButtonLabel()}
           </Button>
         </div>
-      </div>
-    </SideModal>
+      </SheetContent>
+    </Sheet>
   );
 }

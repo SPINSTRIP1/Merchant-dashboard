@@ -121,12 +121,12 @@ export default function SettlementAccount({
       onClose={handleClose}
       className="max-w-[760px] flex flex-col items-center justify-center"
     >
-      <div className="bg-white relative overflow-hidden p-3 mb-2 rounded-full shadow-md">
+      <div className="bg-card relative overflow-hidden p-3 mb-2 rounded-full shadow-md">
         <HugeiconsIcon
           icon={step === "success" ? CheckmarkCircle01Icon : BankIcon}
           size={24}
-          color={"#6932E2"}
-          className="z-[999]"
+          color="currentColor"
+          className="text-primary z-[999]"
         />
         <Image
           src={"/icons/check.svg"}
@@ -222,7 +222,7 @@ export default function SettlementAccount({
             onClick={() => setStep("form")}
             className="flex items-center gap-x-1 mt-5 border border-neutral-accent px-1.5 rounded-3xl py-0.5"
           >
-            <HugeiconsIcon icon={PlusSignIcon} size={14} color={"#6F6D6D"} />
+            <HugeiconsIcon icon={PlusSignIcon} size={14} color="currentColor" className="text-muted-foreground" />
             <p>
               {accounts.length > 0
                 ? "Add Alternative Account"
@@ -266,7 +266,7 @@ export default function SettlementAccount({
 
               <div className="w-full space-y-2">
                 <Label>Account Name</Label>
-                <div className="flex h-[49px] items-center rounded-2xl border border-neutral-accent bg-[#F3F3F3] px-4">
+                <div className="flex h-[49px] items-center rounded-2xl border border-neutral-accent bg-muted px-4">
                   {isResolving ? (
                     <div className="flex items-center gap-x-2">
                       <div className="size-4 animate-spin rounded-full border-b-2 border-primary" />

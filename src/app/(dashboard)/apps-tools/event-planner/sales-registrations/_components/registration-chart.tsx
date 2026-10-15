@@ -1,39 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from "chart.js";
 import { Line } from "react-chartjs-2";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { LineChart } from "lucide-react";
 import EmptyState from "@/components/empty-state";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ChartLineData02Icon } from "@hugeicons/core-free-icons";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { areaDataset, lineChartOptions, useChartThemeKey } from "@/lib/chart-theme";
 import { useEventRegistrations } from "@/hooks/use-event-registrations";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-);
 
 const months = [
   "JAN",
@@ -57,6 +30,7 @@ export default function RegistrationChart({
   eventId: string | null;
   totalRegistrations?: number;
 }) {
+  const chartKey = useChartThemeKey();
   const { registrations, isLoading } = useEventRegistrations({
     eventId,
     limit: 100,
@@ -64,7 +38,10 @@ export default function RegistrationChart({
 
   // Years present in the data, newest first
   const years = Array.from(
-    new Set(registrations.map((r) => new Date(r.createdAt).getFullYear())),
+    new Set([
+      new Date().getFullYear(),
+      ...registrations.map((r) => new Date(r.createdAt).getFullYear()),
+    ]),
   ).sort((a, b) => b - a);
 
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -85,138 +62,47 @@ export default function RegistrationChart({
 
   const data = {
     labels: months,
-    datasets: [
-      {
-        label: "Registrations",
-        data: monthlyCounts,
-        borderColor: "#6932E2",
-        backgroundColor: "rgba(105, 50, 226, 0.1)",
-        borderWidth: 2.5,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: "#6932E2",
-        pointBorderColor: "#6932E2",
-        pointRadius: 0,
-        pointHoverRadius: 8,
-        pointBorderWidth: 2,
-      },
-    ],
+    datasets: [areaDataset("Registrations", monthlyCounts, "chart-5")],
   };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: "#F8F8F8",
-        titleColor: "#0F0F0F",
-        bodyColor: "#6F6D6D",
-        borderColor: "#E5E5E5",
-        borderWidth: 1,
-        cornerRadius: 12,
-        displayColors: false,
-        callbacks: {
-          label: function (context: any) {
-            const value = context.parsed.y;
-            return `${value} ${value === 1 ? "registration" : "registrations"}`;
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: true,
-          color: "#E5E5E5",
-          drawBorder: false,
-        },
-        ticks: {
-          color: "#6F6D6D",
-          font: {
-            size: 12,
-          },
-        },
-      },
-      y: {
-        beginAtZero: true,
-        min: 0,
-        grid: {
-          display: true,
-          color: "#E5E5E5",
-          drawBorder: false,
-        },
-        ticks: {
-          color: "#6F6D6D",
-          font: {
-            size: 14,
-          },
-          precision: 0,
-        },
-      },
-    },
-    interaction: {
-      intersect: false,
-      mode: "index" as const,
-    },
-  };
+  const options = lineChartOptions({
+    integerTicks: true,
+    tooltipLabel: (value) => `${value} ${value === 1 ? "registration" : "registrations"}`,
+  });
 
   return (
-    <div className="mt-4 h-full">
-      <div className="flex mb-7 items-center justify-between">
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-secondary-text text-sm">Total Registrations</h3>
-
-          <p className="text-primary-text font-bold">
+          <p className="text-xs text-muted-foreground">Total Registrations</p>
+          <p className="font-display text-lg font-bold text-foreground">
             {totalRegistrations.toLocaleString()}{" "}
             {totalRegistrations === 1 ? "Registrant" : "Registrants"}
           </p>
         </div>
-        {years.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div className="flex items-center border p-1 rounded-lg">
-                <p className="text-sm">{activeYear}</p>
-                <ChevronDown
-                  className="inline-block text-secondary-text ml-1"
-                  size={18}
-                />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
-              {years.map((year) => (
-                <DropdownMenuItem
-                  key={year}
-                  onClick={() => setSelectedYear(year)}
-                >
-                  {year}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <Select value={String(activeYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+          <SelectTrigger className="h-9 w-[100px] rounded-full text-xs font-semibold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((year) => (
+              <SelectItem key={year} value={String(year)}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {isLoading ? (
-        <div className="flex items-center justify-center h-56">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-        </div>
+        <Skeleton className="h-56" />
       ) : hasData ? (
         <div className="h-56">
-          <Line data={data} options={options} />
+          <Line key={chartKey} data={data} options={options} />
         </div>
       ) : (
         <EmptyState
-          icon={
-            <HugeiconsIcon
-              icon={ChartLineData02Icon}
-              size={32}
-              color="#6932E2"
-            />
-          }
-          title="No Registration Data"
-          description="Registration data will appear here once people start registering for your events."
+          icon={<LineChart />}
+          title="No registration data"
+          description="Registrations will appear here once people start registering for your event."
         />
       )}
     </div>

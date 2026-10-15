@@ -7,7 +7,7 @@ export default function SafetyPolicies() {
   } = usePlacesForm();
 
   return (
-    <div className="space-y-7 py-5">
+    <div className="space-y-5">
       <UploadFile
         control={control}
         name="environmentalSafetyPolicy"
@@ -23,6 +23,9 @@ export default function SafetyPolicies() {
         name="disclaimers"
         label="Upload Disclaimers"
       />
+      <p className="rounded-xl bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
+        These documents are reviewed before your place is published on SpinStrip Discover.
+      </p>
     </div>
   );
 }

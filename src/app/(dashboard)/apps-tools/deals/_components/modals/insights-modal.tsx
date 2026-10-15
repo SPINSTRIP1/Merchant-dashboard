@@ -1,96 +1,132 @@
-import { X } from "lucide-react";
-import PerformanceChart from "../performance-chart";
-import RevenueChart from "../revenue-chart";
-// import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { AiSheetsIcon, Download04Icon } from "@hugeicons/core-free-icons";
+"use client";
+
+import toast from "react-hot-toast";
+import { Line } from "react-chartjs-2";
+import { Download, Sparkles } from "lucide-react";
 import { Deal } from "../../_schemas";
-import { formatDateDisplay } from "@/utils";
+import { exportCsv, fmtDate, formatNaira } from "@/utils";
+import StatusPill from "@/components/status-pill";
+import ChartCard from "@/components/chart-card";
+import SampleDataBadge from "@/components/sample-data-badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { areaDataset, lineChartOptions, useChartThemeKey } from "@/lib/chart-theme";
+import { useDealPerformance } from "@/hooks/use-deal-extras";
+
+function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 text-sm">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground">{children}</span>
+    </div>
+  );
+}
 
 export default function InsightsModal({
   isOpen,
   onClose,
   deal,
+  campaignName,
 }: {
   isOpen: boolean;
   onClose: () => void;
   deal: Deal | null;
+  campaignName?: string;
 }) {
-  if (!isOpen || !deal) return null;
+  const chartKey = useChartThemeKey();
+  const perf = useDealPerformance(deal);
+  if (!deal) return null;
+
+  const labels = perf?.monthly.map((m) => m.label) ?? [];
+
+  const downloadReport = () => {
+    if (!perf) return;
+    exportCsv(
+      `${deal.name.replace(/[^\w-]+/g, "-").toLowerCase()}-deal-report.csv`,
+      ["Month", "Redemptions", "Revenue (NGN)"],
+      perf.monthly.map((m) => [m.label, m.redemptions, m.revenue])
+    );
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div
-        className={
-          "bg-card scrollbar-hide rounded-3xl p-3 lg:p-4 shadow-xl w-full max-h-[90vh] max-w-[857px] overflow-y-auto"
-        }
-      >
-        <div className="flex gap-x-4 justify-between mb-3 w-full">
-          <div className="flex-shrink-0">
-            <h2 className="font-bold text-primary-text">{deal?.name}</h2>
-            {/* <p className="text-[#34C759] text-xs">+25% Today</p> */}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-3xl">
+        <DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle className="text-2xl">{deal.name}</DialogTitle>
+            <StatusPill status={deal.status} />
           </div>
-          <p className="max-w-[435px] w-full">{deal.description}</p>
-          <button
-            onClick={onClose}
-            className="min-w-6 min-h-6 max-h-6 max-w-6 flex items-center justify-center bg-neutral-accent rounded-full hover:bg-gray-200 transition-colors duration-200"
+          {deal.description && <DialogDescription>{deal.description}</DialogDescription>}
+        </DialogHeader>
+
+        <div className="flex justify-end">
+          <SampleDataBadge label="Sample performance" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ChartCard
+            title="Performance"
+            subtitle="Redemptions per month"
+            action={<span className="text-foreground">{(perf?.redemptions ?? 0).toLocaleString()} total</span>}
           >
-            <X size={20} className="text-secondary-text" />
-          </button>
-        </div>
-
-        <div className="px-3">
-          <div className="bg-[#F6DDDD] py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">Performance</h2>
-          </div>
-          <PerformanceChart />
-
-          <div className="bg-[#D9EDFF] mt-12 py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">Revenue</h2>
-          </div>
-          <RevenueChart />
-        </div>
-        <div className="border-t text-sm mt-8 pt-4">
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Discount</h2>
-            <p>{deal.discountPercentage}% </p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Menu Items</h2>
-            <div className="flex items-end justify-end max-w-[300px] flex-wrap gap-2">
-              {deal.products.map((item) => (
-                <div
-                  key={item.id}
-                  className="border border-neutral-accent rounded-xl w-fit py-0.5 px-1"
-                >
-                  <p className="text-sm text-secondary-text">{item.name}</p>
-                </div>
-              ))}
+            <div className="h-48">
+              <Line key={chartKey}
+                data={{ labels, datasets: [areaDataset("Redemptions", perf?.monthly.map((m) => m.redemptions) ?? [], "chart-1")] }}
+                options={lineChartOptions({ integerTicks: true, tooltipLabel: (v) => `${v} redemptions` })}
+              />
             </div>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Validity period</h2>
-            <p>
-              {formatDateDisplay(deal.startDate)} -{" "}
-              {formatDateDisplay(deal.endDate)}
-            </p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1">Maximum Threshold</h2>
-            <p>{deal.maximumThreshold} Orders</p>
-          </div>
+          </ChartCard>
+          <ChartCard
+            title="Revenue"
+            subtitle="Revenue from redemptions"
+            action={<span className="text-foreground">{formatNaira(perf?.revenue ?? 0, true)}</span>}
+            delay={0.05}
+          >
+            <div className="h-48">
+              <Line key={chartKey}
+                data={{ labels, datasets: [areaDataset("Revenue", perf?.monthly.map((m) => m.revenue) ?? [], "chart-2")] }}
+                options={lineChartOptions({
+                  formatY: (v) => formatNaira(v, true),
+                  tooltipLabel: (v) => `Revenue: ${formatNaira(v)}`,
+                })}
+              />
+            </div>
+          </ChartCard>
         </div>
-        <div className="flex justify-end mt-6 mb-2 gap-x-3 w-full items-center">
-          <button className="rounded-2xl bg-primary h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4">
-            <HugeiconsIcon icon={Download04Icon} size={24} color="#FFFFFF" />
-            <p className="font-normal">Download Report</p>
-          </button>
-          <button className="rounded-2xl bg-primary-accent h-12 md:h-10 text-white flex justify-center items-center gap-2 px-4">
-            <HugeiconsIcon icon={AiSheetsIcon} size={24} color="#6932E2" />
-            <p className="font-normal text-primary">Analyse with AI</p>
-          </button>
+
+        <div className="divide-y rounded-2xl border px-4">
+          <Detail label="Campaign">{campaignName ?? "—"}</Detail>
+          <Detail label="Discount">{deal.discountPercentage}% off</Detail>
+          <Detail label="Maximum Threshold">{deal.maximumThreshold ?? 0} Orders</Detail>
+          <Detail label="Products">
+            {deal.products?.length ? (
+              <span className="flex flex-wrap justify-end gap-1.5">
+                {deal.products.map((item) => (
+                  <span
+                    key={item.id ?? item.name}
+                    className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                  >
+                    {item.name}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              "—"
+            )}
+          </Detail>
+          <Detail label="Validity">
+            {fmtDate(deal.startDate)} → {fmtDate(deal.endDate)}
+          </Detail>
         </div>
-      </div>
-    </div>
+
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" onClick={() => toast("AI analysis is coming soon.")}>
+            <Sparkles /> Analyse with AI
+          </Button>
+          <Button variant="brand" onClick={downloadReport} disabled={!perf}>
+            <Download /> Download Report
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

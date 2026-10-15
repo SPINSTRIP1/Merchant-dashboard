@@ -4,9 +4,11 @@ import StockManagement from "../steps/stock-management";
 import Visibility from "../steps/visibility";
 import { useInventoryForm } from "../../_context";
 import { Button } from "@/components/ui/button";
-import StepIndicator from "@/app/(dashboard)/settings/_components/step-indicator";
-import SideModal from "@/app/(dashboard)/_components/side-modal";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import StepProgress from "@/components/step-progress";
 import { ActionType } from "@/app/(dashboard)/_types";
+
+const STEPS = ["General Info", "Pricing", "Stock Management", "Visibility"];
 
 export default function InventoryModal({
   isOpen,
@@ -43,34 +45,25 @@ export default function InventoryModal({
   };
 
   return (
-    <SideModal isOpen={isOpen} onClose={onClose}>
-      <div className="space-y-7 pb-10 md:pb-0">
-        <StepIndicator
-          className="mb-16 mt-10 md:mt-0 justify-end items-end"
-          currentStep={currentStep}
-          steps={["General Info", "Pricing", "Stock Management", "Visibility"]}
-        />
-        {renderContent()}
-        <div className="flex gap-x-2 w-full items-center justify-center">
-          <Button
-            onClick={handlePrevious}
-            className="w-full"
-            size={"lg"}
-            variant={"secondary"}
-            disabled={currentStep === 1}
-          >
-            Previous
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{action === "edit" ? "Edit Item" : "Add Item"}</SheetTitle>
+          <SheetDescription>
+            Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1]}
+          </SheetDescription>
+        </SheetHeader>
+        <StepProgress steps={STEPS} currentStep={currentStep} />
+        <div className="flex-1">{renderContent()}</div>
+        <div className="flex items-center justify-between gap-3 border-t pt-4">
+          <Button variant="outline" onClick={currentStep === 1 ? onClose : handlePrevious}>
+            {currentStep === 1 ? "Cancel" : "Previous"}
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={loading}
-            className="w-full"
-            size={"lg"}
-          >
+          <Button variant="brand" onClick={handleNext} disabled={loading}>
             {getButtonLabel()}
           </Button>
         </div>
-      </div>
-    </SideModal>
+      </SheetContent>
+    </Sheet>
   );
 }

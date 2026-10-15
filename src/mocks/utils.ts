@@ -98,3 +98,36 @@ export function createMockCollection<T extends { id: string }>(seed: () => T[]) 
     snapshot: () => all(),
   };
 }
+
+/**
+ * A small key → value store kept in localStorage, for mocked additions layered on top of real
+ * backend records (e.g. a place's tagline) so they survive a reload. Reads fall back to an empty
+ * store when storage is unavailable.
+ */
+export function createPersistentMap<T>(storageKey: string) {
+  const read = (): Record<string, T> => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) ?? "{}") as Record<string, T>;
+    } catch {
+      return {};
+    }
+  };
+  const write = (value: Record<string, T>) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch {
+      // Storage full or blocked: keep working for this session only.
+    }
+  };
+
+  return {
+    get: (key: string): T | undefined => read()[key],
+    all: read,
+    set: (key: string, value: T) => write({ ...read(), [key]: value }),
+    update: (key: string, fn: (current: T | undefined) => T) => {
+      const store = read();
+      write({ ...store, [key]: fn(store[key]) });
+    },
+  };
+}

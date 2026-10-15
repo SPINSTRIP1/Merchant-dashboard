@@ -33,7 +33,7 @@ export default function GeneralInfo() {
   );
 
   return (
-    <div className="space-y-7 py-5">
+    <div className="space-y-5">
       <FormInput
         control={control}
         label="Name of Place"
@@ -55,19 +55,16 @@ export default function GeneralInfo() {
               key={type.value}
               type="button"
               onClick={() => handlePlaceTypeSelect(type.value)}
+              aria-pressed={placeType === type.value}
               className={cn(
-                "flex items-center gap-x-1 rounded-full hover:bg-primary-accent hover:border-primary hover:text-primary px-1 py-0.5 border cursor-pointer",
+                "flex min-h-[36px] items-center gap-x-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
                 placeType === type.value
-                  ? "bg-primary-accent border-primary text-primary"
-                  : "bg-card border-neutral-accent text-neutral-accent",
+                  ? "brand-gradient border-transparent text-white shadow-md shadow-primary/25"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
               )}
             >
-              <HugeiconsIcon
-                icon={type.icon}
-                size={20}
-                color={placeType === type.value ? "#6932E2" : "#C8C8C8"}
-              />
-              <span className="text-sm text-inherit">{type.label}</span>
+              <HugeiconsIcon icon={type.icon} size={16} />
+              <span>{type.label}</span>
             </button>
           ))}
         </div>
@@ -81,7 +78,7 @@ export default function GeneralInfo() {
         type="textarea"
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <FormInput
           control={control}
           label="City"
@@ -130,7 +127,7 @@ export default function GeneralInfo() {
         label="Contact Email"
         placeholder="Add Contact Email"
         type="email"
-        description="Press Enter to add more emails"
+        description="Press Enter to add more emails."
       />
 
       <FormArrayInput

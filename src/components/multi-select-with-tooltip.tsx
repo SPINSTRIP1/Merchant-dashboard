@@ -32,7 +32,7 @@ export function MultiSelectWithTooltip({
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  "flex bg-[#E0E0E0] w-full lg:w-[170px] h-[44px] px-3 rounded-full items-center gap-x-2 cursor-pointer",
+                  "flex bg-muted w-full lg:w-[170px] h-[44px] px-3 rounded-full items-center gap-x-2 cursor-pointer",
                   radioClassName
                 )}
               >
@@ -48,7 +48,7 @@ export function MultiSelectWithTooltip({
             {option.description && (
               <TooltipContent
                 side="bottom"
-                className="max-w-[280px] shadow-md bg-white"
+                className="max-w-[280px] shadow-md bg-popover"
               >
                 <p className="text-sm">{option.description}</p>
               </TooltipContent>

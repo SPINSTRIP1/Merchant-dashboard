@@ -14,7 +14,7 @@ export default function Success({
   icon?: any;
 }) {
   return (
-    <div className="bg-white relative overflow-hidden p-3 rounded-full shadow-md">
+    <div className="bg-card relative overflow-hidden p-3 rounded-full shadow-md">
       <HugeiconsIcon
         icon={
           icon ??

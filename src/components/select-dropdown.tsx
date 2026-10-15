@@ -41,7 +41,7 @@ export default function SelectDropdown({
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
         disabled={isLoading || !options || options.length === 0}
-        className={cn("w-full bg-[#F3F3F3] !h-[49px] outline-none", className)}
+        className={cn("w-full bg-muted !h-[49px] outline-none", className)}
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

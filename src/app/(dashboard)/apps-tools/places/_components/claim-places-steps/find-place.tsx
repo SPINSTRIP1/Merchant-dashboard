@@ -28,7 +28,7 @@ export interface SinglePlace extends Omit<Place, "coverImage"> {
 export default function FindPlace() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { setCurrentStep } = usePlacesForm();
+  const { form, setCurrentStep } = usePlacesForm();
   const { items, isLoading } = useServerPagination<SinglePlace>({
     queryKey: "unclaimed-places",
     endpoint: `${SERVER_URL}/places/unclaimed`,
@@ -99,7 +99,11 @@ export default function FindPlace() {
                     {place.views ? `${place.views.toLocaleString()} views` : "No views yet"}
                   </p>
                 </div>
-                <Button variant="brand" size="sm" className="mt-4 w-full" onClick={() => setCurrentStep(2)}>
+                <Button variant="brand" size="sm" className="mt-4 w-full" onClick={() => {
+                    // Remember which place is being claimed; the final step posts to /places/{id}/claim
+                    form.setValue("id", place.id);
+                    setCurrentStep(2);
+                  }}>
                   Claim
                 </Button>
               </div>

@@ -1,221 +1,180 @@
 "use client";
-import { cn } from "@/lib/utils";
-import {
-  AddSquareIcon,
-  Cash02Icon,
-  ChartLineData01Icon,
-  CheckListIcon,
-  CircleArrowReload01Icon,
-  DesertIcon,
-  DrinkIcon,
-  FavouriteIcon,
-  MenuRestaurantIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+
+import React from "react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  Building2,
+  CalendarCheck,
+  CalendarPlus,
+  ClipboardList,
+  Globe,
+  MessageSquare,
+  ShoppingBag,
+  Users,
+  UtensilsCrossed,
+  Wallet,
+} from "lucide-react";
+import Loader from "@/components/loader";
+import EmptyState from "@/components/empty-state";
+import Breadcrumb from "@/components/breadcrumb";
+import StatCard from "@/components/stat-card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePlace } from "@/hooks/use-places";
+import { cn } from "@/lib/utils";
+import { formatNaira } from "@/utils";
+import { getPlaceType } from "../_utils";
 import FacilityManagement from "./_components/facility-management";
 import BookingReservation from "./_components/booking-reservation";
-import { useParams, useRouter } from "next/navigation";
-import Loader from "@/components/loader";
-import { ChevronLeft } from "lucide-react";
-import ActivitiesExperience from "./_components/activities-experience";
-import EmptyState from "@/components/empty-state";
 import VisitorList from "./_components/visitor-list";
+import ActivitiesExperience from "./_components/activities-experience";
 import Reviews from "./_components/reviews";
-import { usePlace } from "@/hooks/use-places";
-import { Event } from "../../event-planner/_schemas";
+
+const TABS = [
+  { value: "facilities", label: "Facility Management" },
+  { value: "visitors", label: "Visitor Management" },
+  { value: "bookings", label: "Bookings & Reservations" },
+  { value: "activities", label: "Activities & Experiences" },
+  { value: "reviews", label: "Reviews" },
+] as const;
+
+const STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  PUBLISHED: { label: "Published", className: "text-emerald-600 dark:text-emerald-400" },
+  UNPUBLISHED: { label: "Review Pending", className: "text-amber-600 dark:text-amber-400" },
+  DRAFT: { label: "Draft", className: "text-muted-foreground" },
+  REJECTED: { label: "Rejected", className: "text-rose-600 dark:text-rose-400" },
+};
 
 export default function Page() {
   const { id } = useParams();
   const { place, isLoading } = usePlace(id as string);
   const router = useRouter();
-  const stats = [
-    {
-      title: "Visitors",
-      value: place?.stats.visitors ?? 0,
-      icon: DrinkIcon,
-      textColor: "#6932E2",
-      bgColor: "#EBE2FF",
-    },
-    {
-      title: "Facilities",
-      value: place?.stats.facilities ?? 0,
-      icon: DesertIcon,
-      textColor: "#34C759",
-      bgColor: "#DDF6E2",
-    },
-    {
-      title: "Revenue",
-      value: place?.stats.revenue ?? 0,
-      icon: Cash02Icon,
-      textColor: "#FF9500",
-      bgColor: "#F6E9DD",
-    },
-    {
-      title: "Sales",
-      value: place?.stats.sales ?? 0,
-      icon: ChartLineData01Icon,
-      textColor: "#FF3B30",
-      bgColor: "#F6DDDD",
-    },
-    {
-      title: "Reservations",
-      value: place?.stats.reservations ?? 0,
-      icon: CircleArrowReload01Icon,
-      textColor: "#0088FF",
-      bgColor: "#D9EDFF",
-    },
-  ];
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tab = TABS.some((t) => t.value === tabParam) ? (tabParam as string) : "facilities";
 
-  const quickLinks = [
-    {
-      title: "Add Event",
-      icon: AddSquareIcon,
-      link: "/apps-tools/event-planner",
-    },
-    {
-      title: "Update Menu/Services",
-      icon: MenuRestaurantIcon,
-      link: "/apps-tools/menu",
-    },
-    {
-      title: "Manage Reviews",
-      icon: FavouriteIcon,
-      link: "/apps-tools/reviews",
-    },
-    {
-      title: "Manage Bookings",
-      icon: CheckListIcon,
-      link: "/apps-tools/bookings",
-    },
-  ] as const;
-
-  const [selectedOption, setSelectedOption] = useState<string>(
-    "Facility Management",
-  );
-  const events: Event[] = [];
-
-  const renderContent = () => {
-    switch (selectedOption) {
-      case "Facility Management":
-        return <FacilityManagement place={place ?? undefined} />;
-      case "Visitor Management":
-        return <VisitorList />;
-
-      case "Bookings & Reservations":
-        return <BookingReservation />;
-
-      case "Activities & Experiences":
-        return events.length === 0 ? (
-          <EmptyState
-            // icon={<MapPin className="h-16 w-16 text-primary" />}
-            title="No Activities or Experiences"
-            description={
-              "No activities or experiences available for this place yet"
-            }
-          />
-        ) : (
-          <>
-            <ActivitiesExperience
-              events={events}
-              title="Activities in this Place"
-            />
-            <ActivitiesExperience
-              events={events}
-              title="Events in this Place"
-            />
-          </>
-        );
-      case "Reviews":
-        return <Reviews />;
-      default:
-        return null;
-    }
+  const setTab = (next: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "facilities") params.delete("tab");
+    else params.set("tab", next);
+    params.delete("page");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
+
   if (isLoading) {
     return <Loader />;
   }
+
+  if (!place) {
+    return (
+      <div className="rounded-2xl border bg-card">
+        <EmptyState
+          icon={<Building2 />}
+          title="Place not found"
+          description="This place may have been deleted, or the link is wrong."
+          action={
+            <Button variant="brand" asChild>
+              <Link href="/apps-tools/places">Back to Places</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  const status = STATUS_LABEL[place.status ?? "UNPUBLISHED"] ?? STATUS_LABEL.UNPUBLISHED;
+
   return (
     <div>
-      <div className="flex items-center mb-6 gap-x-2">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft /> <p className="font-bold">Places</p>
-        </button>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-x-2"
-        >
-          <ChevronLeft />{" "}
-          <p className="font-bold text-primary-text">{place?.name}</p>
-        </button>
-      </div>
-      <div className="flex flex-wrap mb-5 gap-5 2xl:grid 2xl:grid-cols-5">
-        {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className="bg-card h-[165px] max-w-[180px] md:max-w-[210px] 2xl:max-w-full w-full p-4 rounded-[32px] flex flex-col justify-between gap-y-2"
-          >
-            <div
-              className="rounded-full p-2 bg-primary-accent w-fit"
-              style={{ backgroundColor: stat.bgColor }}
-            >
-              <HugeiconsIcon
-                icon={stat.icon}
-                size={24}
-                color={stat.textColor}
-              />
-            </div>
-            <div>
-              <p className="text-2xl text-primary-text font-bold">
-                {stat.value}
-              </p>
-              <h3 className="text-secondary-text text-lg">{stat.title}</h3>
-            </div>
-          </div>
-        ))}
-      </div>
-      <h2 className="font-bold mb-5">Quicklinks</h2>
-      <div className="flex flex-wrap gap-5 2xl:grid 2xl:grid-cols-4">
-        {quickLinks.map((item) => (
-          <Link
-            key={item.title}
-            href={item.link}
-            className="p-6 bg-card relative rounded-[32px] w-full md:min-w-[269px] md:max-w-[269px] 2xl:max-w-full flex flex-col items-center justify-center h-[165px] gap-2 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="w-12 h-12 bg-primary-accent rounded-full flex items-center justify-center">
-              <HugeiconsIcon icon={item.icon} size={24} color={"#6932E2"} />
-            </div>
-            <h3>{item.title}</h3>
+      <Breadcrumb parent={{ label: "Places", href: "/apps-tools/places" }} current={place.name} />
+
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            {place.name} - {place.city}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {getPlaceType(place.placeType)} ·{" "}
+            <span className={cn("font-semibold", status.className)}>{status.label}</span>
+          </p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link href={`/preview/places?id=${place.id}`} target="_blank" rel="noopener">
+            <Globe /> Preview Public Page
           </Link>
-        ))}
+        </Button>
       </div>
-      <div className="mt-10 mb-5  flex items-center justify-center w-full">
-        {[
-          "Facility Management",
-          "Visitor Management",
-          "Bookings & Reservations",
-          "Activities & Experiences",
-          "Reviews",
-        ].map((feature) => (
-          <span
-            onClick={() => setSelectedOption(feature)}
-            key={feature}
-            className={cn(
-              "px-4 border-b font-bold cursor-pointer",
-              selectedOption === feature
-                ? "border-primary-text text-primary-text "
-                : "text-neutral-accent border-neutral-accent",
-            )}
-          >
-            {feature}
-          </span>
-        ))}
+
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <StatCard index={0} label="Visitors" value={(place.stats?.visitors ?? 0).toLocaleString()} icon={<Users />} />
+        <StatCard
+          index={1}
+          label="Facilities"
+          value={(place.stats?.facilities ?? 0).toLocaleString()}
+          icon={<Building2 />}
+        />
+        <StatCard
+          index={2}
+          accent
+          label="Revenue"
+          value={formatNaira(place.stats?.revenue ?? 0, true)}
+          icon={<Wallet />}
+        />
+        <StatCard index={3} label="Sales" value={(place.stats?.sales ?? 0).toLocaleString()} icon={<ShoppingBag />} />
+        <StatCard
+          index={4}
+          label="Reservations"
+          value={(place.stats?.reservations ?? 0).toLocaleString()}
+          icon={<CalendarCheck />}
+        />
       </div>
-      {renderContent()}
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Button variant="brand" size="sm" asChild>
+          <Link href={`/apps-tools/event-planner?create=1&placeId=${place.id}`}>
+            <CalendarPlus /> Add Event
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/apps-tools/menu">
+            <UtensilsCrossed /> Update Menu/Services
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setTab("reviews")}>
+          <MessageSquare /> Manage Reviews
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setTab("bookings")}>
+          <ClipboardList /> Manage Bookings
+        </Button>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          {TABS.map((t) => (
+            <TabsTrigger key={t.value} value={t.value}>
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="facilities">
+          <FacilityManagement place={place} />
+        </TabsContent>
+        <TabsContent value="visitors">
+          <VisitorList />
+        </TabsContent>
+        <TabsContent value="bookings">
+          <BookingReservation />
+        </TabsContent>
+        <TabsContent value="activities">
+          <ActivitiesExperience placeId={place.id} />
+        </TabsContent>
+        <TabsContent value="reviews">
+          <Reviews placeId={place.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

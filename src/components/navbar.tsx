@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/components/sidebar-content";
+import ThemeToggle from "@/components/theme-toggle";
 
 const iconButton =
   "grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
@@ -53,6 +54,8 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
               <ClipboardList className="h-5 w-5" />
             </Link>
           )}
+
+          <ThemeToggle />
 
           <Popover>
             <PopoverTrigger className={iconButton} aria-label="Notifications" title="Notifications">

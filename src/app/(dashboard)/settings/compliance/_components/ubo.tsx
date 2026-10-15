@@ -27,11 +27,11 @@ export default function UBO() {
     return (
       <div
         key={uboIndex}
-        className="space-y-5 p-3.5 lg:p-6 border border-gray-200 rounded-2xl relative"
+        className="space-y-5 p-3.5 lg:p-6 border border-border rounded-2xl relative"
       >
         {/* Header with UBO number and remove button */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Ultimate Beneficial Owner {uboIndex + 1}
           </h3>
           {ubos.length > 1 && (
@@ -209,7 +209,7 @@ export default function UBO() {
           type="button"
           variant="outline"
           onClick={addUbo}
-          className="bg-[#F3F3F3] text-black border-none rounded-3xl p-6 hover:bg-gray-200 transition-colors"
+          className="bg-muted text-foreground border-none rounded-3xl p-6 hover:bg-muted transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           <span className="text-sm font-bold">Add another Shareholder</span>

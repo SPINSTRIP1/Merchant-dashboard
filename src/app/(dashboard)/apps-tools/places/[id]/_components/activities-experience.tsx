@@ -1,77 +1,87 @@
-import {
-  Calendar03Icon,
-  Delete02Icon,
-  Edit02Icon,
-  Location01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+"use client";
+
 import Image from "next/image";
-import ImpressionsStack from "../../../event-planner/_components/impressions-stack";
-import { Event } from "../../../event-planner/_schemas";
-import { formatDateDisplay } from "@/utils";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { CalendarDays, CalendarPlus, MapPin, Sparkles } from "lucide-react";
+import EmptyState from "@/components/empty-state";
+import StatusPill from "@/components/status-pill";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePlaceEvents } from "@/hooks/use-place-extras";
+import { fmtDate } from "@/utils";
 
-export default function ActivitiesExperience({
-  title,
-  events,
-}: {
-  title: string;
-  events: Event[];
-}) {
-  return (
-    <div className="w-full overflow-x-hidden mt-7 max-w-[calc(100vw-180px)]">
-      <h1 className="font-bold text-primary-text mb-4">{title}</h1>
-      <div className="flex overflow-x-auto pb-4 w-[90%] 2xl:w-full gap-4">
-        {[...events, ...events].map((event, index) => (
-          <div
-            key={index}
-            className="flex flex-col gap-y-2 min-w-[348px] max-w-[348px] w-full"
-          >
-            <div className="w-full h-[206px]">
-              <Image
-                src={event.images?.[0] || ""}
-                alt={event.name}
-                width={400}
-                height={600}
-                className="w-full h-full object-cover rounded-2xl"
-              />
-            </div>
-            <h2 className="text-sm lg:text-base font-bold">{event.name}</h2>
+/** Events linked to this place (via the event's "Add a place" field). */
+export default function ActivitiesExperience({ placeId }: { placeId?: string }) {
+  const { events, isLoading } = usePlaceEvents(placeId);
 
-            <div className="flex items-center gap-x-2">
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon
-                  icon={Location01Icon}
-                  size={24}
-                  color="#6F6D6D"
-                />
-                <p className="text-sm">
-                  {event.city}, {event.state}
-                </p>
-              </div>
-              <div className="flex items-center gap-x-2">
-                <HugeiconsIcon
-                  icon={Calendar03Icon}
-                  size={24}
-                  color="#6F6D6D"
-                />
-                {formatDateDisplay(event.startDate)}
-              </div>
-            </div>
-            <ImpressionsStack impressions={event.totalImpressions ?? 0} />
-            <div className="flex justify-between w-full">
-              <button className="rounded-2xl bg-primary h-[35px] px-2 text-white flex justify-center items-center gap-2">
-                <HugeiconsIcon icon={Edit02Icon} size={16} color="#FFFFFF" />
-                <p className="font-normal text-sm">Edit</p>
-              </button>
-
-              <button className="rounded-2xl text-[#FF383C] bg-[#F6DDDD] h-[35px] px-2 flex justify-center items-center gap-2">
-                <HugeiconsIcon icon={Delete02Icon} color="#FF383C" size={16} />
-                <p className="font-normal text-sm">Delete</p>
-              </button>
-            </div>
-          </div>
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-64 rounded-2xl" />
         ))}
       </div>
+    );
+  }
+
+  if (!events.length) {
+    return (
+      <div className="rounded-2xl border bg-card">
+        <EmptyState
+          icon={<Sparkles />}
+          title="No activities yet"
+          description="Events and experiences you create at this place will appear here."
+          action={
+            <Button variant="brand" asChild>
+              <Link href={`/apps-tools/event-planner?create=1&placeId=${placeId}`}>
+                <CalendarPlus /> Add Event
+              </Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {events.map((event, i) => (
+        <motion.article
+          key={event.id ?? i}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.04 }}
+          className="card-hover overflow-hidden rounded-2xl border bg-card"
+        >
+          {event.images?.[0] ? (
+            <div className="relative h-36">
+              <Image src={event.images[0]} alt="" fill className="object-cover" />
+            </div>
+          ) : (
+            <div className="brand-gradient-soft grid h-36 place-items-center">
+              <CalendarDays className="h-7 w-7 text-primary/60" />
+            </div>
+          )}
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="truncate font-display font-bold text-foreground">{event.name}</p>
+              <StatusPill
+                status={event.status ?? "draft"}
+                label={event.status === "INACTIVE" ? "Cancelled" : undefined}
+              />
+            </div>
+            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-primary" /> {event.city}, {event.state}
+              </p>
+              <p className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-primary" /> {fmtDate(event.startDate)}
+              </p>
+            </div>
+          </div>
+        </motion.article>
+      ))}
     </div>
   );
 }

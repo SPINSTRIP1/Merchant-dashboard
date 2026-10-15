@@ -80,7 +80,7 @@ export function MonthDayPicker({
             <button
               type="button"
               onClick={() => handleMonthChange("prev")}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-muted rounded"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -90,7 +90,7 @@ export function MonthDayPicker({
             <button
               type="button"
               onClick={() => handleMonthChange("next")}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-muted rounded"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -111,7 +111,7 @@ export function MonthDayPicker({
                     type="button"
                     onClick={() => handleDaySelect(day)}
                     className={cn(
-                      "h-8 w-8 text-sm rounded hover:bg-gray-100 transition-colors",
+                      "h-8 w-8 text-sm rounded hover:bg-muted transition-colors",
                       isSelected && "bg-primary text-white hover:bg-primary/90"
                     )}
                   >

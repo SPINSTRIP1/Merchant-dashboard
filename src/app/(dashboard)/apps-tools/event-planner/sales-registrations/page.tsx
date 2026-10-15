@@ -1,131 +1,123 @@
 "use client";
-import ContainerWrapper from "@/components/container-wrapper";
-import { Time01Icon } from "@hugeicons/core-free-icons";
-import { Calendar03Icon, Location01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { Eye, Globe, PartyPopper, Percent, Tag, Target, Ticket, Users } from "lucide-react";
 import RegistrationChart from "./_components/registration-chart";
 import RegistrationTable from "./_components/table";
+import TicketSalesChart from "./_components/ticket-sales-chart";
 import { useEventRegistrations } from "@/hooks/use-event-registrations";
 import { useEvent } from "@/hooks/use-events";
-import TicketSalesChart from "./_components/ticket-sales-chart";
-import { useSearchParams } from "next/navigation";
+import { useEventViaDealSales } from "@/hooks/use-event-extras";
 import Loader from "@/components/loader";
-import { extractTimeFromDateTime } from "../_utils";
-import { formatDateDisplay } from "@/utils";
-import ImpressionsStack from "../_components/impressions-stack";
+import Breadcrumb from "@/components/breadcrumb";
+import EmptyState from "@/components/empty-state";
+import StatCard from "@/components/stat-card";
+import ChartCard from "@/components/chart-card";
+import { Button } from "@/components/ui/button";
+import { fmtDate, formatNaira } from "@/utils";
 
-export default function SalesAndRegistration() {
+function SalesAndRegistrationContent() {
   const id = useSearchParams().get("id");
   const { event, isLoading } = useEvent(id);
   const { stats } = useEventRegistrations({ eventId: id, limit: 1 });
-  if (isLoading) return <Loader />;
-  if (!event) return <p>No event found.</p>;
 
-  const totalTicketsSold =
-    stats?.ticketTiers?.reduce((acc, t) => acc + t.sold, 0) ?? 0;
+  const totalTicketsSold = stats?.ticketTiers?.reduce((acc, t) => acc + t.sold, 0) ?? 0;
+  const viaDeal = useEventViaDealSales(id, totalTicketsSold);
+
+  if (isLoading) return <Loader />;
+  if (!event) {
+    return (
+      <div className="rounded-2xl border bg-card">
+        <EmptyState
+          icon={<PartyPopper />}
+          title="Event not found"
+          description="This event may have been removed."
+          action={
+            <Button variant="brand" asChild>
+              <Link href="/apps-tools/event-planner">Back to Events</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <ContainerWrapper>
-        <h1 className="font-bold text-2xl text-primary-text">{event.name}</h1>
-
-        <div className="flex flex-col md:flex-row gap-4 mt-3 overflow-x-auto">
-          {event.images?.map((image, index) => (
-            <div key={index} className="w-full md:w-[250px] h-[206px]">
-              <Image
-                src={image}
-                alt={event.name}
-                width={400}
-                height={600}
-                className="w-full h-full object-cover rounded-2xl"
-              />
-            </div>
-          ))}
+      <Breadcrumb parent={{ label: "Events", href: "/apps-tools/event-planner" }} current="Sales & Registrations" />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">{event.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sales &amp; Registrations · {fmtDate(event.startDate)} · {event.city}, {event.state}
+          </p>
         </div>
-        <p className="my-3">{event.description}</p>
-        <div className="grid grid-cols-2 md:flex items-center justify-between gap-3 my-3">
-          <div className="flex items-center gap-x-2">
-            <HugeiconsIcon icon={Location01Icon} size={24} color="#6F6D6D" />
-            <p className="text-sm">
-              {event.city}, {event.state}
-            </p>
-          </div>
-          <div className="flex items-center gap-x-2">
-            <HugeiconsIcon icon={Time01Icon} size={24} color="#6F6D6D" />
-            <p className="text-sm">
-              {extractTimeFromDateTime(event.startDate)} {event.timezone}
-            </p>
-          </div>
-          <div className="flex items-center gap-x-2">
-            <HugeiconsIcon icon={Calendar03Icon} size={24} color="#6F6D6D" />
-            <p className="text-sm">{formatDateDisplay(event.endDate)}</p>
-          </div>
-
-          <ImpressionsStack impressions={event.totalImpressions ?? 0} />
-        </div>
-
-        <div className="text-sm mt-5">
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Total Registrations
-            </h2>
-            <p>{event.totalTransactions ?? 0}</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Total Tickets Sales
-            </h2>
-            <p>{totalTicketsSold}</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Total Ticket Sales Via Deal
-            </h2>
-            <p>0</p>
-          </div>{" "}
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Sold Out Threshold
-            </h2>
-            <p>{event.soldOutThreshold} Tickets</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Event Impressions
-            </h2>
-            <p>{event.totalImpressions ?? 0} Views</p>
-          </div>
-          <div className="flex items-center justify-between my-2 w-full">
-            <h2 className="font-bold mb-1 text-primary-text">
-              Checkout Drop Off Rate
-            </h2>
-            <p>{event.dropOffRate}%</p>
-          </div>
-        </div>
-      </ContainerWrapper>
-      <div className="grid gap-4 mt-6 md:grid-cols-[1fr_357px]">
-        <ContainerWrapper className="w-full h-auto">
-          <div className="bg-[#F6E9DD]  py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">
-              Registrations
-            </h2>
-          </div>
-          <RegistrationChart
-            eventId={id}
-            totalRegistrations={event.totalTransactions ?? 0}
-          />
-        </ContainerWrapper>
-        <ContainerWrapper className="w-full h-auto">
-          <div className="bg-[#D9EDFF]  py-3 px-3 rounded-2xl">
-            <h2 className="font-bold text-lg text-primary-text">
-              Ticket Sales
-            </h2>
-          </div>
-          <TicketSalesChart stats={stats} />
-        </ContainerWrapper>
+        <Button variant="outline" asChild>
+          <Link href={`/preview/events?id=${event.id}`} target="_blank" rel="noopener">
+            <Globe /> Public Page
+          </Link>
+        </Button>
       </div>
-      <RegistrationTable eventId={id} />
+
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard
+          index={0}
+          label="Total Registrations"
+          value={(event.totalTransactions ?? 0).toLocaleString()}
+          icon={<Users />}
+        />
+        <StatCard index={1} accent label="Total Tickets Sales" value={totalTicketsSold.toLocaleString()} icon={<Ticket />} />
+        <StatCard index={2} sample label="Ticket Sales Via Deal" value={viaDeal.toLocaleString()} icon={<Tag />} />
+        <StatCard
+          index={3}
+          label="Sold Out Threshold"
+          value={`${event.soldOutThreshold ?? 0}`}
+          sub="tickets"
+          icon={<Target />}
+        />
+        <StatCard
+          index={4}
+          label="Event Impressions"
+          value={(event.totalImpressions ?? 0).toLocaleString()}
+          sub="views"
+          icon={<Eye />}
+        />
+        <StatCard
+          index={5}
+          label="Checkout Drop Off"
+          value={`${event.dropOffRate ?? 0}%`}
+          icon={<Percent />}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <ChartCard title="Registrations" subtitle="Registrations per month">
+          <RegistrationChart eventId={id} totalRegistrations={event.totalTransactions ?? 0} />
+        </ChartCard>
+        <ChartCard
+          title="Ticket Sales"
+          subtitle="Revenue and tickets by tier"
+          action={
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
+              {formatNaira(Number(stats?.totalRevenue) || 0, true)} revenue
+            </span>
+          }
+          delay={0.05}
+        >
+          <TicketSalesChart stats={stats} />
+        </ChartCard>
+      </div>
+
+      <RegistrationTable eventId={id} eventName={event.name} />
     </div>
+  );
+}
+
+export default function SalesAndRegistration() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <SalesAndRegistrationContent />
+    </Suspense>
   );
 }

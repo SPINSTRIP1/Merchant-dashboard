@@ -6,6 +6,7 @@ import { Doughnut, Line } from "react-chartjs-2";
 import {
   AlertTriangle,
   ArrowLeftRight,
+  ArrowRight,
   CalendarDays,
   Landmark,
   MapPin,
@@ -32,10 +33,12 @@ import {
   doughnutChartOptions,
   doughnutData,
   lineChartOptions,
+  useChartThemeKey,
 } from "@/lib/chart-theme";
 import { formatNaira, rangeFor, timeAgo, type DateRange } from "@/utils";
 
 export default function OverviewPage() {
+  const chartKey = useChartThemeKey();
   const [range, setRange] = useState<DateRange>(() => rangeFor("month"));
   const { analytics, isAnalyticsLoading, counts, recentEvents, isRecentEventsLoading } =
     useOverview(range);
@@ -155,6 +158,12 @@ export default function OverviewPage() {
             sub={`${counts.upcomingEvents.toLocaleString()} upcoming`}
             icon={<CalendarDays />}
           />
+          <Link
+            href="/discover"
+            className="card-hover flex min-h-[112px] items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 text-center text-sm font-semibold text-primary"
+          >
+            View on SpinStrip Discover <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
         </div>
       )}
 
@@ -167,7 +176,7 @@ export default function OverviewPage() {
         >
           <div className="h-[260px]">
             {analytics && (
-              <Line
+              <Line key={chartKey}
                 data={{
                   labels: analytics.series.map((p) => p.label),
                   datasets: [areaDataset("Revenue", analytics.series.map((p) => p.revenue), "chart-1")],
@@ -188,7 +197,7 @@ export default function OverviewPage() {
         >
           <div className="h-[260px]">
             {analytics && (
-              <Line
+              <Line key={chartKey}
                 data={{
                   labels: analytics.series.map((p) => p.label),
                   datasets: [
@@ -214,7 +223,7 @@ export default function OverviewPage() {
         >
           {revenueByLine.length ? (
             <div className="h-[280px]">
-              <Doughnut
+              <Doughnut key={chartKey}
                 data={doughnutData(revenueByLine)}
                 options={doughnutChartOptions({ formatValue: (v) => formatNaira(v) })}
               />
@@ -231,7 +240,7 @@ export default function OverviewPage() {
         >
           {volumeByLine.length ? (
             <div className="h-[280px]">
-              <Doughnut
+              <Doughnut key={chartKey}
                 data={doughnutData(volumeByLine, 2)}
                 options={doughnutChartOptions({ formatValue: (v) => `${v} transactions` })}
               />

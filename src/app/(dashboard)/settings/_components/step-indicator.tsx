@@ -36,7 +36,7 @@ export default function StepIndicator({
               >
                 <div
                   className={`w-8 h-8 md:w-10 md:h-10 rounded-full text-white flex items-center justify-center ${
-                    isActiveOrCompleted ? "bg-primary" : "bg-[#C8C8C8]"
+                    isActiveOrCompleted ? "bg-primary" : "bg-neutral-accent"
                   } `}
                 >
                   <p className="lg:text-lg font-bold"> {stepNumber}</p>
@@ -65,7 +65,7 @@ export default function StepIndicator({
             {index < steps.length - 1 && (
               <div
                 className={cn(
-                  "w-10 lg:w-20 h-px bg-gray-300",
+                  "w-10 lg:w-20 h-px bg-muted",
                   index + 1 < currentStep ? "bg-primary" : "bg-neutral-accent"
                 )}
               ></div>

@@ -1,5 +1,5 @@
-import StepIndicator from "@/app/(dashboard)/settings/_components/step-indicator";
-import SideModal from "@/app/(dashboard)/_components/side-modal";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import StepProgress from "@/components/step-progress";
 import { usePlacesForm } from "../../_context";
 import GeneralInfo from "../new-places-steps/general-info";
 import OperatingHours from "../new-places-steps/operating-hours";
@@ -8,6 +8,8 @@ import LocationVerification from "../new-places-steps/location-verification";
 import { Button } from "@/components/ui/button";
 import { ActionType } from "@/app/(dashboard)/_types";
 import { FormProvider } from "react-hook-form";
+
+const STEPS = ["General Info", "Operating Hours", "Safety & Policies", "Location Verification"];
 
 export default function CreatePlacesModal({
   isOpen,
@@ -18,8 +20,9 @@ export default function CreatePlacesModal({
   onClose: () => void;
   action?: ActionType;
 }) {
-  const { currentStep, form, handleNext, handlePrevious, loading } =
-    usePlacesForm();
+  const { currentStep, form, handleNext, handlePrevious, loading } = usePlacesForm();
+  const isEditing = action === "edit";
+
   const renderContent = () => {
     switch (currentStep) {
       case 1:
@@ -36,50 +39,39 @@ export default function CreatePlacesModal({
   };
   const getButtonLabel = () => {
     if (loading) {
-      return action === "edit" ? "Updating..." : "Publishing...";
+      return isEditing ? "Updating..." : "Publishing...";
     }
     if (currentStep === 4) {
-      return action === "edit" ? "Update" : "Publish";
+      return isEditing ? "Update" : "Publish";
     }
     return "Next";
   };
 
   return (
-    <SideModal isOpen={isOpen} onClose={onClose}>
-      <FormProvider {...form}>
-        <div className="space-y-7 pb-10 md:pb-0">
-          <StepIndicator
-            className="mb-16 mt-10 md:mt-0 pr-5 justify-end items-end"
-            currentStep={currentStep}
-            steps={[
-              "General Info",
-              "Operating Hours",
-              "Safety & Policies",
-              "Location Verification",
-            ]}
-          />
-          {renderContent()}
-          <div className="flex gap-x-2 w-full items-center justify-center">
-            <Button
-              onClick={handlePrevious}
-              className="w-full"
-              size={"lg"}
-              variant={"secondary"}
-              disabled={currentStep === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={handleNext}
-              disabled={loading}
-              className="w-full"
-              size={"lg"}
-            >
-              {getButtonLabel()}
-            </Button>
-          </div>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle>{isEditing ? `Edit ${form.watch("name") || "Place"}` : "Add Place"}</SheetTitle>
+          <SheetDescription>
+            Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1]}
+          </SheetDescription>
+        </SheetHeader>
+        <StepProgress steps={STEPS} currentStep={currentStep} />
+        <FormProvider {...form}>
+          <div className="flex-1">{renderContent()}</div>
+        </FormProvider>
+        <div className="flex items-center justify-between gap-3 border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={currentStep === 1 ? onClose : handlePrevious}
+          >
+            {currentStep === 1 ? "Cancel" : "Previous"}
+          </Button>
+          <Button variant="brand" onClick={handleNext} disabled={loading}>
+            {getButtonLabel()}
+          </Button>
         </div>
-      </FormProvider>
-    </SideModal>
+      </SheetContent>
+    </Sheet>
   );
 }

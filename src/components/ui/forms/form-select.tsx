@@ -67,7 +67,7 @@ export function FormSelect<TFieldValues extends FieldValues>({
             <FormControl>
               <SelectTrigger
                 className={cn(
-                  "w-full !rounded-2xl border bg-[#F3F3F3] border-neutral-accent !h-[49px]",
+                  "w-full !rounded-2xl border bg-muted border-neutral-accent !h-[49px]",
                   className
                 )}
               >

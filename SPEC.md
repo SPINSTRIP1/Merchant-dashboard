@@ -11,7 +11,12 @@
 **SpinStrip Merchant Dashboard** is a Next.js web application that lets business owners
 ("merchants") run their business on the SpinStrip consumer platform. Merchants sign up,
 complete KYC/compliance, then enable modular "Apps/Tools" — each a self-contained business
-capability (Wallet, Event Planner, Menu, Inventory, Places, Deals, Customers).
+capability (Wallet, Event Planner, Menu, Inventory, Places, Deals, Customers). Around the apps sit
+an Overview, Settlement, Billing, Admin & Roles (team permissions), a waiter app and public pages.
+
+Features the backend supports are wired to it. Features from the product prototype with no
+backend endpoint yet are built on **sample data** (section 8.1) and labelled "Sample" on screen;
+`docs/backend-endpoints-needed.md` lists what each one needs.
 
 Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 
@@ -21,23 +26,38 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 
 ### Modules
 
+[S] = runs on sample data (fully or partly) until the backend supports it.
+
 | Module | Route | Purpose |
 |---|---|---|
-| Apps/Tools catalogue | `/apps-tools` | Browse, search, filter, and toggle apps on/off |
-| Wallet | `/apps-tools/wallet` | Create wallet, deposit/withdraw, POS, settlement account, transaction history, revenue chart |
-| Event Planner | `/apps-tools/event-planner` | Create/manage events, ticket tiers, media, impressions |
-| Event Sales & Registrations | `/apps-tools/event-planner/sales-registrations` | Paginated registrant table, revenue/tier stats, charts |
-| Menu | `/apps-tools/menu` | Menu items with pricing, availability schedules, add-ons/extras, allergens |
-| Inventory | `/apps-tools/inventory` | Products, catalogs/categories, stock levels, variants, slot booking config |
-| Inventory item detail | `/apps-tools/inventory/item?id=` | Single product view + duplicate |
+| Overview | `/` | Date-range KPIs, revenue/customer charts, product performance, recent transactions and events. Entity counts live; money/customer analytics [S] |
+| Apps & Tools | `/apps-tools` | Browse, search, filter, toggle apps; Default / Integrated / Available badges; "Open" link |
+| Menu | `/apps-tools/menu?view=` | Tabs: items, Tables & QR [S], Table Analytics [S]; featured items, Top Menus (order counts [S]), Configure sheet |
 | Places | `/apps-tools/places` | Create a new place or claim an existing one |
-| Place detail | `/apps-tools/places/[id]` | Facilities, room inventory, operating hours, bookings, visitors, reviews |
-| Deals | `/apps-tools/deals` | Subscription-gated discount campaigns; performance/revenue charts |
+| Place detail | `/apps-tools/places/[id]?tab=` | Facilities, room inventory, operating hours, bookings, visitors, activities, reviews. Tagline, facility removal, manual visitors, booking status, reviews [S] |
+| Event Planner | `/apps-tools/event-planner` | Create/manage events, ticket tiers, media; deep link `?create=1&placeId=`. Delete [S] |
+| Event Sales & Registrations | `/apps-tools/event-planner/sales-registrations` | Registrant table with CSV export, revenue/tier stats, charts. Via-deal count [S] |
+| Deals | `/apps-tools/deals` | Subscription-gated campaigns and deals, activate/pause, insights (performance [S]) |
 | Deal archives | `/apps-tools/deals/archives` | Archived deals |
-| Settings | `/settings` | Account settings |
-| Compliance / KYC | `/settings/compliance` | 4-step KYC wizard |
-| Overview | `/` | Dashboard home (coming soon) |
-| Billing | `/billing` | Coming soon |
+| Inventory | `/apps-tools/inventory` | Products, catalogs, stock levels, restock, visibility, low-stock bar |
+| Inventory item detail | `/apps-tools/inventory/item?id=` | Product panels, related items, duplicate. History [S] |
+| Wallet | `/apps-tools/wallet` | Create wallet, deposit details, POS, settlement accounts. Balance fallback, revenue, transactions, withdrawals [S] |
+| Customers | `/apps-tools/customers` | Service filter, sort, page search, CSV export. Spend view [S] |
+| Settlement | `/settlement` | Daily batches + settled transactions, CSV [S] |
+| Billing | `/billing` | Monthly bill from active paid apps; invoices and card [S] |
+| Admin & Roles | `/admin` | Owner only; team members, roles, permission grid [S] |
+| Settings hub | `/settings` | Cards for the six sections; sub-pages share a pill tab bar |
+| Compliance / KYC | `/settings/compliance` | Status summary + 4-step KYC wizard |
+| Preferences | `/settings/preferences` | Theme (light/dark/system); notification and auto-settlement switches [S] |
+| Security | `/settings/security` | Change password [S]; link to OTP reset |
+| Payments | `/settings/payments` | Settlement bank accounts (real) |
+| Integrations, Legal | `/settings/integrations`, `/settings/legal` | Informational pages |
+
+### Waiter app (authenticated, no sidebar)
+
+| Route | Purpose |
+|---|---|
+| `/waiter` | Phone-first floor plan (refreshes every 15 s), seat-guests stepper, read-only menu. Tables [S] |
 
 ### Public preview routes (unauthenticated, consumer-facing)
 
@@ -46,6 +66,8 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 | `/preview/events?id=<eventId>` | Public event landing page + ticket checkout |
 | `/preview/events/success` | Post-payment success |
 | `/preview/places?id=<placeId>` | Public place landing page + booking checkout |
+| `/preview/menu?table=<qrToken>` | Table-QR menu: the merchant's real menu when signed in, sample otherwise |
+| `/discover` | SpinStrip Discover: places and events across merchants [S] |
 
 ### Auth routes
 
@@ -60,7 +82,10 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 | Framework | Next.js **15** (App Router), React **19** |
 | Language | TypeScript 5; `@/*` path alias maps to `src/*` |
 | Styling | Tailwind CSS 3.4 + `tailwindcss-animate`, `class-variance-authority`, `clsx`, `tailwind-merge` |
-| UI primitives | Radix UI (checkbox, dropdown-menu, label, popover, radio-group, select, slot, switch, tooltip) — shadcn-style wrappers in `src/components/ui` |
+| UI primitives | Radix UI (checkbox, dialog, dropdown-menu, label, popover, radio-group, select, slot, switch, tabs, tooltip) — shadcn-style wrappers in `src/components/ui` (incl. `sheet`, `skeleton`, `badge`, `progress`) |
+| Theme | `next-themes` (class strategy; light / dark / system) |
+| Animation | `framer-motion` |
+| QR codes | `qrcode.react` |
 | Icons | `@hugeicons/react` + `@hugeicons/core-free-icons` (primary), `lucide-react` (secondary) |
 | Server state | **TanStack React Query v5** |
 | Client/global state | **Redux Toolkit** + `react-redux` + `redux-persist` (localStorage) |
@@ -69,7 +94,7 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 | Charts | `chart.js` + `react-chartjs-2` |
 | Dates | `date-fns`, `react-day-picker` |
 | Notifications | `react-hot-toast` |
-| Fonts | Self-hosted **SF Pro Display** (`/public/fonts/*.OTF`) |
+| Fonts | **Plus Jakarta Sans** (`--font-sans`) and **Outfit** (`--font-display`) via `next/font/google` |
 
 ---
 
@@ -95,9 +120,15 @@ src/
           _schemas/         # zod schemas + inferred types
           _types/           # response types
           _hooks/, _utils/  # module-local helpers
+      page.tsx              # Overview
+      settlement/, billing/, admin/
       settings/
-        compliance/         # 4-step KYC wizard (own context/schemas/constants)
-    preview/                # public consumer-facing pages
+        layout.tsx          # pill tab bar across settings sub-pages
+        compliance/         # status summary + 4-step KYC wizard (own context/schemas/constants)
+        preferences/, security/, payments/, integrations/, legal/
+    waiter/                 # waiter app; layout reuses (dashboard)/providers
+    discover/               # public Discover; own QueryProvider layout
+    preview/                # public consumer-facing pages (events, places, menu); own QueryProvider
     layout.tsx, globals.css
   components/               # cross-app components
     ui/                     # design-system primitives
@@ -110,11 +141,15 @@ src/
     api/axios-client.ts     # configured axios instance
     api/handle-axios-error.ts
     create-form-context.tsx # form-context factory
+    permissions.ts          # roles, permission keys, path rules, landing path
+    chart-theme.ts          # chart.js registration + token-based chart options
     upload-files.ts, utils.ts
-  providers/                # redux-provider, query-provider, auth-provider
+  mocks/                    # sample-data fixtures; imported ONLY by hooks (section 8.1)
+  providers/                # redux-provider, query-provider, auth-provider, theme-provider
   store/                    # index.ts, selectors.ts, slices/{authSlice,appsSlice}.ts
   types/index.d.ts
-  utils/index.ts            # encrypt/decrypt, formatAmount, formatISODate, ...
+  utils/index.ts            # encrypt/decrypt, formatAmount, formatNaira, fmtDate, fmtDateTime,
+                            # timeAgo, rangeFor, exportCsv, ...
 ```
 
 **Naming:** files are kebab-case. Route-private folders are prefixed with `_`
@@ -177,24 +212,33 @@ POST   {EVENTS_SERVER_URL}/events/public/{id}/register   public ticket checkout
 **Places**
 
 ```
+GET    /places                           paginated
+GET    /places/unclaimed                 paginated (claim flow search)
+POST   /places/{id}/claim
 GET    /places/{id}
 GET    /places/{id}/facilities           -> { facilities: Facility[] }
+GET    /places/{id}/appointments         paginated bookings
+GET    /places/{id}/visitors             paginated
 GET    /places/public/{id}
 POST   /places
 PATCH  /places/{id}
+POST   /places/{id}/media                multipart
 POST   /places/facilities                create facility
 POST   /places/facilities/{id}/images    multipart
+GET    /places/customers                 paginated (service, sort) — Customers module
 ```
 
 **Inventory**
 
 ```
-GET    /inventory/products               paginated
+GET    /inventory/products               paginated (stockStatus=lowStock for the low-stock bar)
 GET    /inventory/products/stats         -> { totalItems, inStock, lowStock, outOfStock, recentlyUpdated }
 GET    /inventory/products/{id}
 POST   /inventory/products
-PATCH  /inventory/products/{id}
+PATCH  /inventory/products/{id}          (also used for restock: { quantity })
 POST   /inventory/products/{id}/duplicate
+POST   /inventory/products/{id}/images   multipart
+DELETE /inventory/products/{id}/images
 GET    /inventory/catalogs
 POST   /inventory/catalogs
 ```
@@ -202,8 +246,11 @@ POST   /inventory/catalogs
 **Menu**
 
 ```
+GET    /menu/menu-items                  paginated (search, status, category, isFeatured)
 POST   /menu/menu-items
 PATCH  /menu/menu-items/{id}
+DELETE /menu/menu-items/{id}
+POST   /menu/menu-items/{id}/images      multipart
 POST   /menu/menu-items/{id}/duplicate
 PATCH  /menu/menu-items/{id}/toggle-hidden
 ```
@@ -216,6 +263,7 @@ PATCH  /deals/subscriptions/activate
 GET    /deals/stats                      -> { active, archived, canceled, inactive, total }
 GET    /deals/campaigns                  paginated
 POST   /deals/campaigns
+GET    /deals                            paginated (status filter)
 POST   /deals
 PATCH  /deals/{id}
 PATCH  /deals/{id}/status
@@ -224,9 +272,19 @@ PATCH  /deals/{id}/status
 **Wallet** (`USER_ACCOUNT_URL`)
 
 ```
+GET    /auth/me                          current user (useMe syncs it into Redux)
 GET    /wallet
 POST   /wallet   { currency, customer_email, customer_mobile, customer_name, bvn, nin, address, dob }
+GET    /banks
+GET    /banks/resolve                    account number + bank code -> account name
+GET    /bank-accounts                    settlement accounts
+POST   /bank-accounts
+PATCH  /bank-accounts/{id}               { label?, isDefault? }
+DELETE /bank-accounts/{id}
 ```
+
+**Not built yet.** Endpoints the sample-data features need are listed, with suggested shapes, in
+`docs/backend-endpoints-needed.md`.
 
 ---
 
@@ -257,7 +315,23 @@ POST   /wallet   { currency, customer_email, customer_mobile, customer_name, bvn
   (**base64 + a static salt `"spinstrip2024"` — obfuscation, not real encryption**).
 - The store is additionally wrapped in `redux-persist` (`key: "root"`, whitelist `["auth", "apps"]`).
 - Actions: `logout`, `clearError`, `updateUser`, `setTokens`.
-- `UserData`: `{ email, fullName, userName, role, avatarUrl?, emailVerified?, phoneNumber?, dob?, complianceStatus? }`.
+- `UserData`: `{ email, fullName, userName, role, avatarUrl?, profilePicture?, emailVerified?,
+  phoneNumber?, dob?, complianceStatus?, profiles?, capabilities?, dashboardPermissions? }`.
+  `profiles` are SpinStrip platform profiles (USER / MERCHANT / ADMIN), **not** merchant roles.
+  `capabilities` is the login response's `permissions` block (`canCreateWallet`, …).
+- `useMe()` refreshes the user from `GET {USER_ACCOUNT_URL}/auth/me`.
+- The refresh interceptor accepts both the enveloped and the bare refresh response.
+
+### Roles and permissions (`src/lib/permissions.ts`)
+
+- Roles: `owner` (everything), `admin_ops` (only `user.dashboardPermissions`), `waiter` (only `/waiter`).
+  `resolveRole(user)` reads `user.role`; anything unknown is treated as `owner`, which is every
+  account today because the backend has no merchant team accounts yet.
+- Permission keys: `overview, menu, places, events, inventory, deals, customers, wallet, settlement,
+  billing, settings`. `requirementForPath()` maps routes to keys; `/admin` is owner-only.
+- `usePermissions()` → `{ role, roleLabel, isOwner, permissions, can, canAccessPath, landingPath }`.
+  `<PermissionGate>` in the dashboard layout redirects to `landingPath` (waiters to `/waiter`), and
+  login redirects there too. The sidebar hides items the user can't open.
 - `AuthProvider` (client-side route guard) redirects unauthenticated users to `/login`
   and authenticated users away from `/login`, showing a spinner while resolving.
 
@@ -274,6 +348,9 @@ Actions: `toggleApp`, `setAppState`, `setSearchQuery`, `setCategoryFilter`, `res
 Filters: All / Free / Paid / Default Apps / Community Apps.
 
 Each app entry: `{ name, description, isActive, default?, amount?, route, icon, integrated?, publisher? }`.
+The catalogue badge is derived: `default` → "Default", active → "Integrated", otherwise "Available"
+(the `integrated` field is no longer displayed). `publisher` defaults to "SpinStrip".
+Sidebar app links show only while the app is active.
 Apps priced at 288–588 are "paid"; `default: true` apps are free/always-on.
 Several apps (Chat, Groups/Community, Socials, Reviews, Payment Method, Memberships, Ads)
 are commented out — reserved for future releases.
@@ -302,21 +379,55 @@ Rules, taken from `src/hooks/use-event-registrations.ts` (the reference implemen
 
 ### Existing hooks
 
+Real API hooks:
+
 | Hook file | Exports |
 |---|---|
-| `use-events.ts` | `useEvent`, `useEventStats`, `usePublicEvent`; types `EventStatsResponse`, `PublicEvent`, `PublicTicketTier` |
+| `use-events.ts` | `useEvent`, `useEventStats`, `usePublicEvent`, `useRecentEvents`; types `EventStatsResponse`, `PublicEvent`, `PublicTicketTier` |
 | `use-event-registrations.ts` | `useEventRegistrations`; types `EventRegistration`, `TicketTransaction`, `RegistrationStats`, `RegistrationsPagination` |
-| `use-places.ts` | `usePlace`, `usePlaceFacilities`, `usePublicPlace`; type `PublicPlace` |
+| `use-places.ts` | `usePlace`, `usePlaceFacilities`, `usePublicPlace`, `usePlacesCount`; type `PublicPlace` |
 | `use-inventory.ts` | `useInventoryStats`, `useInventoryProducts`, `useInventoryItem` |
 | `use-catalogs.ts` | `useCatalogs`; types `Catalog`, `CatalogCategory` |
-| `use-deals.ts` | `useDealSubscription`, `useDealStats`, `useDealCampaigns` |
-| `use-kyc.ts` | `useKyc`, `useBusinessCategories`; types `KYCData`, `UBO` |
-| `use-compliance.ts` | `useComplianceStatus` (derived from `useKyc`) |
+| `use-deals.ts` | `useDealSubscription`, `useDealStats`, `useDealCampaigns`, `useActiveDeals` |
+| `use-menu.ts` | `useMenuItems`, `useMenuItemsCount`, `useFeaturedMenuItems`, `useMenuCategories`, `useMenuItemActions`, `useTopMenus` (order counts sample), `usePublicMenu` (sample when signed out) |
+| `use-customers.ts` | `useCustomers` (`GET /places/customers`) |
+| `use-kyc.ts` | `useKyc({ enabled })`, `useBusinessCategories`; types `KYCData`, `UBO` |
+| `use-compliance.ts` | `useComplianceStatus` (derived from `useKyc`: status, steps, percent, adminNotes), `complianceSteps` |
 | `use-wallet.ts` | `useWallet` — wallets query + `createWallet(kyc)` flow |
+| `use-bank-accounts.ts` | `useBanks`, `useResolveBankAccount`, `useBankAccounts` (list, create, set default, delete) |
+| `use-me.ts` | `useMe` (`GET /auth/me` → Redux) |
+| `use-permissions.ts` | `usePermissions` |
 | `use-server-pagination.ts` | URL-synced pagination (`?page=`) + query |
 | `use-fetch.ts` | `useFetch` / `useHandleRequest` for one-off mutations |
 | `use-optimistic-delete.ts` | optimistic `DELETE {endpoint}/{id}` |
 | `use-debounce.ts`, `use-redux-auth.ts`, `use-redux-apps.ts`, `redux.ts` | utility hooks |
+
+### 8.1 Sample-data hooks
+
+Features with no backend endpoint yet read fixtures from `src/mocks/` through these hooks. Rules:
+fixtures are imported **only** by hooks; hooks keep the same return shape a real call would have
+(swap the body, not the consumers); the UI marks the data with `SampleDataBadge` or
+`<StatCard sample>`; existing real calls are never replaced or changed.
+
+| Hook file | Sample features | Fixtures |
+|---|---|---|
+| `use-overview.ts` | `useOverview` money/customer analytics (counts are real) | `mocks/transactions.ts` |
+| `use-settlements.ts` | `useSettlements` | `mocks/transactions.ts` |
+| `use-billing.ts` | `useBilling` invoices, card (subscriptions from the real catalogue) | — |
+| `use-team.ts` | `useTeam` | in memory |
+| `use-menu-tables.ts` | `useMenuTables`, `useTableDetail`, `useSeatGuests`, `useTableByToken`, `useWaiterFloor` | `mocks/menu-tables.ts` |
+| `use-place-extras.ts` | taglines, facility removal, manual visitors, booking status, reviews (`usePlaceEvents` is real) | `mocks/places.ts` |
+| `use-event-extras.ts` | delete event, via-deal count | `mocks/events.ts` |
+| `use-deal-extras.ts` | deal performance | `mocks/deals.ts` |
+| `use-inventory-extras.ts` | `useItemHistory` (`useRestockItem`, `useLowStockItem` are real) | `mocks/inventory.ts` |
+| `use-wallet-extras.ts` | `useWalletActivity`, `SAMPLE_WALLET_BALANCE` | `mocks/transactions.ts` |
+| `use-customer-extras.ts` | `useCustomerSpend` | seeded per customer |
+| `use-settings-extras.ts` | `usePreferences`, `useChangePassword` | localStorage |
+| `use-discover.ts` | `useDiscover` | `mocks/discover.ts` |
+
+`mocks/utils.ts` provides seeded random helpers (`seededRandom`, `between`, `pick`, …),
+`mockResponse` (delayed promise), `createMockCollection` (in-memory CRUD) and
+`createPersistentMap` (localStorage-backed map). Seeds are fixed so numbers are stable across reloads.
 
 ### `useServerPagination<T>` contract
 
@@ -538,64 +649,73 @@ RegistrationsPagination { page, limit, total, totalPages, hasNext, hasPrev }
 
 ## 11. Design System
 
-### Colors (`tailwind.config.ts`)
+### Colors and theme
 
-| Token | Value |
-|---|---|
-| `primary` | `#6932E2` (purple) |
-| `primary-accent` | `#EBE2FF` |
-| `primary-text` | `#0F0F0F` |
-| `primary-background` | `#D9D9D9` |
-| `background` | `#F3F3F3` (`background-light` `#E0E0E0`) |
-| `foreground` | `#F8F8F8` (card surfaces) |
-| `neutral` / `neutral-accent` | `#F3F3F3` / `#C8C8C8` |
-| `secondary-text` | `#6F6D6D` (default body text) |
-| card / popover / muted / accent / destructive / border / input / ring / chart-1..5 | HSL CSS variables in `globals.css` |
+Every colour is an HSL token in `src/app/globals.css` (`:root` = light, `.dark` = dark), consumed
+by `tailwind.config.ts` as `hsl(var(--x) / <alpha-value>)` so opacity modifiers work
+(`bg-primary/10`). Tokens: `background, foreground, card, popover, primary (#6932E2), primary-accent,
+secondary, muted, accent, destructive, border, input, ring, neutral-accent, sidebar-*, chart-1..6`.
+Legacy aliases (`primary-text`, `secondary-text`, `neutral`, `background-light`, `font-sf-pro`) map
+onto these tokens so older screens keep working.
 
-- `darkMode: ["class"]` is configured; the app currently ships light-only.
-- Extra font size: `xxs` = `0.625rem`. Border radius derives from `--radius`.
-- Font family: `font-sf-pro` (also the default `sans`).
-- Body defaults: `font-sf-pro bg-background text-secondary-text antialiased overflow-x-hidden`.
-- Heavily rounded surfaces are the house style — `rounded-2xl` / `rounded-[32px]` for cards
-  and hero blocks; circular icon chips (`size-12 rounded-full bg-primary`).
+- **Dark mode:** `next-themes` (`src/providers/theme-provider.tsx`, class strategy, light / dark /
+  system). It covers the dashboard, `/waiter` and `/discover`; `/preview/*` and the auth pages are
+  forced to light. Toggles: `ThemeToggle` (topbar, waiter, Discover) and Settings → Preferences.
+- Utilities: `.brand-gradient`, `.brand-gradient-soft`, `.brand-text-gradient`, `.card-hover`,
+  `.no-scrollbar`.
+- Fonts: `font-sans` (Plus Jakarta Sans) for body, `font-display` (Outfit) for headings and totals.
+- House style: `rounded-2xl` bordered cards (`border bg-card`), pill buttons and filters
+  (`rounded-full`), icon chips (`bg-primary/10 text-primary`), framer-motion fade/slide-in on entry.
+- Charts: `src/lib/chart-theme.ts` (`lineChartOptions`, `areaDataset`, `doughnutChartOptions`,
+  `chartPalette`, `themeColor`). Call `useChartThemeKey()` and pass it as the chart `key` so colours
+  update on theme change.
 
-### Status badge palette
+### Status pills
 
-| Status | Classes |
-|---|---|
-| `COMPLETED` | `bg-green-100 text-green-700` |
-| `PENDING` | `bg-amber-100 text-amber-700` |
-| `FAILED` | `bg-red-100 text-red-600` |
+`<StatusPill status="…" label? tone?>` (`src/components/status-pill.tsx`) maps backend and prototype
+statuses (ACTIVE, PENDING, REJECTED, COMPLETED, FAILED, …) to success / warning / danger / info /
+muted tones that work in both themes.
 
 ### Toasts
 
-`react-hot-toast`, `position="bottom-right"`, `duration: 3000`,
-style `{ background: "#EBE2FF", color: "#6932E2", fontWeight: 500 }`.
+`react-hot-toast`, `position="top-center"`, `duration: 3000`, styled from the tokens
+(`hsl(var(--card))` background, `hsl(var(--foreground))` text, border).
 
 ### Loading & empty states
 
+- Lists and cards: `Skeleton` (`@/components/ui/skeleton`) rows/blocks.
 - Page-level: `Loader` (`@/components/loader`).
 - Inline: `<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />`.
 - Empty: `EmptyState` (`@/components/empty-state`), often paired with `/icons/work-in-progress.svg`.
 
 ### Currency & dates
 
-- `₦{Number(value).toLocaleString()}` inline, or `formatAmount()` from `@/utils`
-  (`en-NG`, 2 decimal places).
+- `formatNaira(value, compact?)` from `@/utils` (compact gives ₦1.2M); `formatAmount()` (`en-NG`,
+  2 decimal places) in older screens.
+- `fmtDate`, `fmtDateTime`, `timeAgo`, `rangeFor(preset)`; `exportCsv(filename, headers, rows)`.
 - `formatISODate()` → `DD/MM/YYYY`; `formatDateDisplay()` for human-readable dates.
 
 ### Shared components
 
-`Sidebar`, `MobileSidebar`, `Navbar`, `MaxWidthWrapper`, `ContainerWrapper`, `Modal`, `SideModal`,
-`SearchBar`, `Dropdown`, `SelectDropdown`, `CountrySelectDropdown`, `CategorySelectWithAdd`,
-`MultiSelectWithTooltip`, `StatusBadge`, `PaginationButton`, `FileUpload`, `ItemCard`,
-`DeleteModal`, plus chart widgets (`RevenueChart`, `OverviewChart`, `PerformanceChart`,
-`RegistrationChart`, `TicketSalesChart`).
+Layout: `Sidebar`, `MobileSidebar`, `Navbar`, `ComplianceBanner`, `PermissionGate`,
+`MaxWidthWrapper`. Page building blocks: `PageHeader`, `Breadcrumb`, `StatCard` (`index`, `accent`,
+`sample`), `ChartCard`, `StatusPill`, `EmptyState`, `SampleDataBadge`, `DateRangeControl`,
+`PillGroup`, `StepProgress`, `ChipsInput`, `Field`, `ThemeToggle`. Older shared pieces: `Modal`,
+`SideModal`, `SearchBar`, `Dropdown`, `SelectDropdown`, `CountrySelectDropdown` (optional controlled
+`value`), `CategorySelectWithAdd`, `MultiSelectWithTooltip`, `PaginationButton`, `FileUpload`,
+`ItemCard`, `DeleteModal`. New dialogs and side panels use the Radix `Dialog` / `Sheet` primitives.
 
 ### Navigation (`src/constants/sidebar.tsx`)
 
-`Overview /` (coming soon) · `Billing /billing` (coming soon) · `Apps/Tools /apps-tools`
-(has children) · `Settings /settings`. Admin is commented out.
+`navigationSections` in three groups, each item with an optional `permission`, `app` (shown only
+while that app is active) or `ownerOnly`:
+
+- **General:** Overview `/`, Apps & Tools `/apps-tools`
+- **Apps:** Menu, Places, Events, Deals, Inventory, Wallet, Customers
+- **Business:** Settlement `/settlement`, Billing `/billing`, Admin & Roles `/admin` (owner),
+  Settings `/settings`
+
+The active item uses an icon chip with a sliding `bg-primary-accent` pill (framer-motion `layoutId`).
 
 ---
 
@@ -617,18 +737,20 @@ independently of media upload. KYC documents upload through `POST /kyc/upload/me
 ## 13. Provider Tree
 
 ```
-<html><body>
-  <ReduxProvider>          {/* redux store + PersistGate */}
-    <Providers>            {/* QueryProvider (React Query) + AuthProvider (route guard) */}
-      {children}
-      <Toaster />
-    </Providers>
+<html suppressHydrationWarning><body>
+  <ReduxProvider>               {/* redux store + PersistGate */}
+    <ThemeProvider>{children}</ThemeProvider>   {/* next-themes; light forced on /preview + auth */}
+    <Toaster />
   </ReduxProvider>
 </body></html>
+
+(dashboard)/layout   -> Providers (AuthProvider + QueryProvider) -> Sidebar, Navbar,
+                        ComplianceBanner, PermissionGate, template.tsx (page fade)
+waiter/layout        -> the same Providers, no sidebar
+preview/, discover/  -> QueryProvider only (public)
 ```
 
-The dashboard layout adds `Sidebar` + `MobileSidebar` + `Navbar` inside `MaxWidthWrapper`
-(`flex lg:pl-64`). Each module layout wraps its page in the module's `FormProvider`.
+Each module layout wraps its page in the module's `FormProvider`.
 
 ---
 
@@ -648,7 +770,14 @@ The dashboard layout adds `Sidebar` + `MobileSidebar` + `Navbar` inside `MaxWidt
 8. Invalidate related query keys after a successful mutation; keep query keys parameter-complete.
 9. Keep route-private code under `_components` / `_schemas` / `_constants` / `_context` / `_types`;
    promote to `src/components` or `src/hooks` only when genuinely shared.
-10. Reuse the design tokens above — no ad-hoc hex colors.
+10. Reuse the design tokens above — no ad-hoc hex colors, `bg-white` or `text-gray-*` (they break
+    dark mode). White is fine only on gradients and behind QR codes.
+11. **Never change a working integration to add a feature.** Existing API calls, payloads, hooks and
+    submit logic stay as they are. A feature without a backend endpoint gets its own hook (usually
+    `use-<domain>-extras.ts`) backed by `src/mocks/`, a "Sample" label in the UI, and an entry in
+    `docs/backend-endpoints-needed.md`.
+12. New pages: `Breadcrumb` + `PageHeader`, `Skeleton` while loading, `EmptyState` when empty, and a
+    layout that works at phone width.
 
 ---
 
@@ -657,10 +786,19 @@ The dashboard layout adds `Sidebar` + `MobileSidebar` + `Navbar` inside `MaxWidt
 - API base URLs are hard-coded constants; there is no `.env` configuration.
 - Token "encryption" is base64 + a static salt — obfuscation only.
 - The auth guard is client-side (`AuthProvider`); there is no middleware-based route protection.
-- Overview (`/`), Billing and Customers are placeholders; Chat, Groups/Community, Socials,
-  Reviews, Payment Method, Memberships and Ads are commented out of the apps catalogue.
+- The features in section 8.1 run on sample data until the endpoints in
+  `docs/backend-endpoints-needed.md` exist. Merchant team accounts don't exist on the backend, so
+  every user resolves to `owner`.
+- Chat, Groups/Community, Socials, Reviews, Payment Method, Memberships and Ads are commented out
+  of the apps catalogue.
+- Known, unfixed integration bugs: the place edit PATCH omits operating hours, metadata and video
+  URL; the "Other" place type fails the `placeType` enum; the public place checkout shows a fixed
+  ₦200,000; Inventory's "Indefinite" radio sends `INFINITE` while the schema expects `INDEFINITE`;
+  the Wallet POS QR is static and Withdraw doesn't call an API.
 - Pagination shapes are not uniform: `useServerPagination` expects
   `{ count, currentpage, lastpage, nextpage, prevpage }` while `useEventRegistrations` receives
   `{ page, limit, total, totalPages, hasNext, hasPrev }`.
 - App enable/disable state is local (Redux + localStorage) only — it is not synced to the server.
-- There is no test suite, no CI config, and no dark-mode implementation despite `darkMode: ["class"]`.
+- There is no test suite and no CI config. `next.config.ts` ignores type and lint errors during
+  build; three pre-existing type errors remain (`upload-images.tsx`, `places/_context/index.tsx`,
+  `form-array-input.tsx`).
