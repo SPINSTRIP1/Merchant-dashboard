@@ -2,7 +2,6 @@
 
 import { Line } from "react-chartjs-2";
 import ChartCard from "@/components/chart-card";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { areaDataset, lineChartOptions, useChartThemeKey } from "@/lib/chart-theme";
 import type { WalletPeriod } from "@/hooks/use-wallet-extras";
@@ -28,11 +27,10 @@ export default function RevenueChart({
   const chartKey = useChartThemeKey();
   return (
     <ChartCard
-      title="Revenue"
+      title="Money In"
       subtitle={`Total ${formatNaira(total)} · ${PERIOD_LABELS[period].toLowerCase()}`}
       action={
         <span className="flex items-center gap-2">
-          <SampleDataBadge />
           <Select value={period} onValueChange={(value) => onPeriodChange(value as WalletPeriod)}>
             <SelectTrigger className="h-8 w-[120px] rounded-full text-[11px] font-semibold text-foreground">
               <SelectValue />
@@ -52,11 +50,11 @@ export default function RevenueChart({
         <Line key={chartKey}
           data={{
             labels: series.map((p) => p.label),
-            datasets: [areaDataset("Revenue", series.map((p) => p.revenue), "chart-1")],
+            datasets: [areaDataset("Money in", series.map((p) => p.revenue), "chart-1")],
           }}
           options={lineChartOptions({
             formatY: (v) => formatNaira(v, true),
-            tooltipLabel: (v) => `Revenue: ${formatNaira(v)}`,
+            tooltipLabel: (v) => `Money in: ${formatNaira(v)}`,
           })}
         />
       </div>

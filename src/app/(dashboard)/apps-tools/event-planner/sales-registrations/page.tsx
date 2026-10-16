@@ -1,4 +1,5 @@
 "use client";
+import { publicEventUrl } from "@/lib/public-links";
 import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -54,7 +55,7 @@ function SalesAndRegistrationContent() {
           </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href={`/preview/events?id=${event.id}`} target="_blank" rel="noopener">
+          <Link href={publicEventUrl(event.id)} target="_blank" rel="noopener">
             <Globe /> Public Page
           </Link>
         </Button>

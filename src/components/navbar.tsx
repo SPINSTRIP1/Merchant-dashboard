@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/components/sidebar-content";
 import ThemeToggle from "@/components/theme-toggle";
+import { useNotifications } from "@/hooks/use-notifications";
+import { timeAgo } from "@/utils";
 
 const iconButton =
   "grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
@@ -37,6 +39,7 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
   const { activeApps } = useReduxApps();
   const { can, isOwner, roleLabel } = usePermissions();
   const showOrders = can("menu") && activeApps.some((app) => app.name === "Menu");
+  const { notifications, unreadCount } = useNotifications();
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-lg">
@@ -58,20 +61,47 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
           <ThemeToggle />
 
           <Popover>
-            <PopoverTrigger className={iconButton} aria-label="Notifications" title="Notifications">
+            <PopoverTrigger
+              className={`${iconButton} relative`}
+              aria-label={unreadCount ? `Notifications (${unreadCount} unread)` : "Notifications"}
+              title="Notifications"
+            >
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-2 top-2 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 rounded-2xl p-0">
+            <PopoverContent align="end" className="w-80 rounded-2xl p-0">
               <p className="border-b px-4 py-3 font-display text-sm font-bold text-foreground">Notifications</p>
-              <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                <div className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
-                  <Bell className="h-5 w-5" />
+              {notifications.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                  <div className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
+                  <p className="text-xs text-muted-foreground">
+                    New orders, bookings and settlements will show up here.
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
-                <p className="text-xs text-muted-foreground">
-                  New orders, bookings and settlements will show up here.
-                </p>
-              </div>
+              ) : (
+                <ul className="max-h-96 divide-y overflow-y-auto">
+                  {notifications.map((n) => (
+                    <li key={n.id} className="flex gap-2.5 px-4 py-3">
+                      <span
+                        className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-primary"}`}
+                        aria-hidden
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{n.title}</p>
+                        {n.body && <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>}
+                        {n.createdAt && <p className="mt-1 text-[11px] text-muted-foreground/80">{timeAgo(n.createdAt)}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </PopoverContent>
           </Popover>
 

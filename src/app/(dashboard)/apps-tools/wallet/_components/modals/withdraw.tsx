@@ -12,10 +12,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBankAccounts } from "@/hooks/use-bank-accounts";
-import { BankIcon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
+import { useWalletPin, useWithdraw } from "@/hooks/use-wallet-extras";
+import { formatNaira } from "@/utils";
+import { BankIcon, CheckmarkCircle01Icon, LockPasswordIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import React, { useCallback } from "react";
+import toast from "react-hot-toast";
+
+type Step = "amount" | "pin" | "set-pin" | "done";
+
+const isPin = (value: string) => /^\d{4,6}$/.test(value);
+const digitsOnly = (value: string, max: number) => value.replace(/\D/g, "").slice(0, max);
 
 export default function Withdrawal({
   isOpen,
@@ -26,15 +34,19 @@ export default function Withdrawal({
   onClose: () => void;
   onAddSettlementAccount?: () => void;
 }) {
-  const [step, setStep] = React.useState<number>(1);
-  const [pin, setPin] = React.useState<string[]>(["", "", "", ""]);
-  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const [step, setStep] = React.useState<Step>("amount");
+  const [amount, setAmount] = React.useState<number | null>(null);
+  const [pin, setPin] = React.useState("");
+  // Set / reset PIN form
+  const [resetting, setResetting] = React.useState(false);
+  const [otpSent, setOtpSent] = React.useState(false);
+  const [otpCode, setOtpCode] = React.useState("");
+  const [newPin, setNewPin] = React.useState("");
+  const [confirmPin, setConfirmPin] = React.useState("");
 
-  const {
-    accounts,
-    defaultAccount,
-    isLoading: isLoadingAccounts,
-  } = useBankAccounts();
+  const { accounts, defaultAccount, isLoading: isLoadingAccounts } = useBankAccounts();
+  const { hasPin, blocker, requestOtp, savePin } = useWalletPin();
+  const withdraw = useWithdraw();
   const [selectedAccountId, setSelectedAccountId] = React.useState<string>("");
 
   // Default to the merchant's default settlement account once accounts load.
@@ -44,48 +56,69 @@ export default function Withdrawal({
     }
   }, [defaultAccount, selectedAccountId]);
 
-  const selectedAccount =
-    accounts.find((account) => account.id === selectedAccountId) ??
-    defaultAccount;
+  const selectedAccount = accounts.find((account) => account.id === selectedAccountId) ?? defaultAccount;
 
-  const handlePinChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // Only allow digits
+  const openPinSetup = (reset: boolean) => {
+    setResetting(reset);
+    setOtpSent(false);
+    setOtpCode("");
+    setNewPin("");
+    setConfirmPin("");
+    setStep("set-pin");
+  };
 
-    const newPin = [...pin];
-    newPin[index] = value.slice(-1); // Only take the last character
-    setPin(newPin);
+  const goToPin = () => {
+    // No PIN on record yet: set one first. (`null` = unknown, so just ask for it.)
+    if (hasPin === false) openPinSetup(false);
+    else setStep("pin");
+  };
 
-    // Auto-focus next input
-    if (value && index < 3) {
-      inputRefs.current[index + 1]?.focus();
+  const handleWithdraw = async () => {
+    if (!selectedAccount || !amount || !isPin(pin)) return;
+    try {
+      await withdraw.mutateAsync({
+        amount,
+        bankCode: selectedAccount.bankCode,
+        bankAccountNumber: selectedAccount.accountNumber,
+        walletPin: pin,
+      });
+      setStep("done");
+    } catch (error) {
+      toast.error((error as Error).message || "Withdrawal failed");
     }
   };
 
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (e.key === "Backspace" && !pin[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+  const sendOtp = async () => {
+    try {
+      await requestOtp.mutateAsync();
+      setOtpSent(true);
+      toast.success("We've emailed you a code");
+    } catch (error) {
+      toast.error((error as Error).message || "Couldn't send the code");
     }
   };
 
-  const handleConfirmPin = () => {
-    const fullPin = pin.join("");
-    if (fullPin.length === 4) {
-      // Use the PIN here (e.g., send to API)
-      console.log("PIN entered:", fullPin);
-      setStep(3);
+  const handleSavePin = async () => {
+    if (!isPin(newPin) || newPin !== confirmPin || !otpCode) return;
+    try {
+      await savePin.mutateAsync({ pin: newPin, otpCode, reset: resetting });
+      toast.success(resetting ? "Transaction PIN reset" : "Transaction PIN set");
+      setPin("");
+      setStep("pin");
+    } catch (error) {
+      toast.error((error as Error).message || "Couldn't save your PIN");
     }
   };
 
   const handleClose = useCallback(() => {
-    setStep(1);
-    setPin(["", "", "", ""]);
+    setStep("amount");
+    setPin("");
+    setAmount(null);
     onClose();
   }, [onClose]);
 
-  const [amount, setAmount] = React.useState<number | null>(null);
+  const icon = step === "done" ? CheckmarkCircle01Icon : step === "amount" ? BankIcon : LockPasswordIcon;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -93,12 +126,7 @@ export default function Withdrawal({
       className="max-w-[760px] flex flex-col items-center gap-y-1.5 justify-center"
     >
       <div className="bg-card relative overflow-hidden p-3 mb-2 rounded-full shadow-md">
-        <HugeiconsIcon
-          icon={step === 3 ? CheckmarkCircle01Icon : BankIcon}
-          size={24}
-          color="currentColor"
-          className="text-primary z-[999]"
-        />
+        <HugeiconsIcon icon={icon} size={24} color="currentColor" className="text-primary z-[999]" />
         <Image
           src={"/icons/check.svg"}
           className="size-[36px] absolute opacity-60 -bottom-3 z-10 -left-3"
@@ -108,14 +136,20 @@ export default function Withdrawal({
         />
       </div>
 
-      {step === 3 && (
+      {step === "done" && (
         <>
-          <h2 className="font-bold text-primary-text">Successful</h2>
-          <p className="text-sm">Your withdrawal is been processed...</p>
+          <h2 className="font-bold text-primary-text">Withdrawal submitted</h2>
+          <p className="text-center text-sm">
+            {amount ? formatNaira(amount) : "Your funds"} is on its way to {selectedAccount?.bankName}{" "}
+            {selectedAccount?.accountNumber}. It will show in your transaction history once it completes.
+          </p>
+          <Button size={"lg"} className="mt-3 w-full" onClick={handleClose}>
+            Done
+          </Button>
         </>
       )}
 
-      {step === 1 && (
+      {step === "amount" && (
         <>
           <h2 className="font-bold text-primary-text">Withdraw Funds</h2>
 
@@ -123,11 +157,18 @@ export default function Withdrawal({
             <div className="py-8">
               <div className="size-6 animate-spin rounded-full border-b-2 border-primary" />
             </div>
+          ) : blocker ? (
+            <>
+              <p className="text-sm text-center mb-2">Withdrawals aren&apos;t available on this wallet yet.</p>
+              <p className="mb-4 rounded-xl bg-muted px-4 py-3 text-center text-xs text-secondary-text">{blocker}</p>
+              <Button size={"lg"} variant={"secondary"} className="w-full" onClick={handleClose}>
+                Close
+              </Button>
+            </>
           ) : !selectedAccount ? (
             <>
               <p className="text-sm text-center mb-4">
-                You have no settlement account yet. Add one to withdraw your
-                funds.
+                You have no settlement account yet. Add one to withdraw your funds.
               </p>
               <Button
                 size={"lg"}
@@ -142,9 +183,7 @@ export default function Withdrawal({
             </>
           ) : (
             <>
-              <p className="text-sm">
-                Funds will be withdrawn to your settlement account
-              </p>
+              <p className="text-sm">Funds will be withdrawn to your settlement account</p>
               <h2 className="font-bold text-sm text-primary-text">
                 {selectedAccount.accountName} {selectedAccount.accountNumber}
               </h2>
@@ -158,10 +197,7 @@ export default function Withdrawal({
               {accounts.length > 1 && (
                 <div className="w-full space-y-2 mb-4">
                   <Label>Settlement Account</Label>
-                  <Select
-                    value={selectedAccount.id}
-                    onValueChange={setSelectedAccountId}
-                  >
+                  <Select value={selectedAccount.id} onValueChange={setSelectedAccountId}>
                     <SelectTrigger className="w-full !rounded-2xl border bg-muted border-neutral-accent !h-[49px]">
                       <SelectValue placeholder="Select an account" />
                     </SelectTrigger>
@@ -191,65 +227,135 @@ export default function Withdrawal({
                 />
               </div>
 
-              <Button
-                onClick={() => setStep(2)}
-                disabled={!amount || amount < 100}
-                size={"lg"}
-                className="w-full mt-2"
-              >
+              <Button onClick={goToPin} disabled={!amount || amount < 100} size={"lg"} className="w-full mt-2">
                 Confirm
               </Button>
             </>
           )}
         </>
       )}
-      {step === 2 && (
-        <>
-          <h2 className="font-bold text-primary-text">
-            Enter Transaction Passcode
-          </h2>
 
-          <div className="flex justify-center border-b pb-5 px-6 gap-3 my-4">
-            {[0, 1, 2, 3].map((index) => (
-              <input
-                key={index}
-                ref={(el) => {
-                  inputRefs.current[index] = el;
-                }}
-                type="password"
-                inputMode="numeric"
-                maxLength={1}
-                value={pin[index]}
-                onChange={(e) => handlePinChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-12 text-center text-3xl font-bold text-primary-text bg-neutral-accent rounded-xl focus:outline-none"
-              />
-            ))}
+      {step === "pin" && (
+        <>
+          <h2 className="font-bold text-primary-text">Enter Transaction PIN</h2>
+          <p className="text-center text-sm text-secondary-text">
+            Withdraw {amount ? formatNaira(amount) : ""} to {selectedAccount?.bankName} {selectedAccount?.accountNumber}
+          </p>
+
+          <div className="my-4 w-full max-w-[260px] border-b pb-5">
+            <Input
+              autoFocus
+              type="password"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              aria-label="Transaction PIN"
+              placeholder="••••"
+              value={pin}
+              onChange={(e) => setPin(digitsOnly(e.target.value, 6))}
+              onKeyDown={(e) => e.key === "Enter" && handleWithdraw()}
+              className="h-14 text-center text-2xl font-bold tracking-[0.5em]"
+            />
           </div>
 
-          <div className="flex w-full items-center gap-x-4  mt-3">
-            <Button
-              size={"lg"}
-              variant={"secondary"}
-              className="w-full flex-1"
-              onClick={handleClose}
-            >
-              Cancel
+          <div className="flex w-full items-center gap-x-4 mt-3">
+            <Button size={"lg"} variant={"secondary"} className="w-full flex-1" onClick={() => setStep("amount")}>
+              Back
             </Button>
             <Button
-              onClick={handleConfirmPin}
-              disabled={pin.join("").length !== 4}
+              onClick={handleWithdraw}
+              disabled={!isPin(pin) || withdraw.isPending}
               size={"lg"}
               className="w-full flex-1"
             >
-              Confirm
+              {withdraw.isPending ? "Processing…" : "Withdraw"}
             </Button>
           </div>
           <div className="w-full">
-            <button className="text-sm text-left text-secondary-text mt-2">
-              Forgot Passcode?
+            <button
+              type="button"
+              onClick={() => openPinSetup(true)}
+              className="text-sm text-left text-secondary-text mt-2 hover:text-primary"
+            >
+              Forgot PIN?
             </button>
           </div>
+        </>
+      )}
+
+      {step === "set-pin" && (
+        <>
+          <h2 className="font-bold text-primary-text">{resetting ? "Reset Transaction PIN" : "Set a Transaction PIN"}</h2>
+          <p className="text-center text-sm text-secondary-text">
+            {resetting
+              ? "We'll email you a code to confirm it's you."
+              : "You need a 4–6 digit PIN to approve withdrawals. We'll email you a code to confirm it's you."}
+          </p>
+
+          {!otpSent ? (
+            <Button size={"lg"} className="mt-4 w-full" onClick={sendOtp} disabled={requestOtp.isPending}>
+              {requestOtp.isPending ? "Sending…" : "Email me a code"}
+            </Button>
+          ) : (
+            <div className="mt-3 w-full space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="pin-otp">Code from your email</Label>
+                <Input
+                  id="pin-otp"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(digitsOnly(e.target.value, 8))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-pin">New PIN</Label>
+                  <Input
+                    id="new-pin"
+                    type="password"
+                    inputMode="numeric"
+                    value={newPin}
+                    onChange={(e) => setNewPin(digitsOnly(e.target.value, 6))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-pin">Confirm PIN</Label>
+                  <Input
+                    id="confirm-pin"
+                    type="password"
+                    inputMode="numeric"
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(digitsOnly(e.target.value, 6))}
+                  />
+                </div>
+              </div>
+              {confirmPin && newPin !== confirmPin && <p className="text-xs text-rose-500">PINs don&apos;t match</p>}
+              <Button
+                size={"lg"}
+                className="w-full"
+                onClick={handleSavePin}
+                disabled={!otpCode || !isPin(newPin) || newPin !== confirmPin || savePin.isPending}
+              >
+                {savePin.isPending ? "Saving…" : "Save PIN"}
+              </Button>
+              <button
+                type="button"
+                onClick={sendOtp}
+                disabled={requestOtp.isPending}
+                className="text-xs text-secondary-text hover:text-primary"
+              >
+                Resend code
+              </button>
+            </div>
+          )}
+          <Button
+            size={"lg"}
+            variant={"secondary"}
+            className="mt-2 w-full"
+            onClick={() => setStep(hasPin === false && !resetting ? "amount" : "pin")}
+          >
+            Back
+          </Button>
         </>
       )}
     </Modal>

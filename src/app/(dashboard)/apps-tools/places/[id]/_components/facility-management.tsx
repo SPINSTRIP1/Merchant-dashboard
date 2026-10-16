@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Building2, Check, Globe, Mail, MapPin, Pencil, Phone, Plus, X } from "lucide-react";
 import EmptyState from "@/components/empty-state";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,22 +17,20 @@ import {
 } from "@/components/ui/dialog";
 import { usePlaceFacilities } from "@/hooks/use-places";
 import {
-  usePlaceTaglines,
+  placeTagline,
   useRemoveFacility,
-  useRemovedFacilityIds,
   useSetPlaceTagline,
 } from "@/hooks/use-place-extras";
 import { SinglePlace } from "../../_components/claim-places-steps/find-place";
 import type { Facility } from "../../_schemas";
 import { getOperatingHoursDisplay } from "../../_utils";
+import SampleDataBadge from "@/components/sample-data-badge";
 import FacilityCard from "./facility-card";
 import FacilityModal from "./modals/facility-modal";
 import OperatingHoursTable from "./operating-hours-table";
 
-function TaglineEditor({ placeId }: { placeId: string }) {
-  const taglines = usePlaceTaglines();
+function TaglineEditor({ placeId, metadata, saved }: { placeId: string; metadata?: unknown; saved: string }) {
   const setTagline = useSetPlaceTagline();
-  const saved = taglines[placeId] ?? "";
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(saved);
 
@@ -67,8 +64,12 @@ function TaglineEditor({ placeId }: { placeId: string }) {
         type="button"
         aria-label="Save tagline"
         onClick={async () => {
-          await setTagline.mutateAsync({ placeId, tagline: draft });
-          setEditing(false);
+          try {
+            await setTagline.mutateAsync({ placeId, metadata, tagline: draft });
+            setEditing(false);
+          } catch {
+            // error toast shown by the hook; keep the editor open
+          }
         }}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-primary hover:bg-primary/10"
       >
@@ -90,14 +91,13 @@ export default function FacilityManagement({ place }: { place: SinglePlace | und
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [removing, setRemoving] = useState<Facility | null>(null);
   const { facilities: data, isLoading } = usePlaceFacilities(place?.id);
-  const removedIds = useRemovedFacilityIds(place?.id);
   const removeFacility = useRemoveFacility(place?.id ?? "");
 
   if (!place) {
     return <p className="text-center text-muted-foreground">Place not found.</p>;
   }
 
-  const facilities = (data ?? []).filter((f) => !f.id || !removedIds.includes(f.id));
+  const facilities = data ?? [];
   const amenities = (place.metadata?.amenities ?? "")
     .split(",")
     .map((a) => a.trim())
@@ -159,9 +159,9 @@ export default function FacilityManagement({ place }: { place: SinglePlace | und
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-display text-base font-bold text-foreground">{place.name}</h3>
-                <SampleDataBadge label="Sample tagline" className="shrink-0" />
+                <SampleDataBadge label="Tagline saved on this device" className="shrink-0" />
               </div>
-              {place.id && <TaglineEditor placeId={place.id} />}
+              {place.id && <TaglineEditor placeId={place.id} metadata={place.metadata} saved={placeTagline(place)} />}
               {place.description && (
                 <p className="mt-2 line-clamp-3 text-xs text-muted-foreground">{place.description}</p>
               )}

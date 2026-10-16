@@ -11,16 +11,19 @@ export interface DealSubscriptionStatus {
 
 /**
  * Single source of truth for the merchant's deals subscription status
- * from `GET /deals/subscriptions`. Shared by the deals page and the
+ * from `GET /deals/subscriptions/status`. Shared by the deals page and the
  * inventory/menu step forms — all consumers share one cached query.
  */
 export function useDealSubscription() {
   const { data, isLoading, error, refetch } = useQuery<DealSubscriptionStatus>({
     queryKey: ["deals-subscription-status"],
     queryFn: async () => {
+      // `GET /deals/subscriptions` (without /status) is routed to `GET /deals/{id}` and 404s,
+      // which used to make every merchant look unsubscribed.
       try {
-        const response = await api.get(SERVER_URL + "/deals/subscriptions");
-        return response.data.data as DealSubscriptionStatus;
+        const response = await api.get(SERVER_URL + "/deals/subscriptions/status");
+        const data = response.data.data as { subscribed?: boolean; isActive?: boolean } | undefined;
+        return { subscribed: Boolean(data?.subscribed ?? data?.isActive) };
       } catch (error) {
         console.log("Error fetching subscription status:", error);
         return { subscribed: false };

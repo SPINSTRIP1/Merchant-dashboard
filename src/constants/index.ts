@@ -157,3 +157,7 @@ export const months = [
 export const SERVER_URL = "https://spinstrip-merchant-gateway.fly.dev/api/v1";
 export const USER_ACCOUNT_URL = "https://spinstrip-user-account.fly.dev/api/v1";
 export const EVENTS_SERVER_URL = "https://spinstrip-events.fly.dev/api/v1";
+/** Places service (public listings and bookings). Merchant calls still go through SERVER_URL. */
+export const PLACES_API_URL = "https://spinstrip-places.fly.dev/api/v1";
+/** Menu service (public menu items and orders). Merchant calls still go through SERVER_URL. */
+export const MENU_API_URL = "https://spinstrip-menu.fly.dev/api/v1";

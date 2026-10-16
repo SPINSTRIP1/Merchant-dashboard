@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,6 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useReduxApps } from "@/hooks/use-redux-apps";
+import { useAppSelector } from "@/hooks/redux";
+import { selectUser } from "@/store/selectors";
+import { publicRestaurantUrl, tableNumberFromLabel } from "@/lib/public-links";
 import { cn } from "@/lib/utils";
 import MenuTable from "./_components/menu-table";
 import TablesTab from "./_components/tables-tab";
@@ -32,9 +35,9 @@ export default function MenuPage() {
   const enabled = appsWithStatus.find((app) => app.name === "Menu")?.isActive ?? false;
   const [configOpen, setConfigOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [publicUrl, setPublicUrl] = useState("/preview/menu");
-
-  useEffect(() => setPublicUrl(`${window.location.origin}/preview/menu`), []);
+  const user = useAppSelector(selectUser);
+  // The restaurant's page on the public site (places.spinstrip.com), keyed by the merchant's user id.
+  const publicUrl = publicRestaurantUrl(user?.id);
 
   const setTab = (next: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -96,8 +99,8 @@ export default function MenuPage() {
               {copied ? <Check className="text-emerald-500" /> : <Copy />} Copy URL
             </Button>
             <Button size="sm" variant="brand" asChild>
-              <Link href="/preview/menu" target="_blank" rel="noopener">
-                <ExternalLink /> Preview Menu Page
+              <Link href={publicUrl} target="_blank" rel="noopener">
+                <ExternalLink /> View Public Menu
               </Link>
             </Button>
           </div>
@@ -118,7 +121,7 @@ export default function MenuPage() {
           <MenuTable />
         </TabsContent>
         <TabsContent value="tables">
-          <TablesTab publicUrl={publicUrl} />
+          <TablesTab qrUrlFor={(label) => publicRestaurantUrl(user?.id, tableNumberFromLabel(label))} />
         </TabsContent>
         <TabsContent value="analytics">
           <TableAnalyticsTab />
@@ -149,8 +152,8 @@ export default function MenuPage() {
             </div>
             {enabled && (
               <Button variant="brand" className="w-full" asChild>
-                <Link href="/preview/menu" target="_blank" rel="noopener">
-                  <ExternalLink /> Preview Menu Page
+                <Link href={publicUrl} target="_blank" rel="noopener">
+                  <ExternalLink /> View Public Menu
                 </Link>
               </Button>
             )}

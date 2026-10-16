@@ -1,54 +1,63 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CalendarDays, Compass, Eye, MapPin, Search, Star, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, Compass, ExternalLink, Eye, MapPin, Search, UtensilsCrossed } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
-import SampleDataBadge from "@/components/sample-data-badge";
 import PillGroup from "@/components/pill-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAppSelector } from "@/hooks/redux";
+import { useDebounce } from "@/hooks/use-debounce";
 import { selectIsAuthenticated } from "@/store/selectors";
-import { useDiscover } from "@/hooks/use-discover";
-import { DISCOVER_CITIES, type DiscoverEvent, type DiscoverPlace } from "@/mocks/discover";
+import { eventPriceFrom, useDiscover } from "@/hooks/use-discover";
+import { getPlaceType } from "@/app/(dashboard)/apps-tools/places/_utils";
+import { publicEventUrl, publicHomeUrl, publicPlaceUrl, publicRestaurantUrl } from "@/lib/public-links";
 import { fmtDateTime, formatNaira } from "@/utils";
 
-type City = "All" | (typeof DISCOVER_CITIES)[number];
-type Selected = { kind: "place"; item: DiscoverPlace } | { kind: "event"; item: DiscoverEvent } | null;
+const ALL = "All";
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+const SectionTitle = ({ children, count }: { children: React.ReactNode; count?: number }) => (
   <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold text-foreground">
     <span className="h-5 w-1 rounded-full bg-primary" /> {children}
+    {!!count && <span className="text-sm font-medium text-muted-foreground">({count.toLocaleString()})</span>}
   </h2>
+);
+
+/** Listing photo from any host (merchant uploads aren't all on the allow-listed image domains). */
+function Cover({ src, className }: { src?: string | null; className?: string }) {
+  if (!src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" loading="lazy" className={className ?? "absolute inset-0 h-full w-full object-cover"} />;
+}
+
+const cardClass =
+  "group block overflow-hidden rounded-3xl border bg-card text-left shadow-sm transition-shadow hover:shadow-xl hover:shadow-primary/10";
+
+function CardGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-60 rounded-3xl" />
+      ))}
+    </div>
+  );
+}
+
+const Empty = ({ children }: { children: React.ReactNode }) => (
+  <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">{children}</p>
 );
 
 export default function DiscoverPage() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const { places, events, isLoading } = useDiscover();
-  const [city, setCity] = useState<City>("All");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Selected>(null);
-
-  const matches = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase());
-  const visiblePlaces = useMemo(
-    () =>
-      places.filter(
-        (p) => (city === "All" || p.city === city) && (!query || matches(`${p.name} ${p.type} ${p.area} ${p.tagline}`))
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [places, city, query]
-  );
-  const visibleEvents = useMemo(
-    () =>
-      events.filter(
-        (e) => (city === "All" || e.city === city) && (!query || matches(`${e.name} ${e.kind} ${e.venue}`))
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [events, city, query]
-  );
+  const [city, setCity] = useState(ALL);
+  const search = useDebounce(query, 400);
+  const { places, placesTotal, events, eventsTotal, restaurants, cities, isLoading } = useDiscover({
+    search,
+    city: city === ALL ? "" : city,
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -58,13 +67,13 @@ export default function DiscoverPage() {
             <Image src="/logo.svg" alt="SpinStrip" width={76} height={30} className="h-[30px] w-[76px]" />
           </Link>
           <div className="flex items-center gap-1">
-          <ThemeToggle className="rounded-full" />
-          <Link
-            href={isAuthenticated ? "/" : "/login"}
-            className="brand-gradient inline-flex min-h-[40px] items-center rounded-full px-5 text-xs font-semibold text-white"
-          >
-            {isAuthenticated ? "Back to Dashboard" : "Merchant Login"}
-          </Link>
+            <ThemeToggle className="rounded-full" />
+            <Link
+              href={isAuthenticated ? "/" : "/login"}
+              className="brand-gradient inline-flex min-h-[40px] items-center rounded-full px-5 text-xs font-semibold text-white"
+            >
+              {isAuthenticated ? "Back to Dashboard" : "Merchant Login"}
+            </Link>
           </div>
         </div>
       </header>
@@ -87,7 +96,7 @@ export default function DiscoverPage() {
             transition={{ delay: 0.12 }}
             className="mt-3 max-w-md text-sm text-white/85 md:text-base"
           >
-            Restaurants, lounges, events and experiences near you — all on SpinStrip.
+            Places, events and restaurants near you — all on SpinStrip.
           </motion.p>
           <motion.label
             initial={{ opacity: 0, y: 14 }}
@@ -99,118 +108,162 @@ export default function DiscoverPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search places, events, areas…"
+              placeholder="Search places, events, dishes…"
               aria-label="Search Discover"
               className="h-12 w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
             />
           </motion.label>
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-white/90">
-            <Compass className="h-4 w-4" /> {DISCOVER_CITIES.join(" · ")}
-          </p>
+          <a
+            href={publicHomeUrl()}
+            target="_blank"
+            rel="noopener"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white"
+          >
+            <Compass className="h-4 w-4" /> Open places.spinstrip.com <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         </div>
       </div>
 
       <div className="mx-auto max-w-5xl px-4 py-8 pb-24">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <PillGroup<City>
-            options={["All", ...DISCOVER_CITIES]}
-            value={city}
-            onChange={setCity}
-          />
-          <SampleDataBadge label="Sample listings" />
-        </div>
-
-        <SectionTitle>Places</SectionTitle>
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-60 rounded-3xl" />
-            ))}
+        {cities.length > 0 && (
+          <div className="mb-8">
+            <PillGroup<string> options={[ALL, ...cities]} value={city} onChange={setCity} />
           </div>
-        ) : visiblePlaces.length === 0 ? (
-          <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            No places match your search.
-          </p>
+        )}
+
+        <SectionTitle count={placesTotal}>Places</SectionTitle>
+        {isLoading ? (
+          <CardGridSkeleton />
+        ) : places.length === 0 ? (
+          <Empty>No places match your search.</Empty>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visiblePlaces.map((p, i) => (
-              <motion.button
+            {places.map((p, i) => (
+              <motion.a
                 key={p.id}
-                type="button"
-                onClick={() => setSelected({ kind: "place", item: p })}
+                href={publicPlaceUrl(p.id)}
+                target="_blank"
+                rel="noopener"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="group block overflow-hidden rounded-3xl border bg-card text-left shadow-sm transition-shadow hover:shadow-xl hover:shadow-primary/10"
+                transition={{ delay: i * 0.04 }}
+                className={cardClass}
               >
                 <div className="brand-gradient relative h-36">
-                  <Image src={p.image} alt="" fill sizes="(min-width: 1024px) 320px, 100vw" className="object-cover" />
+                  <Cover src={p.coverImage || p.images?.[0]} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                   <span className="absolute left-4 top-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold text-white backdrop-blur">
-                    {p.type}
+                    {getPlaceType(p.placeType) ?? p.metadata?.businessCategory ?? "Place"}
                   </span>
                   <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-xs text-white/90">
-                    <Eye className="h-3.5 w-3.5" /> {p.views > 0 ? p.views.toLocaleString() : "No views yet"}
-                  </span>
-                  <span className="absolute bottom-4 right-4 inline-flex items-center gap-1 text-xs font-semibold text-white">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {p.rating.toFixed(1)}
+                    <Eye className="h-3.5 w-3.5" /> {p.views ? p.views.toLocaleString() : "No views yet"}
                   </span>
                 </div>
                 <div className="p-5">
                   <p className="font-display text-lg font-bold text-foreground group-hover:text-primary">{p.name}</p>
-                  <p className="mt-0.5 truncate text-xs italic text-muted-foreground">“{p.tagline}”</p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" /> {p.area}, {p.city} · {"₦".repeat(p.priceLevel)}
+                  <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" /> {[p.city, p.state].filter(Boolean).join(", ") || p.address}
                   </p>
                 </div>
-              </motion.button>
+              </motion.a>
             ))}
           </div>
         )}
 
         <div className="mt-12">
-          <SectionTitle>Events</SectionTitle>
+          <SectionTitle count={eventsTotal}>Events</SectionTitle>
         </div>
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-60 rounded-3xl" />
-            ))}
-          </div>
-        ) : visibleEvents.length === 0 ? (
-          <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            No events match your search.
-          </p>
+          <CardGridSkeleton />
+        ) : events.length === 0 ? (
+          <Empty>No events match your search.</Empty>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleEvents.map((e, i) => (
-              <motion.button
-                key={e.id}
-                type="button"
-                onClick={() => setSelected({ kind: "event", item: e })}
+            {events.map((e, i) => {
+              const from = eventPriceFrom(e);
+              return (
+                <motion.a
+                  key={e.id}
+                  href={publicEventUrl(e.id)}
+                  target="_blank"
+                  rel="noopener"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className={cardClass}
+                >
+                  <div className="relative h-36 bg-gradient-to-br from-fuchsia-500 to-primary">
+                    <Cover src={e.images?.[0]} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    {e.isFeatured && (
+                      <span className="absolute left-4 top-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold text-white backdrop-blur">
+                        Featured
+                      </span>
+                    )}
+                    <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-xs text-white/90">
+                      <CalendarDays className="h-3.5 w-3.5" /> {fmtDateTime(e.startDate)}
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <p className="font-display text-lg font-bold text-foreground group-hover:text-primary">{e.name}</p>
+                    <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {e.city || e.location}
+                      {from !== null && ` · ${from > 0 ? `from ${formatNaira(from)}` : "Free"}`}
+                    </p>
+                  </div>
+                </motion.a>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-12">
+          <SectionTitle count={restaurants.length}>Restaurants</SectionTitle>
+        </div>
+        {isLoading ? (
+          <CardGridSkeleton />
+        ) : restaurants.length === 0 ? (
+          <Empty>No restaurants match your search.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {restaurants.map((r, i) => (
+              <motion.a
+                key={r.merchantId}
+                href={publicRestaurantUrl(r.merchantId)}
+                target="_blank"
+                rel="noopener"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="group block overflow-hidden rounded-3xl border bg-card text-left shadow-sm transition-shadow hover:shadow-xl hover:shadow-primary/10"
+                transition={{ delay: i * 0.04 }}
+                className={cardClass}
               >
-                <div className="relative h-36 bg-gradient-to-br from-fuchsia-500 to-primary">
-                  <Image src={e.image} alt="" fill sizes="(min-width: 1024px) 320px, 100vw" className="object-cover" />
+                <div className="relative h-36 bg-gradient-to-br from-amber-400 to-primary">
+                  <Cover src={r.cover} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <span className="absolute left-4 top-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold text-white backdrop-blur">
-                    {e.kind}
-                  </span>
                   <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-xs text-white/90">
-                    <CalendarDays className="h-3.5 w-3.5" /> {fmtDateTime(e.startsAt)}
+                    <UtensilsCrossed className="h-3.5 w-3.5" /> {r.dishCount} dish{r.dishCount === 1 ? "" : "es"}
                   </span>
                 </div>
-                <div className="p-5">
-                  <p className="font-display text-lg font-bold text-foreground group-hover:text-primary">{e.name}</p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" /> {e.venue}, {e.city} ·{" "}
-                    {e.priceFrom ? `from ${formatNaira(e.priceFrom)}` : "Free"}
-                  </p>
+                <div className="flex items-center gap-3 p-5">
+                  {r.logo ? (
+                    <Cover src={r.logo} className="h-10 w-10 shrink-0 rounded-full border object-cover" />
+                  ) : (
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {r.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-lg font-bold text-foreground group-hover:text-primary">
+                      {r.name}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[r.categories.slice(0, 2).join(" · "), r.minPrice ? `from ${formatNaira(r.minPrice)}` : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
                 </div>
-              </motion.button>
+              </motion.a>
             ))}
           </div>
         )}
@@ -229,37 +282,6 @@ export default function DiscoverPage() {
           </Link>
         </div>
       </div>
-
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-md overflow-hidden p-0">
-          {selected && (
-            <>
-              <div className="relative h-44">
-                <Image src={selected.item.image} alt="" fill sizes="448px" className="object-cover" />
-              </div>
-              <div className="space-y-2 p-5">
-                <DialogTitle className="font-display text-xl font-bold">{selected.item.name}</DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground">
-                  {selected.kind === "place"
-                    ? `${selected.item.type} in ${selected.item.area}, ${selected.item.city} — “${selected.item.tagline}”`
-                    : `${selected.item.kind} at ${selected.item.venue}, ${selected.item.city} · ${fmtDateTime(selected.item.startsAt)}`}
-                </DialogDescription>
-                <p className="text-sm font-semibold text-foreground">
-                  {selected.kind === "place"
-                    ? `${selected.item.rating.toFixed(1)} ★ · ${"₦".repeat(selected.item.priceLevel)}`
-                    : selected.item.priceFrom
-                      ? `Tickets from ${formatNaira(selected.item.priceFrom)}`
-                      : "Free entry"}
-                </p>
-                <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
-                  This is a sample listing. Real places and events open their public page once Discover is
-                  connected to live listings.
-                </p>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

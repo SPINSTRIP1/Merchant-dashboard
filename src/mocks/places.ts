@@ -1,18 +1,7 @@
 /**
- * Mocked additions to places until the backend supports them: taglines, visitors added by hand,
- * booking status changes, removed facilities and reviews. Kept in localStorage (via
- * createPersistentMap) so they survive a reload; reviews are generated per place from a seed.
+ * Sample place reviews until the backend has a reviews endpoint, generated per place from a seed.
  */
-import { between, createPersistentMap, daysAgo, fullName, pick, seededRandom } from "./utils";
-
-export interface ManualVisitor {
-  id: string;
-  visitorName: string;
-  visitorEmail: string;
-  visitorPhone: string;
-  purpose: string;
-  createdAt: string;
-}
+import { between, daysAgo, fullName, pick, seededRandom } from "./utils";
 
 export interface PlaceReview {
   id: string;
@@ -21,11 +10,6 @@ export interface PlaceReview {
   comment: string;
   createdAt: string;
 }
-
-export const placeTaglines = createPersistentMap<string>("spinstrip_mock_place_taglines");
-export const placeManualVisitors = createPersistentMap<ManualVisitor[]>("spinstrip_mock_place_visitors");
-export const bookingStatusOverrides = createPersistentMap<string>("spinstrip_mock_booking_status");
-export const removedFacilities = createPersistentMap<string[]>("spinstrip_mock_removed_facilities");
 
 const REVIEW_COMMENTS = [
   "Beautiful space, very clean and secure. Will book again.",

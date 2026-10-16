@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { UtensilsCrossed } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTopMenus } from "@/hooks/use-menu";
 import { formatNaira } from "@/utils";
@@ -43,7 +42,6 @@ export default function TopMenusCard() {
           </SelectContent>
         </Select>
       </div>
-      <SampleDataBadge label="Sample order counts" className="mb-3" />
 
       {isLoading ? (
         <div className="space-y-2.5">
@@ -73,7 +71,7 @@ export default function TopMenusCard() {
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-foreground">{item.name}</p>
-                <p className="text-[10px] text-muted-foreground">{item.orderCount} orders</p>
+                <p className="text-[10px] text-muted-foreground">{item.orderCount} sold</p>
               </div>
               <span className="text-xs font-bold text-foreground">{formatNaira(item.price, true)}</span>
             </li>

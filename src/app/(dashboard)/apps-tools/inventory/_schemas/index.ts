@@ -22,7 +22,8 @@ export type CatalogCategory = z.infer<typeof catalogCategorySchema>;
 export type Catalog = z.infer<typeof catalogSchema>;
 
 // Enum schemas
-export const productTypeSchema = z.enum(["DEFINITE", "INDEFINITE"]);
+// Must match the Inventory API (the form offers DEFINITE and INFINITE).
+export const productTypeSchema = z.enum(["DEFINITE", "DEFINITE_INFINITE", "INFINITE"]);
 export const productStatusSchema = z.enum([
   "DRAFT",
   "ACTIVE",

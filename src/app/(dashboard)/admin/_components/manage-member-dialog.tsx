@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useTeam, type TeamMember } from "@/hooks/use-team";
+import { useAdminOps, type TeamMember } from "@/hooks/use-team";
 import type { PermissionKey } from "@/lib/permissions";
 import PermissionGrid from "./permission-grid";
 
@@ -24,7 +24,8 @@ export default function ManageMemberDialog({
   member: TeamMember | null;
   onClose: () => void;
 }) {
-  const { updateMember } = useTeam();
+  // Only admin-ops members are managed here; waiters are added/removed from the Waiters list.
+  const { updateAdmin: updateMember } = useAdminOps();
   const [permissions, setPermissions] = useState<PermissionKey[]>([]);
   const [newPassword, setNewPassword] = useState("");
 

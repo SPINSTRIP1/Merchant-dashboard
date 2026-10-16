@@ -1,15 +1,18 @@
 "use client";
 
+import { publicPlaceUrl } from "@/lib/public-links";
 import React from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  AlertTriangle,
   Building2,
   CalendarCheck,
   CalendarPlus,
   ClipboardList,
   Globe,
   MessageSquare,
+  Send,
   ShoppingBag,
   Users,
   UtensilsCrossed,
@@ -22,11 +25,14 @@ import StatCard from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePlace } from "@/hooks/use-places";
+import { useSubmitPlaceForReview } from "@/hooks/use-place-extras";
 import { cn } from "@/lib/utils";
 import { formatNaira } from "@/utils";
 import { getPlaceType } from "../_utils";
 import FacilityManagement from "./_components/facility-management";
 import BookingReservation from "./_components/booking-reservation";
+import CustomerBookings from "./_components/customer-bookings";
+import PillGroup from "@/components/pill-group";
 import VisitorList from "./_components/visitor-list";
 import ActivitiesExperience from "./_components/activities-experience";
 import Reviews from "./_components/reviews";
@@ -49,6 +55,8 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
 export default function Page() {
   const { id } = useParams();
   const { place, isLoading } = usePlace(id as string);
+  const submitForReview = useSubmitPlaceForReview();
+  const [bookingView, setBookingView] = React.useState<"bookings" | "appointments">("bookings");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -86,6 +94,7 @@ export default function Page() {
   }
 
   const status = STATUS_LABEL[place.status ?? "UNPUBLISHED"] ?? STATUS_LABEL.UNPUBLISHED;
+  const canSubmit = place.status === "DRAFT" || place.status === "REJECTED";
 
   return (
     <div>
@@ -101,12 +110,31 @@ export default function Page() {
             <span className={cn("font-semibold", status.className)}>{status.label}</span>
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={`/preview/places?id=${place.id}`} target="_blank" rel="noopener">
-            <Globe /> Preview Public Page
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canSubmit && place.id && (
+            <Button variant="brand" onClick={() => submitForReview.mutate(place.id!)} disabled={submitForReview.isPending}>
+              <Send /> {submitForReview.isPending ? "Sending…" : "Submit for Review"}
+            </Button>
+          )}
+          <Button variant="outline" asChild>
+            <Link href={publicPlaceUrl(place.id)} target="_blank" rel="noopener">
+              <Globe /> Preview Public Page
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {place.status === "REJECTED" && (
+        <div className="mb-6 flex gap-3 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-semibold">SpinStrip couldn&apos;t publish this place</p>
+            <p className="mt-1 text-xs">
+              {place.rejectionReason || "Update the details below, then submit it for review again."}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <StatCard index={0} label="Visitors" value={(place.stats?.visitors ?? 0).toLocaleString()} icon={<Users />} />
@@ -166,7 +194,17 @@ export default function Page() {
           <VisitorList />
         </TabsContent>
         <TabsContent value="bookings">
-          <BookingReservation />
+          <div className="mb-4">
+            <PillGroup<"bookings" | "appointments">
+              options={[
+                { value: "bookings", label: "Customer Bookings" },
+                { value: "appointments", label: "Appointments" },
+              ]}
+              value={bookingView}
+              onChange={setBookingView}
+            />
+          </div>
+          {bookingView === "bookings" ? <CustomerBookings /> : <BookingReservation />}
         </TabsContent>
         <TabsContent value="activities">
           <ActivitiesExperience placeId={place.id} />

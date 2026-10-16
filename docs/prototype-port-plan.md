@@ -535,3 +535,19 @@ mock hook can be swapped for the real call.
 **Waiter app**
 - Dining tables, seat guests and open orders per table (shared with Menu → Tables & QR)
 
+
+## Follow-up (2026-10-15): public site and backend docs
+
+- [x] Customer-facing pages moved to the public site (`https://places.spinstrip.com`): dashboard links
+      and table QR codes point there (`src/lib/public-links.ts`); `/preview/*` redirects there
+      (`next.config.ts`); the dashboard's copies of the preview pages were removed.
+- [x] Discover uses real public listings (places, events, restaurants derived from menu items).
+- [x] `docs/backend-endpoints-needed.md` rewritten against the services' Swagger docs: Part A lists
+      endpoints that already exist (waiters, waiter login and orders, realtime, place status /
+      facilities / bookings / visits, event status, deal delete, inventory stock, wallet history,
+      payouts, PIN, notifications); Part B is what's still needed.
+- [x] Wire the Part A endpoints into the dashboard, replacing the matching sample hooks: waiters
+      (Admin & Roles), place submit-for-review / tagline / facility delete / booking status / walk-in
+      visitors, inventory restock, wallet history + withdrawals + PIN, notifications. The dashboard
+      `/waiter` page was removed: waiters use the separate SpinStrip waiter app. Fixed the inventory
+      product-type enum and the Deals subscription path (documented path first, old path as fallback).

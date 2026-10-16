@@ -7,9 +7,10 @@ import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { useServerPagination } from "@/hooks/use-server-pagination";
 import { useReduxAuth } from "@/hooks/use-redux-auth";
 import { useKyc } from "@/hooks/use-kyc";
+import { useMenuItemSales } from "@/hooks/use-menu-orders";
 import type { Menu, MenuStatus } from "@/app/(dashboard)/apps-tools/menu/_schemas";
 import { MENU_QUERY_KEY } from "@/app/(dashboard)/apps-tools/menu/_constants";
-import { mockResponse, seededRandom, between } from "@/mocks/utils";
+import { mockResponse } from "@/mocks/utils";
 import { SAMPLE_PUBLIC_MENU } from "@/mocks/public-menu";
 import type { AxiosError } from "axios";
 
@@ -121,31 +122,30 @@ export interface TopMenuItem {
 }
 
 /**
- * Best-selling menu items for a month ("YYYY-MM"), ranked by orders.
- * The items are the merchant's real menu; ORDER COUNTS ARE SAMPLE DATA until the backend reports
- * menu orders — swap the order-count derivation for the real endpoint when it exists.
+ * Best-selling menu items for a month ("YYYY-MM"), ranked by paid units sold — counted from the
+ * merchant's menu orders (`GET /menu/orders`, see use-menu-orders.ts).
  */
 export function useTopMenus({ month }: { month: string }) {
-  const { data: items, isLoading } = useAllMenuItems();
+  const { data: items, isLoading: itemsLoading } = useAllMenuItems();
+  const { sales, isLoading: salesLoading } = useMenuItemSales(month);
 
-  const topMenus = useMemo<TopMenuItem[]>(() => {
-    const seedFor = (id: string) =>
-      [...`${id}:${month}`].reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) >>> 0, 7);
-    return (items ?? [])
-      .filter((m) => m.id && m.status === "AVAILABLE")
-      .map((m) => ({
-        id: m.id!,
-        name: m.name,
-        image: m.images?.[0],
-        price: m.price,
-        orderCount: between(seededRandom(seedFor(m.id!)), 0, 240),
-      }))
-      .filter((m) => m.orderCount > 0)
-      .sort((a, b) => b.orderCount - a.orderCount)
-      .slice(0, 5);
-  }, [items, month]);
+  const topMenus = useMemo<TopMenuItem[]>(
+    () =>
+      (items ?? [])
+        .filter((m) => m.id && sales.get(m.id))
+        .map((m) => ({
+          id: m.id!,
+          name: m.name,
+          image: m.images?.[0],
+          price: m.price,
+          orderCount: sales.get(m.id!) ?? 0,
+        }))
+        .sort((a, b) => b.orderCount - a.orderCount)
+        .slice(0, 5),
+    [items, sales]
+  );
 
-  return { topMenus, isLoading };
+  return { topMenus, isLoading: itemsLoading || salesLoading };
 }
 
 /**

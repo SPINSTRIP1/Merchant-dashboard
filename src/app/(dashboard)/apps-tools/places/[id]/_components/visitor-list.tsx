@@ -12,7 +12,6 @@ import React, { useState } from "react";
 import { FileSpreadsheet, UserPlus, Users } from "lucide-react";
 import EmptyState from "@/components/empty-state";
 import Field from "@/components/field";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +27,7 @@ import { useServerPagination } from "@/hooks/use-server-pagination";
 import { SERVER_URL } from "@/constants";
 import PaginationButton from "@/components/pagination-button";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useAddPlaceVisitor, useManualVisitors } from "@/hooks/use-place-extras";
+import { useAddPlaceVisitor } from "@/hooks/use-place-extras";
 import { exportCsv } from "@/utils";
 
 interface Visitor {
@@ -54,20 +53,12 @@ export default function VisitorList() {
       searchQuery: debouncedSearch,
     });
 
-  // Visitors added by hand (sample data until there's a create-visitor endpoint), shown first.
-  const manualVisitors = useManualVisitors(id);
+  // Walk-ins recorded here go through `POST /places/{id}/visit` and then show up in the list.
   const addVisitor = useAddPlaceVisitor(id ?? "");
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(EMPTY_VISITOR);
 
-  const query = searchQuery.trim().toLowerCase();
-  const manualRows = manualVisitors.filter(
-    (v) =>
-      !query ||
-      v.visitorName.toLowerCase().includes(query) ||
-      v.visitorEmail.toLowerCase().includes(query)
-  );
-  const rows = [...(currentPage === 1 ? manualRows : []), ...(items ?? [])];
+  const rows = items ?? [];
 
   const handleExport = () =>
     exportCsv(
@@ -78,10 +69,18 @@ export default function VisitorList() {
 
   const submitVisitor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!draft.visitorName.trim()) return;
-    await addVisitor.mutateAsync({ ...draft, visitorName: draft.visitorName.trim() });
-    setDraft(EMPTY_VISITOR);
-    setAdding(false);
+    if (!draft.visitorName.trim() || !draft.visitorEmail.trim()) return;
+    try {
+      await addVisitor.mutateAsync({
+        ...draft,
+        visitorName: draft.visitorName.trim(),
+        visitorEmail: draft.visitorEmail.trim(),
+      });
+      setDraft(EMPTY_VISITOR);
+      setAdding(false);
+    } catch {
+      // error toast shown by the hook; keep the form open
+    }
   };
 
   return (
@@ -133,10 +132,7 @@ export default function VisitorList() {
               {rows.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-semibold text-foreground">
-                    <span className="flex items-center gap-2">
-                      {item.visitorName}
-                      {item.id.startsWith("manual_") && <SampleDataBadge label="Added" />}
-                    </span>
+                    {item.visitorName}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{item.visitorEmail || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{item.visitorPhone || "—"}</TableCell>
@@ -173,6 +169,7 @@ export default function VisitorList() {
               <Input
                 id="visitor-email"
                 type="email"
+                required
                 value={draft.visitorEmail}
                 onChange={(e) => setDraft({ ...draft, visitorEmail: e.target.value })}
                 placeholder="name@email.com"
@@ -199,8 +196,8 @@ export default function VisitorList() {
               <Button type="button" variant="outline" onClick={() => setAdding(false)}>
                 Cancel
               </Button>
-              <Button type="submit" variant="brand" disabled={!draft.visitorName.trim() || addVisitor.isPending}>
-                Add Visitor
+              <Button type="submit" variant="brand" disabled={!draft.visitorName.trim() || !draft.visitorEmail.trim() || addVisitor.isPending}>
+                {addVisitor.isPending ? "Adding…" : "Add Visitor"}
               </Button>
             </DialogFooter>
           </form>

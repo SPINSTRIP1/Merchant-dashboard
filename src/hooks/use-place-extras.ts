@@ -1,109 +1,123 @@
 /**
- * Places features from the prototype that the backend doesn't support yet. These sit alongside
- * the real places hooks in use-places.ts and never replace them: each one is SAMPLE DATA (kept in
- * localStorage via src/mocks/places.ts) until its endpoint exists, at which point only the hook
- * body here needs to change.
+ * Places features added with the prototype port. They sit alongside the original places hooks in
+ * use-places.ts and never replace them. Most use the Places service endpoints (through the gateway);
+ * taglines (this browser) and reviews (src/mocks/places.ts) are still SAMPLE until the API supports them.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
-import { mockResponse } from "@/mocks/utils";
-import {
-  bookingStatusOverrides,
-  placeManualVisitors,
-  placeTaglines,
-  removedFacilities,
-  sampleReviews,
-  type ManualVisitor,
-  type PlaceReview,
-} from "@/mocks/places";
+import { handleAxiosError } from "@/lib/api/handle-axios-error";
+import { createPersistentMap, mockResponse } from "@/mocks/utils";
+import { sampleReviews, type PlaceReview } from "@/mocks/places";
 import type { Event } from "@/app/(dashboard)/apps-tools/event-planner/_schemas";
 
-export type { ManualVisitor, PlaceReview };
+export type { PlaceReview };
+
+const errorMessage = (error: unknown) => handleAxiosError(error as AxiosError);
 
 // --- Taglines -------------------------------------------------------------
 
-/** Taglines for all places, keyed by place id. SAMPLE DATA. */
-export function usePlaceTaglines() {
-  const { data } = useQuery<Record<string, string>>({
-    queryKey: ["place-taglines"],
-    queryFn: () => mockResponse(placeTaglines.all(), 0),
-  });
-  return data ?? {};
-}
+/**
+ * Place taglines. The API has no tagline field and `PATCH /places/{id}` ignores `metadata`
+ * (verified on staging, 2026-10-15), so taglines are saved in this browser — SAMPLE until the
+ * backend stores them. A `metadata.tagline` from the API wins if it ever appears.
+ */
+const taglineStore = createPersistentMap<string>("spinstrip:place-taglines");
 
-/** Saves a place's tagline. SAMPLE DATA. */
+export const placeTagline = (place: { id?: string; metadata?: unknown } | null | undefined) => {
+  const fromApi = (place?.metadata as Record<string, unknown> | null | undefined)?.tagline;
+  if (typeof fromApi === "string" && fromApi) return fromApi;
+  return place?.id ? taglineStore.get(place.id) ?? "" : "";
+};
+
+/** Saves a place's tagline on this device. SAMPLE (see above). */
 export function useSetPlaceTagline() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ placeId, tagline }: { placeId: string; tagline: string }) => {
-      placeTaglines.set(placeId, tagline.trim());
-      return mockResponse(true, 0);
+    mutationFn: async ({ placeId, tagline }: { placeId: string; metadata?: unknown; tagline: string }) => {
+      taglineStore.set(placeId, tagline.trim());
     },
-    onSuccess: () => {
-      toast.success("Tagline saved");
-      queryClient.invalidateQueries({ queryKey: ["place-taglines"] });
+    onSuccess: (_, { placeId }) => {
+      toast.success("Tagline saved on this device");
+      queryClient.invalidateQueries({ queryKey: ["single-place", placeId] });
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     },
+  });
+}
+
+// --- Publishing ---------------------------------------------------------------
+
+/** Sends a draft or rejected place for SpinStrip's approval (`POST /places/{id}/publish`). */
+export function useSubmitPlaceForReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (placeId: string) => {
+      try {
+        await api.post(`${SERVER_URL}/places/${placeId}/publish`);
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
+    },
+    onSuccess: (_, placeId) => {
+      toast.success("Sent to SpinStrip for review");
+      queryClient.invalidateQueries({ queryKey: ["single-place", placeId] });
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+    },
+    onError: (error) => toast.error(error.message),
   });
 }
 
 // --- Facilities -------------------------------------------------------------
 
-/** Ids of facilities removed from a place in this browser. SAMPLE DATA (no delete endpoint yet). */
-export function useRemovedFacilityIds(placeId: string | undefined) {
-  const { data } = useQuery<string[]>({
-    queryKey: ["place-removed-facilities", placeId],
-    queryFn: () => mockResponse(removedFacilities.get(placeId!) ?? [], 0),
-    enabled: !!placeId,
-  });
-  return data ?? [];
-}
-
-/** Removes (hides) a facility from a place. SAMPLE DATA. */
+/** Deletes a facility (`DELETE /places/facilities/{id}`, a soft delete). */
 export function useRemoveFacility(placeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (facilityId: string) => {
-      removedFacilities.update(placeId, (ids = []) => [...new Set([...ids, facilityId])]);
-      return mockResponse(true, 0);
+      try {
+        await api.delete(`${SERVER_URL}/places/facilities/${facilityId}`);
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
     },
     onSuccess: () => {
       toast.success("Facility removed");
-      queryClient.invalidateQueries({ queryKey: ["place-removed-facilities", placeId] });
+      queryClient.invalidateQueries({ queryKey: ["place-facility", placeId] });
+      queryClient.invalidateQueries({ queryKey: ["single-place", placeId] });
     },
+    onError: (error) => toast.error(error.message),
   });
 }
 
 // --- Visitors ---------------------------------------------------------------
 
-/** Visitors added by hand for a place, newest first. SAMPLE DATA. */
-export function useManualVisitors(placeId: string | undefined) {
-  const { data } = useQuery<ManualVisitor[]>({
-    queryKey: ["place-manual-visitors", placeId],
-    queryFn: () => mockResponse(placeManualVisitors.get(placeId!) ?? [], 0),
-    enabled: !!placeId,
-  });
-  return data ?? [];
+export interface NewVisitor {
+  visitorName: string;
+  visitorEmail: string;
+  visitorPhone?: string;
+  purpose?: string;
 }
 
-/** Adds a visitor to a place by hand. SAMPLE DATA. */
+/** Records a walk-in visitor (`POST /places/{id}/visit`); they then appear in the visitors list. */
 export function useAddPlaceVisitor(placeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (visitor: Omit<ManualVisitor, "id" | "createdAt">) => {
-      const created: ManualVisitor = {
-        ...visitor,
-        id: `manual_${Date.now().toString(36)}`,
-        createdAt: new Date().toISOString(),
-      };
-      placeManualVisitors.update(placeId, (list = []) => [created, ...list]);
-      return mockResponse(created, 0);
+    mutationFn: async (visitor: NewVisitor) => {
+      const body = Object.fromEntries(Object.entries(visitor).filter(([, v]) => typeof v === "string" && v.trim()));
+      try {
+        const response = await api.post(`${SERVER_URL}/places/${placeId}/visit`, body);
+        return response.data?.data;
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
     },
     onSuccess: () => {
       toast.success("Visitor added");
-      queryClient.invalidateQueries({ queryKey: ["place-manual-visitors", placeId] });
+      queryClient.invalidateQueries({ queryKey: ["places-visitors", placeId] });
     },
+    onError: (error) => toast.error(error.message),
   });
 }
 
@@ -112,27 +126,171 @@ export function useAddPlaceVisitor(placeId: string) {
 export const BOOKING_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
-/** Booking status changes made in the dashboard, keyed by booking id. SAMPLE DATA. */
-export function useBookingStatusOverrides() {
-  const { data } = useQuery<Record<string, string>>({
-    queryKey: ["booking-status-overrides"],
-    queryFn: () => mockResponse(bookingStatusOverrides.all(), 0),
-  });
-  return data ?? {};
-}
-
-/** Changes a booking's status. SAMPLE DATA. */
+/** Changes a booking's status (`PATCH /places/appointments/{id}`). */
 export function useUpdateBookingStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: BookingStatus }) => {
-      bookingStatusOverrides.set(id, status);
-      return mockResponse(true, 0);
+      try {
+        await api.patch(`${SERVER_URL}/places/appointments/${id}`, { status });
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
     },
     onSuccess: () => {
       toast.success("Booking status updated");
-      queryClient.invalidateQueries({ queryKey: ["booking-status-overrides"] });
+      queryClient.invalidateQueries({ queryKey: ["places-bookings"] });
     },
+    onError: (error) => toast.error(error.message),
+  });
+}
+
+// --- Appointments (merchant-scheduled) ------------------------------------------
+
+export interface PlaceAppointment {
+  id: string;
+  placeId: string;
+  facilityId: string;
+  feeId: string;
+  appointmentType: string;
+  scheduledDate: string;
+  endDate: string | null;
+  visitorName: string;
+  visitorEmail: string;
+  visitorPhone: string;
+  purpose: string;
+  notes: string;
+  status: string;
+}
+
+/**
+ * A place's appointments (`GET /places/{id}/appointments`). This endpoint returns
+ * `{ appointments, pagination: { page, limit, total, totalPages } }`, not the usual paginated shape.
+ */
+export function usePlaceAppointments({
+  placeId,
+  page = 1,
+  status = "",
+  search = "",
+}: {
+  placeId: string | undefined;
+  page?: number;
+  status?: string;
+  search?: string;
+}) {
+  const { data, isLoading } = useQuery<{ items: PlaceAppointment[]; totalPages: number }>({
+    queryKey: ["places-bookings", placeId, page, status, search],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`${SERVER_URL}/places/${placeId}/appointments`, {
+          params: { page, limit: 20, ...(status && { status }), ...(search && { search }) },
+        });
+        const body = response.data?.data ?? {};
+        const items = (body.appointments ?? body.data ?? []) as PlaceAppointment[];
+        return { items, totalPages: Number(body.pagination?.totalPages ?? body.lastpage) || 1 };
+      } catch (error) {
+        console.log("Error fetching appointments:", error);
+        return { items: [], totalPages: 1 };
+      }
+    },
+    enabled: !!placeId,
+  });
+  return { items: data?.items ?? [], totalPages: data?.totalPages ?? 1, isLoading };
+}
+
+/** Cancels an appointment (`DELETE /places/appointments/{id}`). */
+export function useCancelAppointment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        await api.delete(`${SERVER_URL}/places/appointments/${id}`);
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
+    },
+    onSuccess: () => {
+      toast.success("Appointment cancelled");
+      queryClient.invalidateQueries({ queryKey: ["places-bookings"] });
+    },
+    onError: (error) => toast.error(error.message),
+  });
+}
+
+// --- Customer bookings (from the public site) ---------------------------------------
+
+export const CUSTOMER_BOOKING_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "REFUNDED"] as const;
+
+export interface CustomerBooking {
+  id: string;
+  facilityId: string;
+  checkInDate: string;
+  checkOutDate: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  paymentMethod: string;
+  totalAmount: string;
+  status: string;
+  transactionRef: string | null;
+  createdAt: string;
+  facility?: { id: string; name: string; facilityCategory?: string } | null;
+  fee?: { id: string; name: string; amount: string } | null;
+}
+
+/**
+ * Facility bookings customers made (and paid for) on the public site
+ * (`GET /places/{placeId}/bookings`, owner only).
+ */
+export function usePlaceBookings({
+  placeId,
+  page = 1,
+  status = "",
+}: {
+  placeId: string | undefined;
+  page?: number;
+  status?: string;
+}) {
+  const { data, isLoading } = useQuery<{ items: CustomerBooking[]; totalPages: number; total: number }>({
+    queryKey: ["place-customer-bookings", placeId, page, status],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`${SERVER_URL}/places/${placeId}/bookings`, {
+          params: { page, limit: 20, ...(status && { status }) },
+        });
+        const body = response.data?.data ?? {};
+        return {
+          items: (body.data ?? []) as CustomerBooking[],
+          totalPages: Number(body.lastpage) || 1,
+          total: Number(body.count) || 0,
+        };
+      } catch (error) {
+        console.log("Error fetching place bookings:", error);
+        return { items: [], totalPages: 1, total: 0 };
+      }
+    },
+    enabled: !!placeId,
+  });
+  return { items: data?.items ?? [], totalPages: data?.totalPages ?? 1, total: data?.total ?? 0, isLoading };
+}
+
+/** Cancels a customer's booking (`DELETE /places/bookings/{id}`). */
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        await api.delete(`${SERVER_URL}/places/bookings/${id}`);
+      } catch (error) {
+        throw new Error(errorMessage(error));
+      }
+    },
+    onSuccess: () => {
+      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({ queryKey: ["place-customer-bookings"] });
+    },
+    onError: (error) => toast.error(error.message),
   });
 }
 
@@ -141,7 +299,7 @@ export const visitorRef = (id: string) => `VIS-${id.replace(/-/g, "").slice(0, 6
 
 // --- Reviews ------------------------------------------------------------------
 
-/** Reviews of a place and their average rating. SAMPLE DATA. */
+/** Reviews of a place and their average rating. SAMPLE DATA (no reviews endpoint yet). */
 export function usePlaceReviews(placeId: string | undefined) {
   const { data, isLoading } = useQuery<PlaceReview[]>({
     queryKey: ["place-reviews", placeId],

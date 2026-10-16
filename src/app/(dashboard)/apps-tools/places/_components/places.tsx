@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Building2, Clock, Eye, Globe, Hourglass, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SinglePlace } from "./claim-places-steps/find-place";
-import { usePlaceTaglines } from "@/hooks/use-place-extras";
+import { placeTagline } from "@/hooks/use-place-extras";
 import { cn } from "@/lib/utils";
 import { getOperatingHoursDisplay, getPlaceType } from "../_utils";
 
@@ -172,7 +172,6 @@ export default function Places({
   onDelete: (place: SinglePlace) => void;
   onAdd: () => void;
 }) {
-  const taglines = usePlaceTaglines();
   return (
     <section>
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -188,7 +187,7 @@ export default function Places({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {places.map((place, i) => (
-            <PlaceCard key={place.id} place={place} tagline={taglines[place.id ?? ""]} index={i} onEdit={onEdit} onDelete={onDelete} />
+            <PlaceCard key={place.id} place={place} tagline={placeTagline(place)} index={i} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </div>
       )}

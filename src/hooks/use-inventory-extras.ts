@@ -20,14 +20,18 @@ import {
 } from "@/mocks/inventory";
 
 /**
- * Adds stock to a product: `PATCH /inventory/products/{id}` with the new `quantity`
- * (the same update call the edit form uses).
+ * Adds stock to a DEFINITE product with the Inventory stock endpoint
+ * (`PATCH /inventory/products/{id}/inventory { quantity: +n, reason }`), which records the change.
  */
 export function useRestockItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, currentQuantity, add }: { id: string; currentQuantity: number; add: number }) =>
-      api.patch(`${SERVER_URL}/inventory/products/${id}`, { quantity: currentQuantity + add }),
+    // `currentQuantity` is kept in the signature for callers; the stock endpoint adjusts incrementally.
+    mutationFn: ({ id, add }: { id: string; currentQuantity: number; add: number }) =>
+      api.patch(`${SERVER_URL}/inventory/products/${id}/inventory`, {
+        quantity: add,
+        reason: "Restock from dashboard",
+      }),
     onSuccess: (_res, { add }) => {
       toast.success(`Restocked +${add}`);
       queryClient.invalidateQueries({ queryKey: ["inventory-products"] });

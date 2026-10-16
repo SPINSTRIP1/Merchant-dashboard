@@ -3,7 +3,7 @@
  *
  * - owner: the merchant account holder; full access, and the only role that manages the team.
  * - admin_ops: dashboard access limited to the sections the owner grants.
- * - waiter: no dashboard access; uses the waiter app at /waiter.
+ * - waiter: no dashboard access; waiters use the separate SpinStrip waiter (mobile) app.
  *
  * The backend doesn't return roles/permissions yet (accounts come back as role "USER"), so
  * `resolveRole` treats any unknown role as the owner. Team members are mocked until it does.
@@ -78,7 +78,7 @@ export function requirementForPath(pathname: string): PermissionKey | "owner" | 
 
 /** Where a user should land after login, or when they open a page they can't access. */
 export function landingPathFor(role: Role, can: (perm: PermissionKey) => boolean): string {
-  if (role === "waiter") return "/waiter";
+  if (role === "waiter") return "/"; // PermissionGate shows "use the waiter app"
   if (can("overview")) return "/";
   const firstAllowed: Record<PermissionKey, string> = {
     overview: "/",

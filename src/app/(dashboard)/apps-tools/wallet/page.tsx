@@ -135,11 +135,11 @@ export default function Wallet() {
 
             <div className="grid grid-cols-1 gap-4">
               <div className="rounded-2xl border bg-card p-5">
-                <p className="flex items-center justify-between text-sm text-muted-foreground">
-                  Wallet inflow <SampleDataBadge label="Sample" />
+                <p className="text-sm text-muted-foreground">Wallet funding</p>
+                <p className="mt-1 font-display text-2xl font-bold text-foreground">
+                  {activity.isLoading ? "…" : formatNaira(activity.funding, true)}
                 </p>
-                <p className="mt-1 font-display text-2xl font-bold text-foreground">{formatNaira(activity.inflow, true)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">top-ups · bill splits · cashbacks</p>
+                <p className="mt-1 text-xs text-muted-foreground">deposits into your wallet</p>
               </div>
               <div className="rounded-2xl border bg-card p-5">
                 <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -154,17 +154,15 @@ export default function Wallet() {
           <div className="my-6 grid grid-cols-2 gap-3">
             <StatCard
               index={0}
-              sample
-              label="Revenue"
-              value={formatNaira(activity.revenue, true)}
-              sub="successful payments"
+              label="Money In"
+              value={activity.isLoading ? "…" : formatNaira(activity.moneyIn, true)}
+              sub="completed credits"
               icon={<TrendingUp />}
             />
             <StatCard
               index={1}
-              sample
               label="Withdrawals"
-              value={formatNaira(activity.withdrawn, true)}
+              value={activity.isLoading ? "…" : formatNaira(activity.withdrawn, true)}
               sub="settled to your bank"
               icon={<ArrowUpFromLine />}
             />
@@ -172,11 +170,16 @@ export default function Wallet() {
 
           <RevenueChart
             series={activity.series}
-            total={activity.revenue}
+            total={activity.moneyIn}
             period={period}
             onPeriodChange={setPeriod}
           />
-          <TransactionHistory transactions={activity.transactions} period={period} onPeriodChange={setPeriod} />
+          <TransactionHistory
+            transactions={activity.transactions}
+            isLoading={activity.isLoading}
+            period={period}
+            onPeriodChange={setPeriod}
+          />
         </>
       )}
 

@@ -12,7 +12,7 @@
 ("merchants") run their business on the SpinStrip consumer platform. Merchants sign up,
 complete KYC/compliance, then enable modular "Apps/Tools" — each a self-contained business
 capability (Wallet, Event Planner, Menu, Inventory, Places, Deals, Customers). Around the apps sit
-an Overview, Settlement, Billing, Admin & Roles (team permissions), a waiter app and public pages.
+an Overview, Settlement, Billing, Admin & Roles (team permissions) and Discover. Waiters use the separate **SpinStrip waiter app** (mobile) for login, the order queue, guest chat and live order updates. This dashboard only adds, lists and removes waiters (Admin & Roles).
 
 Features the backend supports are wired to it. Features from the product prototype with no
 backend endpoint yet are built on **sample data** (section 8.1) and labelled "Sample" on screen;
@@ -41,11 +41,11 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 | Deal archives | `/apps-tools/deals/archives` | Archived deals |
 | Inventory | `/apps-tools/inventory` | Products, catalogs, stock levels, restock, visibility, low-stock bar |
 | Inventory item detail | `/apps-tools/inventory/item?id=` | Product panels, related items, duplicate. History [S] |
-| Wallet | `/apps-tools/wallet` | Create wallet, deposit details, POS, settlement accounts. Balance fallback, revenue, transactions, withdrawals [S] |
+| Wallet | `/apps-tools/wallet` | Create wallet, deposit details, POS, settlement accounts, transaction history (`/wallet/transaction-history`), withdrawals (`/payouts` + PIN). Balance fallback [S] |
 | Customers | `/apps-tools/customers` | Service filter, sort, page search, CSV export. Spend view [S] |
 | Settlement | `/settlement` | Daily batches + settled transactions, CSV [S] |
 | Billing | `/billing` | Monthly bill from active paid apps; invoices and card [S] |
-| Admin & Roles | `/admin` | Owner only; team members, roles, permission grid [S] |
+| Admin & Roles | `/admin` | Owner only; waiters via `/menu/waiters` (add by email, list, remove); admin ops with permission grid [S] |
 | Settings hub | `/settings` | Cards for the six sections; sub-pages share a pill tab bar |
 | Compliance / KYC | `/settings/compliance` | Status summary + 4-step KYC wizard |
 | Preferences | `/settings/preferences` | Theme (light/dark/system); notification and auto-settlement switches [S] |
@@ -53,21 +53,20 @@ Currency is **Nigerian Naira (₦)**. Amounts arrive from the API as strings.
 | Payments | `/settings/payments` | Settlement bank accounts (real) |
 | Integrations, Legal | `/settings/integrations`, `/settings/legal` | Informational pages |
 
-### Waiter app (authenticated, no sidebar)
 
-| Route | Purpose |
+### Public routes and the public site
+
+Customer-facing pages live on the separate public site **https://places.spinstrip.com**
+(repo `SpinStrip-Projects/places`): place / event / dish pages (`/preview/places|events|menu?id=`),
+restaurant menus with table ordering (`/restaurants/{merchantUserId}?number=<table>`), booking,
+ticketing, ordering and their payment success pages. `src/lib/public-links.ts` builds every link to it
+(`publicPlaceUrl`, `publicEventUrl`, `publicDishUrl`, `publicRestaurantUrl`, `tableNumberFromLabel`);
+the base URL is `NEXT_PUBLIC_PUBLIC_SITE_URL` (default `https://places.spinstrip.com`).
+
+| Route (this app) | Purpose |
 |---|---|
-| `/waiter` | Phone-first floor plan (refreshes every 15 s), seat-guests stepper, read-only menu. Tables [S] |
-
-### Public preview routes (unauthenticated, consumer-facing)
-
-| Route | Purpose |
-|---|---|
-| `/preview/events?id=<eventId>` | Public event landing page + ticket checkout |
-| `/preview/events/success` | Post-payment success |
-| `/preview/places?id=<placeId>` | Public place landing page + booking checkout |
-| `/preview/menu?table=<qrToken>` | Table-QR menu: the merchant's real menu when signed in, sample otherwise |
-| `/discover` | SpinStrip Discover: places and events across merchants [S] |
+| `/discover` | Discover: published places, live events and restaurants (derived from public menu items grouped by merchant). Real data; cards open the public site |
+| `/preview/*` | `next.config.ts` redirect (307) to the same path on the public site, query string kept; `/preview/menu` without `id` → public home |
 
 ### Auth routes
 
@@ -126,9 +125,7 @@ src/
         layout.tsx          # pill tab bar across settings sub-pages
         compliance/         # status summary + 4-step KYC wizard (own context/schemas/constants)
         preferences/, security/, payments/, integrations/, legal/
-    waiter/                 # waiter app; layout reuses (dashboard)/providers
     discover/               # public Discover; own QueryProvider layout
-    preview/                # public consumer-facing pages (events, places, menu); own QueryProvider
     layout.tsx, globals.css
   components/               # cross-app components
     ui/                     # design-system primitives
@@ -167,7 +164,12 @@ Paginated list endpoints nest one level deeper (`response.data.data.data`), retu
 |---|---|---|
 | `SERVER_URL` | `https://spinstrip-merchant-gateway.fly.dev/api/v1` | All authenticated merchant endpoints |
 | `USER_ACCOUNT_URL` | `https://spinstrip-user-account.fly.dev/api/v1` | Wallet / user account |
-| `EVENTS_SERVER_URL` | `https://spinstrip-events.fly.dev/api/v1` | Public event registration & payment |
+| `EVENTS_SERVER_URL` | `https://spinstrip-events.fly.dev/api/v1` | Unused since the public pages moved to the public site |
+| `PLACES_API_URL` | `https://spinstrip-places.fly.dev/api/v1` | Public place listings (Discover) |
+| `MENU_API_URL` | `https://spinstrip-menu.fly.dev/api/v1` | Public menu items (Discover restaurants) |
+
+Every service publishes Swagger docs at `/api/docs` (user-account: `/api/v1/docs`); add `-json` for the
+OpenAPI file. `docs/backend-endpoints-needed.md` maps them to dashboard features.
 
 > These are hard-coded constants, **not** environment variables.
 
@@ -205,8 +207,7 @@ POST   /events
 POST   /events/{id}/media                multipart: mediaType=images, files[]
 DELETE /events/{id}/media
 GET    /events/{id}/registrations?page&limit&status
-GET    /events/public/{id}               unauthenticated public event
-POST   {EVENTS_SERVER_URL}/events/public/{id}/register   public ticket checkout
+GET    {USER_ACCOUNT_URL}/events/public  public active events (Discover)
 ```
 
 **Places**
@@ -226,6 +227,7 @@ POST   /places/{id}/media                multipart
 POST   /places/facilities                create facility
 POST   /places/facilities/{id}/images    multipart
 GET    /places/customers                 paginated (service, sort) — Customers module
+GET    {PLACES_API_URL}/places/public    public published places (Discover; search, city, placeType)
 ```
 
 **Inventory**
@@ -324,13 +326,15 @@ DELETE /bank-accounts/{id}
 
 ### Roles and permissions (`src/lib/permissions.ts`)
 
-- Roles: `owner` (everything), `admin_ops` (only `user.dashboardPermissions`), `waiter` (only `/waiter`).
+- Roles: `owner` (everything), `admin_ops` (only `user.dashboardPermissions`), `waiter` (no dashboard
+  access; waiters use the separate SpinStrip waiter app).
   `resolveRole(user)` reads `user.role`; anything unknown is treated as `owner`, which is every
   account today because the backend has no merchant team accounts yet.
 - Permission keys: `overview, menu, places, events, inventory, deals, customers, wallet, settlement,
   billing, settings`. `requirementForPath()` maps routes to keys; `/admin` is owner-only.
 - `usePermissions()` → `{ role, roleLabel, isOwner, permissions, can, canAccessPath, landingPath }`.
-  `<PermissionGate>` in the dashboard layout redirects to `landingPath` (waiters to `/waiter`), and
+  `<PermissionGate>` in the dashboard layout blocks pages the role can't open (waiters get a "use the
+  waiter app" screen), and
   login redirects there too. The sidebar hides items the user can't open.
 - `AuthProvider` (client-side route guard) redirects unauthenticated users to `/login`
   and authenticated users away from `/login`, showing a spinner while resolving.
@@ -397,6 +401,12 @@ Real API hooks:
 | `use-bank-accounts.ts` | `useBanks`, `useResolveBankAccount`, `useBankAccounts` (list, create, set default, delete) |
 | `use-me.ts` | `useMe` (`GET /auth/me` → Redux) |
 | `use-permissions.ts` | `usePermissions` |
+| `use-team.ts` | `useWaiters` (`GET/POST/DELETE /menu/waiters`); `useAdminOps` is sample |
+| `use-wallet-extras.ts` | `useWalletActivity` (`/wallet/transaction-history`), `useWithdraw` (`/payouts` + authorize), `useWalletPin` (`/pin*`) |
+| `use-place-extras.ts` | `useSubmitPlaceForReview`, `useSetPlaceTagline` (`metadata.tagline`), `useRemoveFacility`, `useUpdateBookingStatus`, `useAddPlaceVisitor`, `usePlaceEvents` |
+| `use-notifications.ts` | `useNotifications` (`GET /notifications`, polled every 60 s) |
+| `use-discover.ts` | `useDiscover` (public places / events / menu items) |
+| `use-menu-orders.ts` | `useMenuOrders` (`GET /menu/orders`, latest 500), `useTableOrderStats` (per table number), `useMenuItemSales` (Top Menus) |
 | `use-server-pagination.ts` | URL-synced pagination (`?page=`) + query |
 | `use-fetch.ts` | `useFetch` / `useHandleRequest` for one-off mutations |
 | `use-optimistic-delete.ts` | optimistic `DELETE {endpoint}/{id}` |
@@ -414,16 +424,15 @@ fixtures are imported **only** by hooks; hooks keep the same return shape a real
 | `use-overview.ts` | `useOverview` money/customer analytics (counts are real) | `mocks/transactions.ts` |
 | `use-settlements.ts` | `useSettlements` | `mocks/transactions.ts` |
 | `use-billing.ts` | `useBilling` invoices, card (subscriptions from the real catalogue) | — |
-| `use-team.ts` | `useTeam` | in memory |
-| `use-menu-tables.ts` | `useMenuTables`, `useTableDetail`, `useSeatGuests`, `useTableByToken`, `useWaiterFloor` | `mocks/menu-tables.ts` |
-| `use-place-extras.ts` | taglines, facility removal, manual visitors, booking status, reviews (`usePlaceEvents` is real) | `mocks/places.ts` |
+| `use-team.ts` | `useAdminOps` (`useWaiters` is real) | in memory |
+| `use-menu-tables.ts` | `useMenuTables` (table list for QR codes, saved in localStorage) | — |
+| `use-place-extras.ts` | `usePlaceReviews`, tagline (localStorage); the rest — customer bookings + cancel, appointments, submit for review, facility delete, walk-in visitors, place events — are real | `mocks/places.ts` |
 | `use-event-extras.ts` | delete event, via-deal count | `mocks/events.ts` |
 | `use-deal-extras.ts` | deal performance | `mocks/deals.ts` |
-| `use-inventory-extras.ts` | `useItemHistory` (`useRestockItem`, `useLowStockItem` are real) | `mocks/inventory.ts` |
-| `use-wallet-extras.ts` | `useWalletActivity`, `SAMPLE_WALLET_BALANCE` | `mocks/transactions.ts` |
+| `use-inventory-extras.ts` | `useItemHistory` (`useRestockItem` → stock endpoint, `useLowStockItem` are real) | `mocks/inventory.ts` |
+| `use-wallet-extras.ts` | `SAMPLE_WALLET_BALANCE` only (`useWalletActivity`, `useWithdraw`, `useWalletPin` are real) | `mocks/transactions.ts` |
 | `use-customer-extras.ts` | `useCustomerSpend` | seeded per customer |
 | `use-settings-extras.ts` | `usePreferences`, `useChangePassword` | localStorage |
-| `use-discover.ts` | `useDiscover` | `mocks/discover.ts` |
 
 `mocks/utils.ts` provides seeded random helpers (`seededRandom`, `between`, `pick`, …),
 `mockResponse` (delayed promise), `createMockCollection` (in-memory CRUD) and
@@ -659,8 +668,7 @@ Legacy aliases (`primary-text`, `secondary-text`, `neutral`, `background-light`,
 onto these tokens so older screens keep working.
 
 - **Dark mode:** `next-themes` (`src/providers/theme-provider.tsx`, class strategy, light / dark /
-  system). It covers the dashboard, `/waiter` and `/discover`; `/preview/*` and the auth pages are
-  forced to light. Toggles: `ThemeToggle` (topbar, waiter, Discover) and Settings → Preferences.
+  system). It covers the dashboard and `/discover`; the auth pages are forced to light. Toggles: `ThemeToggle` (topbar, Discover) and Settings → Preferences.
 - Utilities: `.brand-gradient`, `.brand-gradient-soft`, `.brand-text-gradient`, `.card-hover`,
   `.no-scrollbar`.
 - Fonts: `font-sans` (Plus Jakarta Sans) for body, `font-display` (Outfit) for headings and totals.
@@ -739,15 +747,14 @@ independently of media upload. KYC documents upload through `POST /kyc/upload/me
 ```
 <html suppressHydrationWarning><body>
   <ReduxProvider>               {/* redux store + PersistGate */}
-    <ThemeProvider>{children}</ThemeProvider>   {/* next-themes; light forced on /preview + auth */}
+    <ThemeProvider>{children}</ThemeProvider>   {/* next-themes; light forced on auth pages */}
     <Toaster />
   </ReduxProvider>
 </body></html>
 
 (dashboard)/layout   -> Providers (AuthProvider + QueryProvider) -> Sidebar, Navbar,
                         ComplianceBanner, PermissionGate, template.tsx (page fade)
-waiter/layout        -> the same Providers, no sidebar
-preview/, discover/  -> QueryProvider only (public)
+discover/            -> QueryProvider only (public)
 ```
 
 Each module layout wraps its page in the module's `FormProvider`.
@@ -792,9 +799,8 @@ Each module layout wraps its page in the module's `FormProvider`.
 - Chat, Groups/Community, Socials, Reviews, Payment Method, Memberships and Ads are commented out
   of the apps catalogue.
 - Known, unfixed integration bugs: the place edit PATCH omits operating hours, metadata and video
-  URL; the "Other" place type fails the `placeType` enum; the public place checkout shows a fixed
-  ₦200,000; Inventory's "Indefinite" radio sends `INFINITE` while the schema expects `INDEFINITE`;
-  the Wallet POS QR is static and Withdraw doesn't call an API.
+  URL; the "Other" place type fails the `placeType` enum (and the API's `RESTAURANT` type isn't
+  offered); `PATCH /places/{id}` ignores `metadata` (so taglines live on the device); the Wallet POS QR is static.
 - Pagination shapes are not uniform: `useServerPagination` expects
   `{ count, currentpage, lastpage, nextpage, prevpage }` while `useEventRegistrations` receives
   `{ page, limit, total, totalPages, hasNext, hasPrev }`.

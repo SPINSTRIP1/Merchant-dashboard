@@ -21,20 +21,17 @@ import React, { useMemo, useState } from "react";
 import { formatAmount } from "@/utils";
 import EmptyState from "@/components/empty-state";
 import StatusPill from "@/components/status-pill";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useServerPagination } from "@/hooks/use-server-pagination";
-import { SERVER_URL } from "@/constants";
 import { useDebounce } from "@/hooks/use-debounce";
 import PaginationButton from "@/components/pagination-button";
-import { useOptimisticDelete } from "@/hooks/use-optimistic-delete";
 import DeleteModal from "@/components/modals/delete-modal";
 import { usePlaceFacilities } from "@/hooks/use-places";
 import {
   BOOKING_STATUSES,
-  useBookingStatusOverrides,
+  useCancelAppointment,
+  usePlaceAppointments,
   useUpdateBookingStatus,
   visitorRef,
   type BookingStatus,
@@ -76,23 +73,17 @@ export default function BookingReservation() {
   const [action, setAction] = useState<"delete" | null>(null);
   const [selectedItem, setSelectedItem] = useState<Booking | null>(null);
   const { id } = useParams() as { id: string | undefined };
-  const { items, currentPage, totalPages, isLoading, handlePageChange } =
-    useServerPagination<Booking>({
-      queryKey: ["places-bookings", id || ""],
-      endpoint: `${SERVER_URL}/places/${id}/appointments`,
-      enabled: !!id,
-      searchQuery: debouncedSearch,
-      filters: {
-        status: statusFilter,
-      },
-    });
-
-  const { deleteItem } = useOptimisticDelete<Booking>({
-    queryKey: ["places-bookings", currentPage],
-    deleteEndpoint: `${SERVER_URL}/places/appointments`,
-    successMessage: "Item deleted successfully",
-    errorMessage: "Failed to delete item",
-  });
+  const [currentPage, handlePageChange] = useState(1);
+  // `/places/{id}/appointments` returns `{ appointments, pagination }`, so it has its own hook
+  // rather than useServerPagination (which expects `{ data, count, lastpage }`).
+  const { items, totalPages, isLoading } = usePlaceAppointments({
+    placeId: id,
+    page: currentPage,
+    status: statusFilter,
+    search: debouncedSearch,
+  }) as { items: Booking[]; totalPages: number; isLoading: boolean };
+  const cancelAppointment = useCancelAppointment();
+  const deleteItem = (appointmentId: string) => appointmentId && cancelAppointment.mutate(appointmentId);
 
   // Display helpers: facility names and fee amounts come from the place's facilities.
   const { facilities } = usePlaceFacilities(id);
@@ -106,18 +97,15 @@ export default function BookingReservation() {
     return fee ? fee.amount : null;
   };
 
-  // Status changes made in the dashboard (sample data until there's an update endpoint).
-  const statusOverrides = useBookingStatusOverrides();
+  // Status changes go to `PATCH /places/appointments/{id}`; the list refetches afterwards.
   const updateStatus = useUpdateBookingStatus();
-  const statusOf = (booking: Booking) =>
-    (statusOverrides[booking.id] as BookingStatus | undefined) ??
-    (String(booking.status).toUpperCase().replace("-", "_") as BookingStatus);
+  const statusOf = (booking: Booking) => String(booking.status).toUpperCase().replace("-", "_") as BookingStatus;
 
   const rows = items ?? [];
 
   const handleExport = () =>
     exportCsv(
-      "bookings.csv",
+      "appointments.csv",
       ["Visitor Name", "Visitor ID", "Email", "Phone Number", "Facility", "Status", "Fee (NGN)"],
       rows.map((b) => [
         b.visitorName,
@@ -134,11 +122,14 @@ export default function BookingReservation() {
     <section className="w-full">
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <SearchBar
-          placeholder="Search bookings…"
+          placeholder="Search appointments…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <Select value={statusFilter || ALL} onValueChange={(v) => setStatusFilter(v === ALL ? "" : v)}>
+        <Select value={statusFilter || ALL} onValueChange={(v) => {
+            setStatusFilter(v === ALL ? "" : v);
+            handlePageChange(1);
+          }}>
           <SelectTrigger className="h-11 w-[170px] rounded-full text-xs font-semibold">
             <SelectValue />
           </SelectTrigger>
@@ -166,11 +157,11 @@ export default function BookingReservation() {
         ) : rows.length === 0 ? (
           <EmptyState
             icon={<ClipboardList />}
-            title="No bookings yet"
+            title="No appointments yet"
             description={
               searchQuery || statusFilter
-                ? "No bookings match your filters."
-                : "Reservations for this place's facilities will appear here."
+                ? "No appointments match your filters."
+                : "Appointments scheduled for this place's facilities will appear here."
             }
           />
         ) : (
@@ -203,7 +194,6 @@ export default function BookingReservation() {
                     <TableCell>
                       <span className="flex items-center gap-1.5">
                         <StatusPill status={status} label={STATUS_LABELS[status] ?? String(item.status)} />
-                        {statusOverrides[item.id] && <SampleDataBadge label="Changed" />}
                       </span>
                     </TableCell>
                     <TableCell className="font-semibold text-foreground">
@@ -239,7 +229,7 @@ export default function BookingReservation() {
                               setAction("delete");
                             }}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete Booking
+                            <Trash2 className="mr-2 h-4 w-4" /> Cancel Appointment
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -263,7 +253,7 @@ export default function BookingReservation() {
         onClose={() => setAction(null)}
         onDeleteConfirm={() => deleteItem(selectedItem?.id || "")}
         secondaryText="Cancel"
-        description="This appointment will be deleted permanently and cannot be recovered!"
+        description="This appointment will be cancelled."
       />
     </section>
   );

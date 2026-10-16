@@ -18,14 +18,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMenuTables, type TableSummary } from "@/hooks/use-menu-tables";
+import { useMenuTables, type DiningTable } from "@/hooks/use-menu-tables";
+import { useTableOrderStats } from "@/hooks/use-menu-orders";
+import { tableNumberFromLabel } from "@/lib/public-links";
 
-export default function TablesTab({ publicUrl }: { publicUrl: string }) {
+/** `qrUrlFor(label)` builds the public-site link a table's QR code opens (tagged with its table number). */
+export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableLabel: string) => string }) {
   const { tables, isLoading, createTable, deleteTable } = useMenuTables();
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
   const [seats, setSeats] = useState(4);
-  const [removing, setRemoving] = useState<TableSummary | null>(null);
+  const [removing, setRemoving] = useState<DiningTable | null>(null);
+  const { tables: orderStats } = useTableOrderStats();
+  const paidOrdersFor = (label: string) =>
+    orderStats.find((t) => t.tableNumber === tableNumberFromLabel(label))?.paidCount ?? 0;
 
   const seatsValid = Number.isInteger(seats) && seats >= 1 && seats <= 40;
 
@@ -38,8 +44,8 @@ export default function TablesTab({ publicUrl }: { publicUrl: string }) {
       setAdding(false);
       setLabel("");
       setSeats(4);
-    } catch {
-      toast.error("Could not create table");
+    } catch (error) {
+      toast.error((error as Error).message || "Could not create table");
     }
   };
 
@@ -55,7 +61,7 @@ export default function TablesTab({ publicUrl }: { publicUrl: string }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           Each table gets a unique QR code that opens your public menu with the table pre-selected.
-          <SampleDataBadge label="Sample tables" />
+          <SampleDataBadge label="Table list saved in this browser" />
         </p>
         <Button variant="brand" onClick={() => setAdding(true)}>
           <Plus /> Add Table
@@ -83,7 +89,7 @@ export default function TablesTab({ publicUrl }: { publicUrl: string }) {
                 </button>
                 <div className="mx-auto w-fit rounded-xl bg-white p-2 shadow-sm">
                   <QRCodeSVG
-                    value={`${publicUrl}?table=${table.qrToken}`}
+                    value={qrUrlFor(table.label)}
                     size={104}
                     fgColor="#6932E2"
                     title={`QR code for ${table.label}`}
@@ -91,7 +97,7 @@ export default function TablesTab({ publicUrl }: { publicUrl: string }) {
                 </div>
                 <p className="mt-3 font-display font-bold text-foreground">{table.label}</p>
                 <p className="text-xs text-muted-foreground">
-                  {table.seats} seats · {table.totalSeatings} seatings
+                  {table.seats} seats · {paidOrdersFor(table.label)} paid orders
                 </p>
               </motion.div>
             ))}
