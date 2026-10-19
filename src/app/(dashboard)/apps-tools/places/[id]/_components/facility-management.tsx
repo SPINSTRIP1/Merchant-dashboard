@@ -146,7 +146,8 @@ export default function FacilityManagement({ place }: { place: SinglePlace | und
           )}
         </section>
 
-        <aside className="space-y-4">
+        {/* Beside the facility grid (xl), the place summary stays in view below the sticky navbar. */}
+        <aside className="no-scrollbar space-y-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-y-auto">
           <div className="overflow-hidden rounded-2xl border bg-card">
             {place.coverImage ? (
               <div className="relative h-40">
