@@ -1,7 +1,7 @@
 /**
  * Places features added with the prototype port. They sit alongside the original places hooks in
  * use-places.ts and never replace them. Most use the Places service endpoints (through the gateway);
- * taglines (this browser) and reviews (src/mocks/places.ts) are still SAMPLE until the API supports them.
+ * taglines (this browser) are still SAMPLE until the API supports them.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -9,11 +9,8 @@ import toast from "react-hot-toast";
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
-import { createPersistentMap, mockResponse } from "@/mocks/utils";
-import { sampleReviews, type PlaceReview } from "@/mocks/places";
+import { createPersistentMap } from "@/mocks/utils";
 import type { Event } from "@/app/(dashboard)/apps-tools/event-planner/_schemas";
-
-export type { PlaceReview };
 
 const errorMessage = (error: unknown) => handleAxiosError(error as AxiosError);
 
@@ -296,20 +293,6 @@ export function useCancelBooking() {
 
 /** Short visitor reference shown in tables, e.g. "VIS-4F07A2". */
 export const visitorRef = (id: string) => `VIS-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
-
-// --- Reviews ------------------------------------------------------------------
-
-/** Reviews of a place and their average rating. SAMPLE DATA (no reviews endpoint yet). */
-export function usePlaceReviews(placeId: string | undefined) {
-  const { data, isLoading } = useQuery<PlaceReview[]>({
-    queryKey: ["place-reviews", placeId],
-    queryFn: () => mockResponse(sampleReviews(placeId!)),
-    enabled: !!placeId,
-  });
-  const reviews = data ?? [];
-  const average = reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
-  return { reviews, average, isLoading };
-}
 
 // --- Activities ----------------------------------------------------------------
 

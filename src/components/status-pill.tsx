@@ -36,6 +36,7 @@ const STATUS_TONES: Record<string, Tone> = {
   unpublished: "warning",
 
   scheduled: "info",
+  processing: "info",
   refunded: "info",
 
   failed: "danger",

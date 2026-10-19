@@ -76,12 +76,14 @@ function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
       // URLs so images removed in the Media step are removed on the server too.
       if (!isUpdating) delete payload.images;
       // A schedule only applies to "Specific days/time"
-      if (payload.availabilityType !== "SCHEDULED") delete payload.availabilitySchedule;
+      if (payload.availabilityType !== "SCHEDULED")
+        delete payload.availabilitySchedule;
       // Drop add-on / extra rows left without a name
       payload.addOns = payload.addOns?.filter((item) => item.name.trim());
       payload.extras = payload.extras?.filter((item) => item.name.trim());
       let res;
       if (isUpdating) {
+        delete payload.images;
         const { id, ...updateData } = payload;
         res = await api.patch(
           SERVER_URL + "/menu/menu-items/" + id,
@@ -135,13 +137,25 @@ function MenuExtendedProvider({ children }: { children: React.ReactNode }) {
 
     // Don't leave General Info until the required fields are valid
     if (currentStep === 1) {
-      const valid = await form.trigger(["name", "price", "quantity", "category", "status", "description"]);
+      const valid = await form.trigger([
+        "name",
+        "price",
+        "quantity",
+        "category",
+        "status",
+        "description",
+      ]);
       if (!valid) {
-        toast.error("Fill in the item name, price, category and description to continue.");
+        toast.error(
+          "Fill in the item name, price, category and description to continue.",
+        );
         return;
       }
     }
-    if (currentStep === 3 && form.getValues("availabilityType") === "SCHEDULED") {
+    if (
+      currentStep === 3 &&
+      form.getValues("availabilityType") === "SCHEDULED"
+    ) {
       const schedule = form.getValues("availabilitySchedule");
       if (!schedule?.days?.length || !schedule.startTime || !schedule.endTime) {
         toast.error("Choose the days and serving times for this item.");

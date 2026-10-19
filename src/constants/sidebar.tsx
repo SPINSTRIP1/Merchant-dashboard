@@ -25,6 +25,7 @@ export interface NavItem {
   /** Only the account owner sees it. */
   ownerOnly?: boolean;
   /** Name of the app in `apps` (src/constants) — the item is shown only while that app is on. */
+  /** Key of the app (src/constants `apps`) that must be switched on for this link to show. */
   app?: string;
 }
 
@@ -44,40 +45,84 @@ export const navigationSections: NavSection[] = [
   {
     title: "Apps",
     items: [
-      { name: "Menu", href: "/apps-tools/menu", icon: UtensilsCrossed, permission: "menu", app: "Menu" },
-      { name: "Places", href: "/apps-tools/places", icon: MapPin, permission: "places", app: "Places" },
+      {
+        name: "Restaurant",
+        href: "/apps-tools/menu",
+        icon: UtensilsCrossed,
+        permission: "menu",
+        app: "menu",
+      },
+      {
+        name: "Places",
+        href: "/apps-tools/places",
+        icon: MapPin,
+        permission: "places",
+        app: "places",
+      },
       {
         name: "Events",
         href: "/apps-tools/event-planner",
         icon: CalendarDays,
         permission: "events",
-        app: "Event Planner",
+        app: "events",
       },
-      { name: "Deals", href: "/apps-tools/deals", icon: Tag, permission: "deals", app: "Deals" },
+      {
+        name: "Deals",
+        href: "/apps-tools/deals",
+        icon: Tag,
+        permission: "deals",
+        app: "deals",
+      },
       {
         name: "Inventory",
         href: "/apps-tools/inventory",
         icon: Package,
         permission: "inventory",
-        app: "Inventory",
+        app: "inventory",
       },
-      { name: "Wallet", href: "/apps-tools/wallet", icon: Wallet, permission: "wallet", app: "Wallet" },
+      {
+        name: "Wallet",
+        href: "/apps-tools/wallet",
+        icon: Wallet,
+        permission: "wallet",
+        app: "wallet",
+      },
       {
         name: "Customers",
         href: "/apps-tools/customers",
         icon: Users,
         permission: "customers",
-        app: "Customers",
+        app: "customers",
       },
     ],
   },
   {
     title: "Business",
     items: [
-      { name: "Settlement", href: "/settlement", icon: Landmark, permission: "settlement" },
-      { name: "Billing", href: "/billing", icon: CreditCard, permission: "billing" },
-      { name: "Admin & Roles", href: "/admin", icon: ShieldCheck, ownerOnly: true },
-      { name: "Settings", href: "/settings", icon: Settings, permission: "settings" },
+      {
+        name: "Settlement",
+        href: "/settlement",
+        icon: Landmark,
+        permission: "settlement",
+      },
+      {
+        name: "Billing",
+        href: "/billing",
+        icon: CreditCard,
+        permission: "billing",
+      },
+      {
+        name: "Admin & Roles",
+        href: "/admin",
+        icon: ShieldCheck,
+        ownerOnly: true,
+      },
+      {
+        name: "Settings",
+        href: "/settings",
+        icon: Settings,
+        permission: "settings",
+      },
     ],
   },
 ];

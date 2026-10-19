@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -44,7 +45,13 @@ export default function SecurityPage() {
     <div>
       <Breadcrumb parent={{ label: "Settings", href: "/settings" }} current="Security" />
       <PageHeader title="Security" subtitle="Keep your account and payouts protected." />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div
+        className={
+          SHOW_SAMPLE_FEATURES ? "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" : "grid max-w-xl grid-cols-1 gap-4"
+        }
+      >
+        {/* Change password is simulated until the API supports it. */}
+        {SHOW_SAMPLE_FEATURES && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,6 +94,7 @@ export default function SecurityPage() {
             </Button>
           </form>
         </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}

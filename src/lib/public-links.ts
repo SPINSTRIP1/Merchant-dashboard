@@ -31,5 +31,3 @@ export function publicRestaurantUrl(merchantUserId: string | null | undefined, t
   return tableNumber ? `${base}?number=${encodeURIComponent(tableNumber)}` : base;
 }
 
-/** "Table 7" → "7"; any other label is used as-is (the public site caps it at 12 characters). */
-export const tableNumberFromLabel = (label: string) => label.replace(/^table\s*/i, "").trim().slice(0, 12) || label;

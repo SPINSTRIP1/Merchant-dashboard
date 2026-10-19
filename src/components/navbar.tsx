@@ -38,7 +38,7 @@ export default function Navbar({ toggle }: { toggle: () => void }) {
   const { user, logout } = useReduxAuth();
   const { activeApps } = useReduxApps();
   const { can, isOwner, roleLabel } = usePermissions();
-  const showOrders = can("menu") && activeApps.some((app) => app.name === "Menu");
+  const showOrders = can("menu") && activeApps.some((app) => app.key === "menu");
   const { notifications, unreadCount } = useNotifications();
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -187,7 +188,7 @@ export default function Places({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {places.map((place, i) => (
-            <PlaceCard key={place.id} place={place} tagline={placeTagline(place)} index={i} onEdit={onEdit} onDelete={onDelete} />
+            <PlaceCard key={place.id} place={place} tagline={SHOW_SAMPLE_FEATURES ? placeTagline(place) : undefined} index={i} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </div>
       )}

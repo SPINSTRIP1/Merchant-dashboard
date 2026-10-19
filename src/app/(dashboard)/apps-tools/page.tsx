@@ -19,6 +19,8 @@ import toast from "react-hot-toast";
 
 // Type for app with status
 type AppWithStatus = {
+  /** Stable id used for on/off state (see src/constants apps). */
+  key: string;
   name: string;
   description: string;
   amount?: number;
@@ -62,7 +64,7 @@ export default function Apps() {
   const selectedApp = filteredApps.find((app) => app.name === selectedName) ?? null;
 
   const handleToggle = (app: AppWithStatus) => {
-    toggleAppState(app.name);
+    toggleAppState(app.key);
     if (app.isActive) toast.success(`${app.name} deactivated`);
     else toast.success(`${app.name} activated — find it in your sidebar`);
   };

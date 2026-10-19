@@ -1,9 +1,10 @@
 "use client";
 
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { BarChart3, CalendarDays, Clock, FileText, MapPin, Pencil, PartyPopper, Trash2, Users, X } from "lucide-react";
+import { BarChart3, CalendarDays, Clock, FileText, Globe, MapPin, Pencil, PartyPopper, Trash2, Users, X } from "lucide-react";
 import { Event } from "../_schemas";
 import { fmtDate, formatAmount } from "@/utils";
 import { extractTimeFromDateTime } from "../_utils";
@@ -19,6 +20,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useDeleteEvent } from "@/hooks/use-event-extras";
+import PublicPreviewDialog from "@/components/public-preview-dialog";
+import { publicEventUrl } from "@/lib/public-links";
 
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -44,6 +47,7 @@ export default function DetailsModal({
 }) {
   const deleteEvent = useDeleteEvent();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   if (!event) return null;
 
   const location = [event.location, event.city, event.state].filter(Boolean).join(", ");
@@ -100,17 +104,23 @@ export default function DetailsModal({
                 <BarChart3 /> Sales and Registrations
               </Link>
             </Button>
+            <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+              <Globe /> Preview Public Page
+            </Button>
             <Button variant="outline" onClick={() => toast("Form Builder is coming soon.")}>
               <FileText /> Form Builder
             </Button>
             {event.status === "INACTIVE" ? (
-              <Button
-                variant="outline"
-                className="text-rose-500 hover:text-rose-600"
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2 /> Delete
-              </Button>
+              // Deleting is sample-only (no delete endpoint yet), so cancelled events show no action.
+              SHOW_SAMPLE_FEATURES ? (
+                <Button
+                  variant="outline"
+                  className="text-rose-500 hover:text-rose-600"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 /> Delete
+                </Button>
+              ) : null
             ) : (
               <Button
                 variant="outline"
@@ -183,6 +193,22 @@ export default function DetailsModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {event.id && (
+        <PublicPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          title={event.name}
+          url={publicEventUrl(event.id)}
+          kind="event"
+          id={event.id}
+          data={event}
+          notice={
+            event.status === "ACTIVE"
+              ? undefined
+              : "This event isn't live, so customers can't see it yet — this is how it will look once it's active."
+          }
+        />
+      )}
     </>
   );
 }

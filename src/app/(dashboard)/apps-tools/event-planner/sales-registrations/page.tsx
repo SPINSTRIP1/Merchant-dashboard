@@ -1,5 +1,8 @@
 "use client";
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
+import { useState } from "react";
 import { publicEventUrl } from "@/lib/public-links";
+import PublicPreviewDialog from "@/components/public-preview-dialog";
 import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,12 +18,14 @@ import Breadcrumb from "@/components/breadcrumb";
 import EmptyState from "@/components/empty-state";
 import StatCard from "@/components/stat-card";
 import ChartCard from "@/components/chart-card";
+import ReviewsList from "@/components/reviews-list";
 import { Button } from "@/components/ui/button";
 import { fmtDate, formatNaira } from "@/utils";
 
 function SalesAndRegistrationContent() {
   const id = useSearchParams().get("id");
   const { event, isLoading } = useEvent(id);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { stats } = useEventRegistrations({ eventId: id, limit: 1 });
 
   const totalTicketsSold = stats?.ticketTiers?.reduce((acc, t) => acc + t.sold, 0) ?? 0;
@@ -54,10 +59,8 @@ function SalesAndRegistrationContent() {
             Sales &amp; Registrations · {fmtDate(event.startDate)} · {event.city}, {event.state}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={publicEventUrl(event.id)} target="_blank" rel="noopener">
-            <Globe /> Public Page
-          </Link>
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+          <Globe /> Preview Public Page
         </Button>
       </div>
 
@@ -69,7 +72,9 @@ function SalesAndRegistrationContent() {
           icon={<Users />}
         />
         <StatCard index={1} accent label="Total Tickets Sales" value={totalTicketsSold.toLocaleString()} icon={<Ticket />} />
-        <StatCard index={2} sample label="Ticket Sales Via Deal" value={viaDeal.toLocaleString()} icon={<Tag />} />
+        {SHOW_SAMPLE_FEATURES && (
+          <StatCard index={2} sample label="Ticket Sales Via Deal" value={viaDeal.toLocaleString()} icon={<Tag />} />
+        )}
         <StatCard
           index={3}
           label="Sold Out Threshold"
@@ -111,6 +116,31 @@ function SalesAndRegistrationContent() {
       </div>
 
       <RegistrationTable eventId={id} eventName={event.name} />
+
+      <section className="mt-8">
+        <h2 className="mb-4 font-display text-base font-bold text-foreground">Reviews</h2>
+        <ReviewsList
+          source="events"
+          subjectId={event.id}
+          emptyDescription="Attendees can review this event on its public page after buying a ticket."
+        />
+      </section>
+      {event.id && (
+        <PublicPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          title={event.name}
+          url={publicEventUrl(event.id)}
+          kind="event"
+          id={event.id}
+          data={event}
+          notice={
+            event.status === "ACTIVE"
+              ? undefined
+              : "This event isn't live, so customers can't see it yet — this is how it will look once it's active."
+          }
+        />
+      )}
     </div>
   );
 }

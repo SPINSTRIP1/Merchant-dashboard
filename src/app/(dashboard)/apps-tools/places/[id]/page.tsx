@@ -24,7 +24,8 @@ import Breadcrumb from "@/components/breadcrumb";
 import StatCard from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePlace } from "@/hooks/use-places";
+import { usePlace, usePlaceFacilities } from "@/hooks/use-places";
+import PublicPreviewDialog from "@/components/public-preview-dialog";
 import { useSubmitPlaceForReview } from "@/hooks/use-place-extras";
 import { cn } from "@/lib/utils";
 import { formatNaira } from "@/utils";
@@ -43,7 +44,7 @@ const TABS = [
   { value: "bookings", label: "Bookings & Reservations" },
   { value: "activities", label: "Activities & Experiences" },
   { value: "reviews", label: "Reviews" },
-] as const;
+];
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   PUBLISHED: { label: "Published", className: "text-emerald-600 dark:text-emerald-400" },
@@ -56,6 +57,8 @@ export default function Page() {
   const { id } = useParams();
   const { place, isLoading } = usePlace(id as string);
   const submitForReview = useSubmitPlaceForReview();
+  const { facilities: previewFacilities } = usePlaceFacilities(place?.id);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
   const [bookingView, setBookingView] = React.useState<"bookings" | "appointments">("bookings");
   const router = useRouter();
   const pathname = usePathname();
@@ -116,10 +119,8 @@ export default function Page() {
               <Send /> {submitForReview.isPending ? "Sending…" : "Submit for Review"}
             </Button>
           )}
-          <Button variant="outline" asChild>
-            <Link href={publicPlaceUrl(place.id)} target="_blank" rel="noopener">
-              <Globe /> Preview Public Page
-            </Link>
+          <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+            <Globe /> Preview Public Page
           </Button>
         </div>
       </div>
@@ -172,7 +173,7 @@ export default function Page() {
           </Link>
         </Button>
         <Button variant="outline" size="sm" onClick={() => setTab("reviews")}>
-          <MessageSquare /> Manage Reviews
+          <MessageSquare /> Reviews
         </Button>
         <Button variant="outline" size="sm" onClick={() => setTab("bookings")}>
           <ClipboardList /> Manage Bookings
@@ -213,6 +214,22 @@ export default function Page() {
           <Reviews placeId={place.id} />
         </TabsContent>
       </Tabs>
+      {place.id && (
+        <PublicPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          title={place.name}
+          url={publicPlaceUrl(place.id)}
+          kind="place"
+          id={place.id}
+          data={{ ...place, facilities: previewFacilities }}
+          notice={
+            place.status === "PUBLISHED"
+              ? undefined
+              : "Customers can't see this place yet — this is how it will look once SpinStrip publishes it."
+          }
+        />
+      )}
     </div>
   );
 }

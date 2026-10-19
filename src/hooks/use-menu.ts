@@ -5,13 +5,9 @@ import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
 import { handleAxiosError } from "@/lib/api/handle-axios-error";
 import { useServerPagination } from "@/hooks/use-server-pagination";
-import { useReduxAuth } from "@/hooks/use-redux-auth";
-import { useKyc } from "@/hooks/use-kyc";
-import { useMenuItemSales } from "@/hooks/use-menu-orders";
+import { useMenuItemsSales } from "@/hooks/use-menu-analytics";
 import type { Menu, MenuStatus } from "@/app/(dashboard)/apps-tools/menu/_schemas";
 import { MENU_QUERY_KEY } from "@/app/(dashboard)/apps-tools/menu/_constants";
-import { mockResponse } from "@/mocks/utils";
-import { SAMPLE_PUBLIC_MENU } from "@/mocks/public-menu";
 import type { AxiosError } from "axios";
 
 /** Built-in menu categories; merchants can add their own on top of these. */
@@ -122,27 +118,35 @@ export interface TopMenuItem {
 }
 
 /**
- * Best-selling menu items for a month ("YYYY-MM"), ranked by paid units sold — counted from the
- * merchant's menu orders (`GET /menu/orders`, see use-menu-orders.ts).
+ * Best-selling menu items for a month ("YYYY-MM"), ranked by the units sold the API reports per item
+ * (`GET /menu/analytics/items/{itemId}` for the month).
  */
 export function useTopMenus({ month }: { month: string }) {
   const { data: items, isLoading: itemsLoading } = useAllMenuItems();
-  const { sales, isLoading: salesLoading } = useMenuItemSales(month);
+  const range = useMemo(() => {
+    const [year, m] = month.split("-").map(Number);
+    return { from: new Date(year, m - 1, 1), to: new Date(year, m, 0, 23, 59, 59, 999) };
+  }, [month]);
+  const ids = useMemo(() => (items ?? []).map((item) => item.id).filter((id): id is string => !!id), [items]);
+  const { sales, isLoading: salesLoading } = useMenuItemsSales(ids, range);
 
   const topMenus = useMemo<TopMenuItem[]>(
     () =>
-      (items ?? [])
-        .filter((m) => m.id && sales.get(m.id))
-        .map((m) => ({
-          id: m.id!,
-          name: m.name,
-          image: m.images?.[0],
-          price: m.price,
-          orderCount: sales.get(m.id!) ?? 0,
-        }))
-        .sort((a, b) => b.orderCount - a.orderCount)
-        .slice(0, 5),
-    [items, sales]
+      sales
+        .filter((sale) => sale.quantitySold > 0)
+        .sort((a, b) => b.quantitySold - a.quantitySold)
+        .slice(0, 5)
+        .map((sale) => {
+          const item = items?.find((i) => i.id === sale.itemId);
+          return {
+            id: sale.itemId,
+            name: item?.name ?? sale.name,
+            image: item?.images?.[0],
+            price: item?.price ?? 0,
+            orderCount: sale.quantitySold,
+          };
+        }),
+    [sales, items]
   );
 
   return { topMenus, isLoading: itemsLoading || salesLoading };
@@ -195,70 +199,3 @@ export function useMenuItemActions() {
   return { updateStatus, duplicate, toggleHidden, remove };
 }
 
-export interface PublicMenuItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  tag?: string;
-  image?: string;
-  availability: string;
-  bestSeller: boolean;
-}
-
-const AVAILABILITY_LABELS: Record<string, string> = {
-  ALWAYS_AVAILABLE: "Always available",
-  SCHEDULED: "Specific days/time",
-  UNAVAILABLE: "Unavailable",
-};
-
-/**
- * Data for the public menu page (`/preview/menu`).
- *
- * There is no public menu endpoint yet. When the merchant is signed in (previewing their own page)
- * this shows their real available, visible items and business name. Anyone else — e.g. a diner who
- * scanned a table QR — sees SAMPLE DATA (`isSample: true`) until the backend exposes a public menu.
- */
-export function usePublicMenu() {
-  const { isAuthenticated, user } = useReduxAuth();
-  const { kyc } = useKyc({ enabled: isAuthenticated });
-
-  const { data, isLoading } = useQuery<PublicMenuItem[] | null>({
-    queryKey: ["public-menu", isAuthenticated],
-    queryFn: async () => {
-      if (!isAuthenticated) return mockResponse(null);
-      try {
-        const response = await api.get(`${SERVER_URL}/menu/menu-items`, {
-          params: { page: 1, limit: 100, status: "AVAILABLE" },
-        });
-        return ((response.data.data?.data ?? []) as Menu[])
-          .filter((m) => m.status === "AVAILABLE" && !m.isHidden)
-          .map((m) => ({
-            id: m.id!,
-            name: m.name,
-            description: m.description,
-            price: m.price,
-            category: categoryLabel(m.category),
-            tag: m.tag || undefined,
-            image: m.images?.[0],
-            availability: AVAILABILITY_LABELS[m.availabilityType] ?? "Always available",
-            bestSeller: m.tag?.toLowerCase() === "best seller",
-          }));
-      } catch (error) {
-        console.log("Error fetching menu for preview:", error);
-        return null;
-      }
-    },
-  });
-
-  const isSample = !data;
-  return {
-    business: isSample
-      ? SAMPLE_PUBLIC_MENU.business
-      : kyc?.companyName || user?.fullName || "Your restaurant",
-    items: data ?? SAMPLE_PUBLIC_MENU.items,
-    isSample,
-    isLoading,
-  };
-}

@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Building2, Check, Globe, Mail, MapPin, Pencil, Phone, Plus, X } from "lucide-react";
@@ -159,9 +160,13 @@ export default function FacilityManagement({ place }: { place: SinglePlace | und
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-display text-base font-bold text-foreground">{place.name}</h3>
-                <SampleDataBadge label="Tagline saved on this device" className="shrink-0" />
+                {SHOW_SAMPLE_FEATURES && (
+                  <SampleDataBadge label="Tagline saved on this device" className="shrink-0" />
+                )}
               </div>
-              {place.id && <TaglineEditor placeId={place.id} metadata={place.metadata} saved={placeTagline(place)} />}
+              {SHOW_SAMPLE_FEATURES && place.id && (
+                <TaglineEditor placeId={place.id} metadata={place.metadata} saved={placeTagline(place)} />
+              )}
               {place.description && (
                 <p className="mt-2 line-clamp-3 text-xs text-muted-foreground">{place.description}</p>
               )}

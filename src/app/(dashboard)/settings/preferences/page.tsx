@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import { motion } from "framer-motion";
 import Breadcrumb from "@/components/breadcrumb";
 import PageHeader from "@/components/page-header";
@@ -76,6 +77,7 @@ export default function PreferencesPage() {
       <Breadcrumb parent={{ label: "Settings", href: "/settings" }} current="Preferences" />
       <PageHeader title="Preferences" subtitle="Choose how SpinStrip keeps you updated and settles your money." />
       <AppearanceCard />
+      {SHOW_SAMPLE_FEATURES && (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,6 +103,7 @@ export default function PreferencesPage() {
           ))}
         </ul>
       </motion.div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDownToLine, ArrowUpFromLine, CalendarClock, ChevronRight, CreditCard, Landmark, TrendingUp, Wallet as WalletIcon } from "lucide-react";
@@ -53,7 +54,8 @@ export default function Wallet() {
   // The wallet response shape isn't typed yet: use its balance/account fields when present.
   const wallet = (Array.isArray(wallets) ? wallets[0] : wallets) as Record<string, unknown> | undefined;
   const realBalance = pickNumber(wallet, ["balance", "availableBalance", "available_balance", "ledgerBalance"]);
-  const balance = realBalance ?? SAMPLE_WALLET_BALANCE;
+  // Real balance only; the sample fallback is for local previews (SHOW_SAMPLE_FEATURES).
+  const balance = realBalance ?? (SHOW_SAMPLE_FEATURES ? SAMPLE_WALLET_BALANCE : null);
   const accountNumber = pickString(wallet, ["accountNumber", "account_number", "virtualAccountNumber"]);
   const bankName = pickString(wallet, ["bankName", "bank_name"]);
 
@@ -89,11 +91,11 @@ export default function Wallet() {
                   <span className="flex items-center gap-2 text-sm text-white/80">
                     <WalletIcon className="h-4 w-4" /> Available Balance
                   </span>
-                  {realBalance === null && (
+                  {SHOW_SAMPLE_FEATURES && realBalance === null && (
                     <SampleDataBadge className="border-white/40 bg-white/15 text-white" />
                   )}
                 </div>
-                <p className="mt-3 font-display text-4xl font-extrabold tracking-tight">{formatNaira(balance)}</p>
+                <p className="mt-3 font-display text-4xl font-extrabold tracking-tight">{balance === null ? "—" : formatNaira(balance)}</p>
                 <div className="mt-6 flex flex-wrap gap-2">
                   <button
                     type="button"

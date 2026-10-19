@@ -1,4 +1,5 @@
 import PaginationButton from "@/components/pagination-button";
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import SearchBar from "@/components/search-bar";
 import React, { useMemo, useState } from "react";
 import PerformingDeals from "./perfoming-deals";
@@ -145,7 +146,11 @@ export default function DealsTable() {
   const performance = useDealsPerformance(items);
 
   return (
-    <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <section
+      className={
+        SHOW_SAMPLE_FEATURES ? "grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_300px]" : "grid grid-cols-1 gap-5"
+      }
+    >
       <div className="min-w-0">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <SearchBar
@@ -225,11 +230,13 @@ export default function DealsTable() {
                   <TableHead>Discount</TableHead>
                   <TableHead>Threshold</TableHead>
                   <TableHead>Validity</TableHead>
-                  <TableHead>
-                    <span className="inline-flex items-center gap-1">
-                      Redemptions <SampleDataBadge label="Sample" />
-                    </span>
-                  </TableHead>
+                  {SHOW_SAMPLE_FEATURES && (
+                    <TableHead>
+                      <span className="inline-flex items-center gap-1">
+                        Redemptions <SampleDataBadge label="Sample" />
+                      </span>
+                    </TableHead>
+                  )}
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -266,9 +273,11 @@ export default function DealsTable() {
                       <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                         {fmtDate(deal.startDate)} → {fmtDate(deal.endDate)}
                       </TableCell>
-                      <TableCell className="font-semibold text-foreground">
-                        {(performance[deal.id ?? ""]?.redemptions ?? 0).toLocaleString()}
-                      </TableCell>
+                      {SHOW_SAMPLE_FEATURES && (
+                        <TableCell className="font-semibold text-foreground">
+                          {(performance[deal.id ?? ""]?.redemptions ?? 0).toLocaleString()}
+                        </TableCell>
+                      )}
                       <TableCell>
                         {isActive || deal.status === "PAUSED" ? (
                           <DropdownMenu>
@@ -333,15 +342,17 @@ export default function DealsTable() {
                                 <Play className="mr-2 h-4 w-4" /> Activate
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => {
-                                setSelectedItem(deal);
-                                setAction("insights");
-                              }}
-                            >
-                              <BarChart3 className="mr-2 h-4 w-4" /> Insights
-                            </DropdownMenuItem>
+                            {SHOW_SAMPLE_FEATURES && (
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setSelectedItem(deal);
+                                  setAction("insights");
+                                }}
+                              >
+                                <BarChart3 className="mr-2 h-4 w-4" /> Insights
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="cursor-pointer text-rose-500 focus:text-rose-500"
@@ -369,7 +380,7 @@ export default function DealsTable() {
         </div>
       </div>
 
-      <PerformingDeals deals={items} performance={performance} />
+      {SHOW_SAMPLE_FEATURES && <PerformingDeals deals={items} performance={performance} />}
 
       <DealsModal
         isOpen={action === "add" || action === "edit"}

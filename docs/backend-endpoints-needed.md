@@ -46,7 +46,12 @@ flow are wired but weren't exercised: the test wallet isn't set up for PINs (que
 | Wallet: withdraw to a settlement account | `POST /payouts` (BANK_TRANSFER) → `POST /payouts/{id}/authorize { authToken, walletPin }` | `useWithdraw` |
 | Wallet: set / reset the transaction PIN | `GET /pin/status`, `POST /pin/otp`, `POST /pin`, `PATCH /pin` | `useWalletPin` |
 | Top bar notifications | `GET /notifications` | `useNotifications` |
-| Menu → Table Analytics (orders, revenue, items, top dish per table number) and Top Menus (paid units per month) | `GET /menu/orders` | `useTableOrderStats`, `useTopMenus` |
+| Menu → Tables & QR: create, edit, delete tables (server-assigned numbers; QR encodes the number) | `GET` / `POST /menu/tables`, `PATCH` / `DELETE /menu/tables/{id}` (2026-10-19) | `useMenuTables` |
+| Menu → Table Analytics: revenue, average order, items sold; per-table guests, paid orders, items, revenue; date filter; a table's orders | `GET /menu/analytics`, `GET /menu/analytics/tables`, `GET /menu/orders?tableNumber=` | `useMenuAnalytics`, `useTableAnalytics`, `useTableOrders` |
+| Reviews: Menu → Reviews tab, place → Reviews tab, event → Sales & Registrations (paged, newest first) | `GET /menu/reviews`, `GET /places/reviews?placeId=`, `GET /events/reviews?eventId=` | `useReviews` |
+| Top Menus (paid units per month; PROCESSING counts as paid) | `GET /menu/orders` | `useTopMenus` |
+| Public site: table orders carry the real table (`tableId` + number), matched via the public table list | `GET /menu/public/tables`, `POST /menu/public/orders` | `usePublicTables` (places repo) |
+| Public site: guests review a place, an event or a restaurant (place / event / restaurant pages, the event success page and a paid order's page). Posted straight to each service with the checkout email; ineligible guests see the service's 403 reason | `POST /places/{id}/reviews`, `POST /events/{id}/reviews`, `POST /menu/reviews` | `useSubmitReview` (places repo) |
 
 **Available, not wired yet:**
 
@@ -112,26 +117,28 @@ Waiters are covered (Part A). Still missing:
 | Confirm the balance and account-number field names on `GET /wallet` (we read `balance` / `availableBalance`, `accountNumber`, `bankName`) | existing endpoint |
 | A merchant "pay me" QR or link for the POS popup (it shows a static image today) | `GET /wallet/payment-link` → `{ url, qrPayload }` |
 
-### B5. Dining tables and seating (P2)
+### B5. Dining tables (P2)
 
-Orders already carry a free-text `tableNumber`, which is enough for table QR codes
-(`places.spinstrip.com/restaurants/{merchantUserId}?number=7`) and per-table order lists. Still missing:
+Tables, table analytics and reviews shipped on 2026-10-19 and are wired (Part A). Open points (the review ones apply to places and events too):
 
-| Need | Suggested endpoint |
+| Need | Notes |
 |---|---|
-| A saved list of the restaurant's tables (label, seats), so QR codes and the floor plan survive a reload | `GET` / `POST` / `DELETE /menu/tables` |
-| Optional: sales per menu item / table for a date range server-side (the dashboard counts the latest 500 orders itself) | `GET /menu/orders/summary?from&to` |
-
-**Hook to swap:** `use-menu-tables.ts`, `useTopMenus`.
+| What table bank `accounts` are for (`POST /menu/tables` accepts them, resolved with Paystack) | Not shown in the dashboard until we know whether they receive that table's payments or waiter tips |
+| Table numbering after deletes | A deleted test table had number 1; does the next table reuse it? |
+| Reviews: reviewer name and an average | Rows are `{ id, email, userId, stars, comment, createdAt }` plus `place` / `event` (verified with test reviews on all three services). The dashboard shows the email; a `customerName` and an average rating / star breakdown from the API would let us show more without computing it |
+| Reviews through the gateway without sign-in | Guest `POST …/reviews` returns 401 at the gateway, so the public site posts straight to the service hosts (which accept guests). A public gateway route would let it use one host |
+| Public list of reviews | Every `GET …/reviews` needs merchant auth, so the public pages can collect reviews but can't show them. Needed: public `GET /places/public/{id}/reviews`, `GET /events/public/{id}/reviews`, `GET /menu/public/reviews?merchantUserId=` with an average |
+| "Already reviewed" | No way to tell a guest has reviewed; the site remembers it on the phone. Does a second review from the same email replace the first, or get rejected? |
+| Analytics for every item in one call | Top Menus calls `GET /menu/analytics/items/{id}` once per dish; an all-items breakdown (or top-N) endpoint would replace that |
 
 ### B6. Places (P2)
 
 | Need | Suggested endpoint |
 |---|---|
 | **Bug:** `PATCH /places/{id}` returns 200 but ignores `metadata` (JSON object, JSON string or multipart), so amenities can't be edited and there's nowhere to store a tagline | persist `metadata` on update, or add a `tagline` field |
+| **Bug:** `PATCH /places/facilities/{id}` returns 200 but ignores `accessType` and `isGated`, so a facility can't be switched between free and paid after creation (verified on staging, 2026-10-19). The public site now decides free vs paid from the facility's active rates | persist `accessType` / `isGated` on update |
 | Change a customer booking's status (e.g. COMPLETED after check-out) — only cancel exists | `PATCH /places/bookings/{id} { status }` |
 | Delete a mistakenly recorded walk-in visitor | `DELETE /places/visitors/{id}` |
-| Reviews for a place (dashboard and public site) | `GET /places/{id}/reviews`, public `GET /places/public/{id}/reviews` |
 | Following a place (`POST /followers/follow` follows a *user*; is following the place's merchant enough?) | confirm, or `POST /places/public/{id}/follow` |
 | `RESTAURANT` place type is in live data and the API, but the dashboard's create form doesn't offer it | frontend fix; please confirm the full enum |
 
@@ -141,8 +148,19 @@ Orders already carry a free-text `tableNumber`, which is enough for table QR cod
 |---|---|
 | Delete an event (only status changes exist) | `DELETE /events/{id}` |
 | Tickets sold via a deal | `viaDeal` on registrations, or a count on event stats |
-| Event reviews / posts on the public page | public `GET /events/public/{id}/reviews` |
+| Posts on the public event page | needs a product spec first |
 | Form Builder (custom registration questions, `formId`) | needs a product spec first |
+
+### B7b. Checkout contact details (P2)
+
+The public site's checkouts now ask only for **full name, email and phone**. The frontend splits the name
+into `firstName` / `lastName` and copies the email into `confirmEmail`.
+
+| Need | Suggested change |
+|---|---|
+| Event registration rejects `phone` ("property phone should not exist"), so the phone a guest enters isn't saved | add optional `phone` to `RegisterEventDto` (`POST /events/public/{id}/register`) |
+| `confirmEmail` is redundant now that the form asks for the email once | make `confirmEmail` optional on event registration and facility booking |
+| Single-word names fail (`lastName should not be empty`); the form asks for first and last name | optional: accept a single `fullName` like menu orders' `customerName` |
 
 ### B8. Deals (P2)
 

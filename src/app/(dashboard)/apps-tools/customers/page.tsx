@@ -25,19 +25,25 @@ import SampleDataBadge from "@/components/sample-data-badge";
 import { getInitials } from "@/components/sidebar-content";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+// import { cn } from "@/lib/utils";
 
 const SERVICE_OPTIONS: { value: CustomerService | "All"; label: string }[] = [
   { value: "All", label: "All Services" },
-  { value: "MENU", label: "Menu" },
+  { value: "MENU", label: "Restaurant" },
   { value: "EVENTS", label: "Events" },
   { value: "PLACES", label: "Places" },
 ];
 
 const SORT_OPTIONS: { value: CustomerSort; label: string }[] = [
   { value: "totalCount", label: "Total Visits" },
-  { value: "menuCount", label: "Menu Orders" },
+  { value: "menuCount", label: "Restaurant Orders" },
   { value: "eventsCount", label: "Events Attended" },
   { value: "placesCount", label: "Places Visits" },
 ];
@@ -78,7 +84,7 @@ export default function Customers() {
         "Name",
         "Email Address",
         "Phone",
-        "Menu visits",
+        "Restaurant visits",
         "Event visits",
         "Place visits",
         "Total visits",
@@ -93,15 +99,24 @@ export default function Customers() {
         c.placesCount,
         c.totalCount,
         c.lastPatronizedAt ? fmtDate(c.lastPatronizedAt) : "",
-      ])
+      ]),
     );
 
   const cell = (count: number, amount: number | undefined) =>
-    view === "spend" ? (amount ? formatNaira(amount) : "—") : count ? count.toLocaleString() : "—";
+    view === "spend"
+      ? amount
+        ? formatNaira(amount)
+        : "—"
+      : count
+        ? count.toLocaleString()
+        : "—";
 
   return (
     <section>
-      <Breadcrumb parent={{ label: "Tools", href: "/apps-tools" }} current="Customers" />
+      <Breadcrumb
+        parent={{ label: "Tools", href: "/apps-tools" }}
+        current="Customers"
+      />
       <PageHeader
         title={
           <>
@@ -115,7 +130,11 @@ export default function Customers() {
         }
         subtitle="Everyone who has ordered from your menu, events or places."
         actions={
-          <Button variant="outline" onClick={handleExport} disabled={!currentItems.length}>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={!currentItems.length}
+          >
             <FileSpreadsheet /> Export Sheet
           </Button>
         }
@@ -165,7 +184,7 @@ export default function Customers() {
         </Select>
         <div className="ml-auto flex items-center gap-2">
           {view === "spend" && <SampleDataBadge label="Sample spend" />}
-          <div className="flex rounded-full border bg-card p-1" role="tablist" aria-label="Show visits or spend">
+          {/* <div className="flex rounded-full border bg-card p-1" role="tablist" aria-label="Show visits or spend">
             {(["visits", "spend"] as View[]).map((v) => (
               <button
                 key={v}
@@ -181,7 +200,7 @@ export default function Customers() {
                 {v}
               </button>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -209,7 +228,7 @@ export default function Customers() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email Address</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Menu</TableHead>
+                <TableHead>Restaurant</TableHead>
                 <TableHead>Events</TableHead>
                 <TableHead>Places</TableHead>
                 <TableHead>Total</TableHead>
@@ -226,17 +245,33 @@ export default function Customers() {
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                           {getInitials(item.name ?? item.email ?? "")}
                         </span>
-                        <span className="font-semibold text-foreground">{item.name || "—"}</span>
+                        <span className="font-semibold text-foreground">
+                          {item.name || "—"}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{item.email || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.phone || "—"}</TableCell>
-                    <TableCell className="text-foreground">{cell(item.menuCount, s?.menu)}</TableCell>
-                    <TableCell className="text-foreground">{cell(item.eventsCount, s?.events)}</TableCell>
-                    <TableCell className="text-foreground">{cell(item.placesCount, s?.places)}</TableCell>
-                    <TableCell className="font-display font-bold text-primary">{cell(item.totalCount, s?.total)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.email || "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.phone || "—"}
+                    </TableCell>
+                    <TableCell className="text-foreground">
+                      {cell(item.menuCount, s?.menu)}
+                    </TableCell>
+                    <TableCell className="text-foreground">
+                      {cell(item.eventsCount, s?.events)}
+                    </TableCell>
+                    <TableCell className="text-foreground">
+                      {cell(item.placesCount, s?.places)}
+                    </TableCell>
+                    <TableCell className="font-display font-bold text-primary">
+                      {cell(item.totalCount, s?.total)}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {item.lastPatronizedAt ? fmtDate(item.lastPatronizedAt) : "—"}
+                      {item.lastPatronizedAt
+                        ? fmtDate(item.lastPatronizedAt)
+                        : "—"}
                     </TableCell>
                   </TableRow>
                 );
@@ -246,7 +281,11 @@ export default function Customers() {
         )}
         {!isLoading && totalPages > 1 && (
           <div className="border-t">
-            <PaginationButton currentPage={currentPage} onPageChange={handlePageChange} totalPages={totalPages} />
+            <PaginationButton
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
+              totalPages={totalPages}
+            />
           </div>
         )}
       </div>

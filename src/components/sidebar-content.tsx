@@ -46,11 +46,11 @@ export default function SidebarContent({
   const layoutGroupId = useId();
 
   const sections = useMemo(() => {
-    const activeAppNames = new Set(activeApps.map((app) => app.name));
+    const activeAppKeys = new Set<string>(activeApps.map((app) => app.key));
     const visible = (item: NavItem) =>
       (!item.ownerOnly || isOwner) &&
       (!item.permission || can(item.permission)) &&
-      (!item.app || activeAppNames.has(item.app));
+      (!item.app || activeAppKeys.has(item.app));
 
     return navigationSections
       .map((section) => ({ ...section, items: section.items.filter(visible) }))

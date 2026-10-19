@@ -1,6 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "./index";
 import { apps as constantsApps } from "@/constants";
+import { resolveAppActive } from "./slices/appsSlice";
 
 // Auth selectors
 export const selectAuth = (state: RootState) => state.auth;
@@ -22,7 +23,7 @@ export const selectCategoryFilter = (state: RootState) =>
 export const selectActiveApps = createSelector(
   [selectAppsState],
   (appsState) => {
-    return constantsApps.filter((app) => appsState[app.name].isActive);
+    return constantsApps.filter((app) => resolveAppActive(appsState, app));
   }
 );
 
@@ -32,7 +33,7 @@ export const selectAppsWithStatus = createSelector(
   (appsState) => {
     return constantsApps.map((app) => ({
       ...app,
-      isActive: appsState[app.name].isActive || false,
+      isActive: resolveAppActive(appsState, app),
     }));
   }
 );

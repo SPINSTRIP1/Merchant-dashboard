@@ -3,13 +3,20 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { ConciergeBell, Plus, ShieldCheck, Smartphone, Trash2, UserCog } from "lucide-react";
+import {
+  ConciergeBell,
+  Plus,
+  ShieldCheck,
+  Smartphone,
+  Trash2,
+  UserCog,
+} from "lucide-react";
 import PageHeader from "@/components/page-header";
 import EmptyState from "@/components/empty-state";
-import SampleDataBadge from "@/components/sample-data-badge";
+// import SampleDataBadge from "@/components/sample-data-badge";
 import { getInitials } from "@/components/sidebar-content";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+// import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -20,14 +27,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useReduxAuth } from "@/hooks/use-redux-auth";
-import { useAdminOps, useWaiters, type TeamMember, type TeamRole } from "@/hooks/use-team";
-import { PERMISSIONS } from "@/lib/permissions";
-import { cn } from "@/lib/utils";
+import { useWaiters, type TeamMember, type TeamRole } from "@/hooks/use-team";
+// import { PERMISSIONS } from "@/lib/permissions";
+// import { cn } from "@/lib/utils";
 import { fmtDate } from "@/utils";
 import AddMemberDialog from "./_components/add-member-dialog";
 import ManageMemberDialog from "./_components/manage-member-dialog";
 
-const PERMISSION_LABELS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, p.label]));
+// const PERMISSION_LABELS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, p.label]));
 
 function RolePill({ role }: { role: "owner" | TeamRole }) {
   if (role === "owner")
@@ -70,7 +77,13 @@ function MemberHeader({ member }: { member: TeamMember }) {
   );
 }
 
-const RemoveButton = ({ member, onClick }: { member: TeamMember; onClick: () => void }) => (
+const RemoveButton = ({
+  member,
+  onClick,
+}: {
+  member: TeamMember;
+  onClick: () => void;
+}) => (
   <button
     type="button"
     onClick={onClick}
@@ -81,11 +94,21 @@ const RemoveButton = ({ member, onClick }: { member: TeamMember; onClick: () => 
   </button>
 );
 
-function SectionHeading({ title, hint, badge }: { title: string; hint: string; badge?: React.ReactNode }) {
+function SectionHeading({
+  title,
+  hint,
+  badge,
+}: {
+  title: string;
+  hint: string;
+  badge?: React.ReactNode;
+}) {
   return (
     <div className="mb-3 mt-8 flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+        <h2 className="font-display text-lg font-bold text-foreground">
+          {title}
+        </h2>
         <p className="text-xs text-muted-foreground">{hint}</p>
       </div>
       {badge}
@@ -96,26 +119,29 @@ function SectionHeading({ title, hint, badge }: { title: string; hint: string; b
 export default function AdminRolesPage() {
   const { user } = useReduxAuth();
   const { waiters, isLoading: waitersLoading, removeWaiter } = useWaiters();
-  const { admins, isLoading: adminsLoading, updateAdmin, removeAdmin } = useAdminOps();
+  // const { admins, isLoading: adminsLoading, updateAdmin, removeAdmin } = useAdminOps();
   const [adding, setAdding] = useState<TeamRole | null>(null);
   const [managing, setManaging] = useState<TeamMember | null>(null);
   const [removing, setRemoving] = useState<TeamMember | null>(null);
 
-  const toggleActive = async (member: TeamMember, active: boolean) => {
-    try {
-      await updateAdmin.mutateAsync({ id: member.id, active });
-      toast.success(active ? `${member.name} can sign in again` : `${member.name} has been deactivated`);
-    } catch {
-      toast.error("Could not update team member");
-    }
-  };
+  // const toggleActive = async (member: TeamMember, active: boolean) => {
+  //   try {
+  //     await updateAdmin.mutateAsync({ id: member.id, active });
+  //     toast.success(active ? `${member.name} can sign in again` : `${member.name} has been deactivated`);
+  //   } catch {
+  //     toast.error("Could not update team member");
+  //   }
+  // };
 
-  const isRemoving = removeWaiter.isPending || removeAdmin.isPending;
+  const isRemoving = removeWaiter.isPending;
+
+  // || removeAdmin.isPending;
   const confirmRemove = async () => {
     if (!removing) return;
     try {
-      if (removing.role === "waiter") await removeWaiter.mutateAsync(removing.id);
-      else await removeAdmin.mutateAsync(removing.id);
+      if (removing.role === "waiter")
+        await removeWaiter.mutateAsync(removing.id);
+      // else await removeAdmin.mutateAsync(removing.id);
       toast.success(`${removing.name} removed from your team`);
       setRemoving(null);
     } catch (error) {
@@ -144,12 +170,18 @@ export default function AdminRolesPage() {
         <div className="flex items-start gap-3">
           <Avatar name={user?.fullName} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-foreground">{user?.fullName}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+            <p className="truncate font-semibold text-foreground">
+              {user?.fullName}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {user?.email}
+            </p>
           </div>
           <RolePill role="owner" />
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">Full access to every section, billing and team management.</p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Full access to every section, billing and team management.
+        </p>
       </motion.div>
 
       <SectionHeading
@@ -187,21 +219,27 @@ export default function AdminRolesPage() {
             >
               <MemberHeader member={member} />
               <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Smartphone className="h-3.5 w-3.5" /> Waiter app only — no dashboard access.
+                <Smartphone className="h-3.5 w-3.5" /> Waiter app only — no
+                dashboard access.
               </p>
               <div className="mt-4 flex items-center gap-2 border-t pt-4">
                 <span className="text-[11px] text-muted-foreground">
-                  {member.createdAt ? `Added ${fmtDate(member.createdAt)}` : "Active waiter"}
+                  {member.createdAt
+                    ? `Added ${fmtDate(member.createdAt)}`
+                    : "Active waiter"}
                 </span>
                 <span className="ml-auto" />
-                <RemoveButton member={member} onClick={() => setRemoving(member)} />
+                <RemoveButton
+                  member={member}
+                  onClick={() => setRemoving(member)}
+                />
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
-      <SectionHeading
+      {/* <SectionHeading
         title="Admin Operations"
         hint="Staff who sign in to this dashboard and see only the sections you choose."
         badge={<SampleDataBadge label="Sample — not saved yet" />}
@@ -265,7 +303,7 @@ export default function AdminRolesPage() {
             </motion.div>
           ))}
         </div>
-      )}
+      )} */}
 
       <AddMemberDialog
         key={adding ?? "closed"}
@@ -275,7 +313,10 @@ export default function AdminRolesPage() {
       />
       <ManageMemberDialog member={managing} onClose={() => setManaging(null)} />
 
-      <Dialog open={!!removing} onOpenChange={(open) => !open && setRemoving(null)}>
+      <Dialog
+        open={!!removing}
+        onOpenChange={(open) => !open && setRemoving(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remove {removing?.name}?</DialogTitle>
@@ -289,7 +330,11 @@ export default function AdminRolesPage() {
             <Button variant="outline" onClick={() => setRemoving(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmRemove} disabled={isRemoving}>
+            <Button
+              variant="destructive"
+              onClick={confirmRemove}
+              disabled={isRemoving}
+            >
               {isRemoving ? "Removing…" : "Remove"}
             </Button>
           </DialogFooter>

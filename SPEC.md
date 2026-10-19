@@ -68,6 +68,13 @@ the base URL is `NEXT_PUBLIC_PUBLIC_SITE_URL` (default `https://places.spinstrip
 | `/discover` | Discover: published places, live events and restaurants (derived from public menu items grouped by merchant). Real data; cards open the public site |
 | `/preview/*` | `next.config.ts` redirect (307) to the same path on the public site, query string kept; `/preview/menu` without `id` → public home |
 
+Merchant previews don't navigate away: `PublicPreviewDialog` embeds the public page with
+`?merchantPreview=1`. The public site (`src/lib/merchant-preview.ts` there) posts
+`{ type: "spinstrip:preview-ready", kind: "place" | "event", id }` to the dashboard origin; the dialog
+answers with `{ type: "spinstrip:preview-data", kind, id, data }` (the merchant's copy), which the page
+uses only when the public API can't return the listing (draft / unpublished). Allowed dashboard origins:
+`https://merchant.spinstrip.com`, localhost, plus `NEXT_PUBLIC_DASHBOARD_ORIGINS` on the public site.
+
 ### Auth routes
 
 `/login`, `/register`, `/otp-verification`, `/forgot-password`, `/reset-password`
@@ -393,7 +400,7 @@ Real API hooks:
 | `use-inventory.ts` | `useInventoryStats`, `useInventoryProducts`, `useInventoryItem` |
 | `use-catalogs.ts` | `useCatalogs`; types `Catalog`, `CatalogCategory` |
 | `use-deals.ts` | `useDealSubscription`, `useDealStats`, `useDealCampaigns`, `useActiveDeals` |
-| `use-menu.ts` | `useMenuItems`, `useMenuItemsCount`, `useFeaturedMenuItems`, `useMenuCategories`, `useMenuItemActions`, `useTopMenus` (order counts sample), `usePublicMenu` (sample when signed out) |
+| `use-menu.ts` | `useMenuItems`, `useMenuItemsCount`, `useFeaturedMenuItems`, `useMenuCategories`, `useMenuItemActions`, `useTopMenus` (units sold per month from `/menu/analytics/items/{id}`) |
 | `use-customers.ts` | `useCustomers` (`GET /places/customers`) |
 | `use-kyc.ts` | `useKyc({ enabled })`, `useBusinessCategories`; types `KYCData`, `UBO` |
 | `use-compliance.ts` | `useComplianceStatus` (derived from `useKyc`: status, steps, percent, adminNotes), `complianceSteps` |

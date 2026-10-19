@@ -1,5 +1,10 @@
+/**
+ * The apps catalogue. `key` is the stable id used for on/off state, permissions and links —
+ * `name` is only the display label and can change freely.
+ */
 export const apps = [
   {
+    key: "wallet",
     name: "Wallet",
     description:
       "A secure and seamless payment tool that allows customers to pay instantly and split bills with ease. As a merchant, you receive fast, reliable payments while benefiting from SpinStrip’s reward-driven spending system that encourages customers to return.",
@@ -9,6 +14,7 @@ export const apps = [
     icon: "/icons/Wallet.png",
   },
   {
+    key: "events",
     name: "Event Planner",
     description: `Create, organise, and manage your events effortlessly. From RSVPs and reminders to 
 promotions and guest engagement, this Event Planner gives you everything you need to turn 
@@ -20,7 +26,10 @@ ideas into fully booked experiences. `,
     integrated: true,
   },
   {
-    name: "Menu",
+    key: "menu",
+    /** Earlier display names, so settings saved under them still apply. */
+    legacyNames: ["Menu"],
+    name: "Restaurant",
     description: `Showcase your full menu offerings, including pricing, photos, and specialities, so customers know 
 exactly what to expect before visiting. Update items in real time to reduce confusion, set expectations, 
 and highlight best-sellers or promotions. `,
@@ -41,6 +50,7 @@ and highlight best-sellers or promotions. `,
   //     icon: "/icons/Chats.png",
   //   },
   {
+    key: "inventory",
     name: "Inventory",
     description: `Manage stock, menu items, and product availability in real time. Update items instantly, track what’s 
 selling, and ensure your SpinStrip listing always reflects accurate information, improving customer 
@@ -61,6 +71,7 @@ trust and reducing order issues. `,
   //     icon: "/icons/Groups.png",
   //   },
   {
+    key: "places",
     name: "Places",
     integrated: true,
     description: `Get discovered by customers searching for restaurants, lounges, cafes, hotels, shops, or service-based 
@@ -92,6 +103,7 @@ audience. `,
   //     icon: "/icons/Reviews.png",
   //   },
   {
+    key: "deals",
     name: "Deals",
     description: `Attract more customers by offering exclusive SpinStrip discounts or limited-time promotions. Deals 
 help your business stand out, boost off-peak demand, and increase customer loyalty. `,
@@ -101,6 +113,7 @@ help your business stand out, boost off-peak demand, and increase customer loyal
     integrated: true,
   },
   {
+    key: "customers",
     name: "Customers",
     description: `View and understand your customer base through detailed insights. Track visits, preferences, and 
 feedback to better tailor your services. SpinStrip helps you turn new visitors into loyal, returning 

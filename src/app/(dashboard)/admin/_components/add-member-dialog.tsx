@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminOps, useWaiters, type TeamRole } from "@/hooks/use-team";
 import type { PermissionKey } from "@/lib/permissions";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import PermissionGrid from "./permission-grid";
 
 const waiterSchema = z.object({
@@ -35,7 +35,12 @@ const adminSchema = waiterSchema.extend({
 type WaiterValues = z.infer<typeof waiterSchema>;
 type AdminValues = z.infer<typeof adminSchema>;
 
-const ROLE_OPTIONS: { value: TeamRole; label: string; icon: typeof UserCog; help: string }[] = [
+const ROLE_OPTIONS: {
+  value: TeamRole;
+  label: string;
+  icon: typeof UserCog;
+  help: string;
+}[] = [
   {
     value: "waiter",
     label: "Waiter",
@@ -50,7 +55,13 @@ const ROLE_OPTIONS: { value: TeamRole; label: string; icon: typeof UserCog; help
   },
 ];
 
-function WaiterForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+function WaiterForm({
+  onDone,
+  onCancel,
+}: {
+  onDone: () => void;
+  onCancel: () => void;
+}) {
   const { addWaiter } = useWaiters();
   const form = useForm<WaiterValues>({
     resolver: zodResolver(waiterSchema),
@@ -77,7 +88,12 @@ function WaiterForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
         error={form.formState.errors.email?.message}
         hint="If they don't have an account yet, ask them to sign up in the SpinStrip app first."
       >
-        <Input id="waiter-email" type="email" placeholder="name@example.com" {...form.register("email")} />
+        <Input
+          id="waiter-email"
+          type="email"
+          placeholder="name@example.com"
+          {...form.register("email")}
+        />
       </Field>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -91,7 +107,13 @@ function WaiterForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
   );
 }
 
-function AdminForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+function AdminForm({
+  onDone,
+  onCancel,
+}: {
+  onDone: () => void;
+  onCancel: () => void;
+}) {
   const { createAdmin } = useAdminOps();
   const [permissions, setPermissions] = useState<PermissionKey[]>(["overview"]);
   const [showPassword, setShowPassword] = useState(false);
@@ -120,11 +142,24 @@ function AdminForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => v
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <SampleDataBadge label="Sample — admin ops aren't saved yet" />
-      <Field label="Full name" htmlFor="member-name" error={errors.name?.message}>
-        <Input id="member-name" placeholder="e.g. Adaeze Okonkwo" {...form.register("name")} />
+      <Field
+        label="Full name"
+        htmlFor="member-name"
+        error={errors.name?.message}
+      >
+        <Input
+          id="member-name"
+          placeholder="e.g. Adaeze Okonkwo"
+          {...form.register("name")}
+        />
       </Field>
       <Field label="Email" htmlFor="member-email" error={errors.email?.message}>
-        <Input id="member-email" type="email" placeholder="name@business.com" {...form.register("email")} />
+        <Input
+          id="member-email"
+          type="email"
+          placeholder="name@business.com"
+          {...form.register("email")}
+        />
       </Field>
       <Field
         label="Password"
@@ -147,7 +182,11 @@ function AdminForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => v
             aria-label={showPassword ? "Hide password" : "Show password"}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </button>
         </div>
       </Field>
@@ -194,7 +233,7 @@ export default function AddMemberDialog({
           <DialogDescription>{selectedRole.help}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-2">
+        {/* <div className="grid grid-cols-2 gap-2">
           {ROLE_OPTIONS.map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -211,12 +250,20 @@ export default function AddMemberDialog({
               <Icon className="h-4 w-4" /> {label}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {role === "waiter" ? (
-          <WaiterForm key={`w${formKey}`} onDone={() => close(false)} onCancel={() => close(false)} />
+          <WaiterForm
+            key={`w${formKey}`}
+            onDone={() => close(false)}
+            onCancel={() => close(false)}
+          />
         ) : (
-          <AdminForm key={`a${formKey}`} onDone={() => close(false)} onCancel={() => close(false)} />
+          <AdminForm
+            key={`a${formKey}`}
+            onDone={() => close(false)}
+            onCancel={() => close(false)}
+          />
         )}
       </DialogContent>
     </Dialog>

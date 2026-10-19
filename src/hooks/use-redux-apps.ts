@@ -23,12 +23,13 @@ export const useReduxApps = () => {
   const searchQuery = useAppSelector(selectSearchQuery);
   const categoryFilter = useAppSelector(selectCategoryFilter);
 
-  const toggleAppState = (appName: string) => {
-    dispatch(toggleApp(appName));
+  /** Switches an app on/off by its stable `key` (e.g. "menu"), not its display name. */
+  const toggleAppState = (appKey: string) => {
+    dispatch(toggleApp(appKey));
   };
 
-  const setAppActiveState = (appName: string, isActive: boolean) => {
-    dispatch(setAppState({ appName, isActive }));
+  const setAppActiveState = (appKey: string, isActive: boolean) => {
+    dispatch(setAppState({ appKey, isActive }));
   };
 
   const resetApps = () => {

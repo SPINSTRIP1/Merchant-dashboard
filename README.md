@@ -67,6 +67,8 @@ Customer-facing pages (place, event and restaurant pages, booking, ticketing and
 
 Links to the public site are built in `src/lib/public-links.ts`: place, event, dish and restaurant pages, and table QR codes (`/restaurants/{merchantUserId}?number=7`).
 
+**Merchant preview.** "Preview Public Page" on a place, and on an event (details window and Sales & Registrations), opens `PublicPreviewDialog` (`src/components/public-preview-dialog.tsx`): the real public page embedded in a modal, with a phone/desktop toggle. Drafts and listings not yet public can't load from the public API, so the embedded page asks the dashboard for its copy over `postMessage` and renders that. The public site only allows itself to be embedded by the dashboard's origins (`frame-ancestors`) and only accepts preview data from them.
+
 ### Auth pages
 
 `/login`, `/register`, `/otp-verification`, `/forgot-password`, `/reset-password`

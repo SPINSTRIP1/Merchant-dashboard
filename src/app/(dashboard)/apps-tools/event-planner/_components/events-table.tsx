@@ -1,4 +1,5 @@
 import SearchBar from "@/components/search-bar";
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import DetailsModal from "./details-modal";
 import AddEventsModal from "./add-events-modal";
 import { useEventsForm } from "../_context";
@@ -162,7 +163,7 @@ export default function EventsTable() {
   const visibleEvents = useMemo(
     () =>
       (items ?? []).filter((event) => {
-        if (event.id && deletedIds.includes(event.id)) return false;
+        if (SHOW_SAMPLE_FEATURES && event.id && deletedIds.includes(event.id)) return false;
         if (when === ALL) return true;
         const isPast = new Date(event.endDate || event.startDate).getTime() < now;
         return when === "past" ? isPast : !isPast;

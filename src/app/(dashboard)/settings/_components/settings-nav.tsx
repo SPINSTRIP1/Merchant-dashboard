@@ -14,7 +14,7 @@ export const SETTINGS_SECTIONS = [
   },
   {
     title: "Preferences",
-    description: "Notifications, summaries and auto-settlement.",
+    description: "Appearance: light, dark or match your device.",
     href: "/settings/preferences",
     icon: SlidersHorizontal,
   },

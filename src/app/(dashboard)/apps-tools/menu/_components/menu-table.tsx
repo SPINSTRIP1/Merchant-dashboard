@@ -2,14 +2,29 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Copy, Eye, EyeOff, MoreVertical, Pencil, Plus, Trash2, UtensilsCrossed } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+  UtensilsCrossed,
+} from "lucide-react";
 import SearchBar from "@/components/search-bar";
 import EmptyState from "@/components/empty-state";
 import PaginationButton from "@/components/pagination-button";
 import DeleteModal from "@/components/modals/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +32,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { categoryLabel, useMenuCategories, useMenuItemActions, useMenuItems } from "@/hooks/use-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  categoryLabel,
+  useMenuCategories,
+  useMenuItemActions,
+  useMenuItems,
+} from "@/hooks/use-menu";
 import { formatAmount } from "@/utils";
 import { Menu } from "../_schemas";
 import { useMenuForm } from "../_context";
@@ -52,12 +79,14 @@ export default function MenuTable() {
     resetForm,
   } = useMenuForm();
   const { categories } = useMenuCategories();
-  const { items, currentPage, totalPages, isLoading, handlePageChange } = useMenuItems({
-    search: debouncedSearch,
-    status: statusFilter,
-    category: categoryFilter,
-  });
-  const { updateStatus, duplicate, toggleHidden, remove } = useMenuItemActions();
+  const { items, currentPage, totalPages, isLoading, handlePageChange } =
+    useMenuItems({
+      search: debouncedSearch,
+      status: statusFilter,
+      category: categoryFilter,
+    });
+  const { updateStatus, duplicate, toggleHidden, remove } =
+    useMenuItemActions();
 
   const openAdd = () => {
     resetForm();
@@ -69,7 +98,7 @@ export default function MenuTable() {
       id: item.id,
       name: item.name,
       description: item.description,
-      price: item.price,
+      price: Number(item.price),
       quantity: item.quantity,
       tag: item.tag,
       status: item.status,
@@ -78,7 +107,11 @@ export default function MenuTable() {
       category: item.category,
       isFeatured: item.isFeatured,
       availabilityType: item.availabilityType,
-      availabilitySchedule: item.availabilitySchedule ?? { days: [], startTime: "", endTime: "" },
+      availabilitySchedule: item.availabilitySchedule ?? {
+        days: [],
+        startTime: "",
+        endTime: "",
+      },
       nutritionAllergens: item.nutritionAllergens || [],
       addOns: item.addOns || [],
       sizeOptions: item.sizeOptions || [],
@@ -105,7 +138,10 @@ export default function MenuTable() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <Select value={statusFilter || ALL} onValueChange={(v) => setStatusFilter(v === ALL ? "" : v)}>
+          <Select
+            value={statusFilter || ALL}
+            onValueChange={(v) => setStatusFilter(v === ALL ? "" : v)}
+          >
             <SelectTrigger className="h-11 w-[150px] rounded-full text-xs font-semibold">
               <SelectValue />
             </SelectTrigger>
@@ -117,7 +153,10 @@ export default function MenuTable() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={categoryFilter || ALL} onValueChange={(v) => setCategoryFilter(v === ALL ? "" : v)}>
+          <Select
+            value={categoryFilter || ALL}
+            onValueChange={(v) => setCategoryFilter(v === ALL ? "" : v)}
+          >
             <SelectTrigger className="h-11 w-[160px] rounded-full text-xs font-semibold">
               <SelectValue />
             </SelectTrigger>
@@ -182,7 +221,9 @@ export default function MenuTable() {
                         setAction("details");
                       }}
                     >
-                      <TableCell className="font-mono text-[11px] text-muted-foreground">{item.code || "—"}</TableCell>
+                      <TableCell className="font-mono text-[11px] text-muted-foreground">
+                        {item.code || "—"}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.images?.[0] ? (
@@ -201,7 +242,12 @@ export default function MenuTable() {
                           <div className="min-w-0">
                             <p className="flex items-center gap-1.5 truncate font-semibold text-foreground">
                               {item.name}
-                              {item.isHidden && <EyeOff className="h-3.5 w-3.5 text-muted-foreground" aria-label="Hidden" />}
+                              {item.isHidden && (
+                                <EyeOff
+                                  className="h-3.5 w-3.5 text-muted-foreground"
+                                  aria-label="Hidden"
+                                />
+                              )}
                             </p>
                             <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                               {categoryLabel(item.category)}
@@ -209,12 +255,16 @@ export default function MenuTable() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold text-foreground">{formatAmount(item.price)}</TableCell>
+                      <TableCell className="font-semibold text-foreground">
+                        {formatAmount(item.price)}
+                      </TableCell>
                       <TableCell>
                         <MenuStatusBadge
                           status={item.status}
                           menuId={item.id}
-                          onStatusChange={(id, status) => updateStatus.mutate({ id, status })}
+                          onStatusChange={(id, status) =>
+                            updateStatus.mutate({ id, status })
+                          }
                         />
                       </TableCell>
                       <TableCell>
@@ -235,8 +285,15 @@ export default function MenuTable() {
                           >
                             <MoreVertical className="h-4 w-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 rounded-xl" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClick(item)}>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-44 rounded-xl"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => handleEditClick(item)}
+                            >
                               <Pencil className="mr-2 h-4 w-4" /> Edit Item
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -248,8 +305,15 @@ export default function MenuTable() {
                             >
                               <Copy className="mr-2 h-4 w-4" /> Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => toggleHidden.mutate(item.id!)}>
-                              {item.isHidden ? <Eye className="mr-2 h-4 w-4" /> : <EyeOff className="mr-2 h-4 w-4" />}
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => toggleHidden.mutate(item.id!)}
+                            >
+                              {item.isHidden ? (
+                                <Eye className="mr-2 h-4 w-4" />
+                              ) : (
+                                <EyeOff className="mr-2 h-4 w-4" />
+                              )}
                               {item.isHidden ? "Show Item" : "Hide Item"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -280,9 +344,18 @@ export default function MenuTable() {
         </div>
       </div>
 
-      <aside className="space-y-5">
-        <TopMenusCard />
-        <FeaturedMenus onDeleteClick={handleDeleteClick} onEditClick={handleEditClick} />
+      {/* Side by side (xl+), the sidebar takes the table's height exactly: its content is
+          positioned over the grid cell, so it never makes the row taller, and Featured Menus
+          scrolls inside. Stacked (below xl), everything shows at full length. */}
+      <aside className="relative xl:min-h-[560px]">
+        <div className="flex flex-col gap-5 xl:absolute xl:inset-0">
+          <TopMenusCard />
+          <FeaturedMenus
+            className="xl:min-h-0 xl:flex-1"
+            onDeleteClick={handleDeleteClick}
+            onEditClick={handleEditClick}
+          />
+        </div>
       </aside>
 
       <MenuModal
@@ -300,7 +373,9 @@ export default function MenuTable() {
         isOpen={action === "delete"}
         title={selectedItem?.name || "this item"}
         onClose={() => setAction(null)}
-        onDeleteConfirm={() => selectedItem?.id && remove.mutate(selectedItem.id)}
+        onDeleteConfirm={() =>
+          selectedItem?.id && remove.mutate(selectedItem.id)
+        }
         secondaryText="Cancel"
         description="This menu item will be deleted permanently and cannot be recovered."
       />
@@ -308,7 +383,9 @@ export default function MenuTable() {
         isOpen={action === "duplicate"}
         title={selectedItem?.name || "this item"}
         onClose={() => setAction(null)}
-        onDeleteConfirm={() => selectedItem?.id && duplicate.mutate(selectedItem.id)}
+        onDeleteConfirm={() =>
+          selectedItem?.id && duplicate.mutate(selectedItem.id)
+        }
         secondaryText="Cancel"
         primaryText="Duplicate"
         description="A copy of this item will be added to your menu."

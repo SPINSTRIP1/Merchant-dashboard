@@ -15,13 +15,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useReduxApps } from "@/hooks/use-redux-apps";
 import { useAppSelector } from "@/hooks/redux";
 import { selectUser } from "@/store/selectors";
-import { publicRestaurantUrl, tableNumberFromLabel } from "@/lib/public-links";
+import { publicRestaurantUrl } from "@/lib/public-links";
 import { cn } from "@/lib/utils";
 import MenuTable from "./_components/menu-table";
 import TablesTab from "./_components/tables-tab";
 import TableAnalyticsTab from "./_components/table-analytics-tab";
+import ReviewsTab from "./_components/reviews-tab";
 
-const TABS = ["items", "tables", "analytics"] as const;
+const TABS = ["items", "tables", "analytics", "reviews"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MenuPage() {
@@ -32,7 +33,7 @@ export default function MenuPage() {
   const tab: Tab = TABS.includes(view as Tab) ? (view as Tab) : "items";
 
   const { appsWithStatus, setAppActiveState } = useReduxApps();
-  const enabled = appsWithStatus.find((app) => app.name === "Menu")?.isActive ?? false;
+  const enabled = appsWithStatus.find((app) => app.key === "menu")?.isActive ?? false;
   const [configOpen, setConfigOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const user = useAppSelector(selectUser);
@@ -49,7 +50,7 @@ export default function MenuPage() {
   };
 
   const toggleApp = (active: boolean) => {
-    setAppActiveState("Menu", active);
+    setAppActiveState("menu", active);
     toast.success(active ? "Menu app activated — your public menu page is live" : "Menu app deactivated");
   };
 
@@ -66,9 +67,9 @@ export default function MenuPage() {
 
   return (
     <div>
-      <Breadcrumb parent={{ label: "Tools", href: "/apps-tools" }} current="Menu" />
+      <Breadcrumb parent={{ label: "Tools", href: "/apps-tools" }} current="Restaurant" />
       <PageHeader
-        title="Menu"
+        title="Restaurant"
         subtitle="Manage dishes, table QR codes and your public menu page."
         actions={
           <Button variant="outline" onClick={() => setConfigOpen(true)}>
@@ -116,15 +117,19 @@ export default function MenuPage() {
           <TabsTrigger value="items">Menu Items</TabsTrigger>
           <TabsTrigger value="tables">Tables &amp; QR</TabsTrigger>
           <TabsTrigger value="analytics">Table Analytics</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
         <TabsContent value="items">
           <MenuTable />
         </TabsContent>
         <TabsContent value="tables">
-          <TablesTab qrUrlFor={(label) => publicRestaurantUrl(user?.id, tableNumberFromLabel(label))} />
+          <TablesTab qrUrlFor={(tableNumber) => publicRestaurantUrl(user?.id, String(tableNumber))} />
         </TabsContent>
         <TabsContent value="analytics">
           <TableAnalyticsTab />
+        </TabsContent>
+        <TabsContent value="reviews">
+          <ReviewsTab />
         </TabsContent>
       </Tabs>
 

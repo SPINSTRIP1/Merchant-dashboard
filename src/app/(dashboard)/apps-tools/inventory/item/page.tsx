@@ -1,4 +1,5 @@
 "use client";
+import { SHOW_SAMPLE_FEATURES } from "@/lib/features";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useMemo } from "react";
@@ -251,6 +252,7 @@ function InventoryItemContent() {
             )}
           </div>
 
+          {SHOW_SAMPLE_FEATURES && (
           <ChartCard title="Sales and Performance" subtitle="Units sold per month" action={<SampleDataBadge />}>
             <div className="h-56">
               {history && (
@@ -264,7 +266,9 @@ function InventoryItemContent() {
               )}
             </div>
           </ChartCard>
+          )}
 
+          {SHOW_SAMPLE_FEATURES && (
           <section className="overflow-hidden rounded-2xl border bg-card">
             <div className="flex items-center justify-between gap-2 border-b px-5 py-4">
               <h2 className="font-display text-base font-bold text-foreground">Inventory Activity Log</h2>
@@ -286,6 +290,7 @@ function InventoryItemContent() {
               ))}
             </ul>
           </section>
+          )}
         </section>
 
         <aside className="space-y-4">
@@ -312,7 +317,7 @@ function InventoryItemContent() {
               <Row label="Tax">{data.taxPercentage ? `${data.taxPercentage}% applied` : "None"}</Row>
               <Row label="Linked deals">{data.dealIds?.length ? data.dealIds.length : "None"}</Row>
             </div>
-            {!!history?.priceHistory.length && (
+            {SHOW_SAMPLE_FEATURES && !!history?.priceHistory.length && (
               <div className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
                 <div className="mb-1 flex items-center justify-between">
                   <span className="font-semibold text-foreground">Price history</span>
