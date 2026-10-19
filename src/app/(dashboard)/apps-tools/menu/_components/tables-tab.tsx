@@ -4,7 +4,15 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
-import { Download, MoreVertical, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
+import {
+  Download,
+  Maximize2,
+  MoreVertical,
+  Pencil,
+  Plus,
+  QrCode,
+  Trash2,
+} from "lucide-react";
 import Field from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +40,9 @@ const EMPTY_FORM = { name: "", description: "", seats: 4 };
 
 /** "Table 3 · Window" — the number is what guests see on the QR menu. */
 export const tableTitle = (table: Pick<DiningTable, "number" | "name">) =>
-  table.name ? `Table ${table.number} · ${table.name}` : `Table ${table.number}`;
+  table.name
+    ? `Table ${table.number} · ${table.name}`
+    : `Table ${table.number}`;
 
 const qrElementId = (tableId: string) => `table-qr-${tableId}`;
 
@@ -77,7 +87,9 @@ async function downloadTableQr(table: DiningTable) {
   ctx.font = "500 40px system-ui, sans-serif";
   ctx.fillText("Scan to view the menu & order", centre, y + 70);
 
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/png"),
+  );
   if (!blob) return;
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -88,22 +100,34 @@ async function downloadTableQr(table: DiningTable) {
 }
 
 /** `qrUrlFor(number)` builds the public-site link a table's QR code opens. */
-export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number) => string }) {
-  const { tables, isLoading, createTable, updateTable, deleteTable } = useMenuTables();
+export default function TablesTab({
+  qrUrlFor,
+}: {
+  qrUrlFor: (tableNumber: number) => string;
+}) {
+  const { tables, isLoading, createTable, updateTable, deleteTable } =
+    useMenuTables();
   const { tables: stats } = useTableAnalytics();
   const [editing, setEditing] = useState<DiningTable | "new" | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [removing, setRemoving] = useState<DiningTable | null>(null);
+  const [previewing, setPreviewing] = useState<DiningTable | null>(null);
 
-  const paidOrdersFor = (id: string) => stats.find((t) => t.tableId === id)?.seatings ?? 0;
-  const seatsValid = Number.isInteger(form.seats) && form.seats >= 1 && form.seats <= 100;
+  const paidOrdersFor = (id: string) =>
+    stats.find((t) => t.tableId === id)?.seatings ?? 0;
+  const seatsValid =
+    Number.isInteger(form.seats) && form.seats >= 1 && form.seats <= 100;
   const saving = createTable.isPending || updateTable.isPending;
 
   const openForm = (table: DiningTable | "new") => {
     setForm(
       table === "new"
         ? EMPTY_FORM
-        : { name: table.name ?? "", description: table.description ?? "", seats: table.seats }
+        : {
+            name: table.name ?? "",
+            description: table.description ?? "",
+            seats: table.seats,
+          },
     );
     setEditing(table);
   };
@@ -126,7 +150,9 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
   };
 
   const download = (table: DiningTable) =>
-    downloadTableQr(table).catch(() => toast.error("Could not download the QR code"));
+    downloadTableQr(table).catch(() =>
+      toast.error("Could not download the QR code"),
+    );
 
   const confirmRemove = async () => {
     if (!removing) return;
@@ -143,8 +169,8 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Each table gets a number and a QR code that opens your public menu with the table pre-selected, so
-          orders are tagged to it.
+          Each table gets a number and a QR code that opens your public menu
+          with the table pre-selected, so orders are tagged to it.
         </p>
         <Button variant="brand" onClick={() => openForm("new")}>
           <Plus /> Add Table
@@ -153,7 +179,9 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
         {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[264px] rounded-2xl" />)
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[264px] rounded-2xl" />
+            ))
           : tables.map((table, i) => (
               <motion.div
                 key={table.id}
@@ -170,10 +198,22 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
                     <MoreVertical className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44 rounded-xl">
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => openForm(table)}>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => setPreviewing(table)}
+                    >
+                      <Maximize2 className="mr-2 h-4 w-4" /> Preview QR
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => openForm(table)}
+                    >
                       <Pencil className="mr-2 h-4 w-4" /> Edit Table
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => download(table)}>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => download(table)}
+                    >
                       <Download className="mr-2 h-4 w-4" /> Download QR
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -194,12 +234,21 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
                     title={`QR code for ${tableTitle(table)}`}
                   />
                 </div>
-                <p className="mt-3 font-display text-2xl font-extrabold text-primary">{table.number}</p>
-                <p className="truncate font-display text-sm font-bold text-foreground">{table.name}</p>
+                <p className="mt-3 font-display text-2xl font-extrabold text-primary">
+                  {table.number}
+                </p>
+                <p className="truncate font-display text-sm font-bold text-foreground">
+                  {table.name}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {table.seats} seats · {paidOrdersFor(table.id)} paid orders
                 </p>
-                <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => download(table)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={() => download(table)}
+                >
                   <Download /> Download QR
                 </Button>
               </motion.div>
@@ -215,10 +264,19 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
         </button>
       </div>
 
-      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing === "new" ? "Add Table" : editing ? `Edit ${tableTitle(editing)}` : ""}</DialogTitle>
+            <DialogTitle>
+              {editing === "new"
+                ? "Add Table"
+                : editing
+                  ? `Edit ${tableTitle(editing)}`
+                  : ""}
+            </DialogTitle>
             <DialogDescription>
               {editing === "new"
                 ? "The table gets the next number and its QR code straight away."
@@ -226,7 +284,11 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
-            <Field label="Name" htmlFor="table-name" hint="Shown alongside the number, e.g. Window, Terrace, VIP Booth.">
+            <Field
+              label="Name"
+              htmlFor="table-name"
+              hint="Shown alongside the number, e.g. Window, Terrace, VIP Booth."
+            >
               <Input
                 id="table-name"
                 required
@@ -235,14 +297,20 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
                 placeholder="e.g. Window"
               />
             </Field>
-            <Field label="Seats" htmlFor="table-seats" error={seatsValid ? undefined : "Enter between 1 and 100 seats"}>
+            <Field
+              label="Seats"
+              htmlFor="table-seats"
+              error={seatsValid ? undefined : "Enter between 1 and 100 seats"}
+            >
               <Input
                 id="table-seats"
                 type="number"
                 min={1}
                 max={100}
                 value={form.seats}
-                onChange={(e) => setForm({ ...form, seats: Number(e.target.value) })}
+                onChange={(e) =>
+                  setForm({ ...form, seats: Number(e.target.value) })
+                }
               />
             </Field>
             <Field label="Description (optional)" htmlFor="table-description">
@@ -250,30 +318,90 @@ export default function TablesTab({ qrUrlFor }: { qrUrlFor: (tableNumber: number
                 id="table-description"
                 rows={3}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 placeholder="e.g. By the window, lagoon view"
               />
             </Field>
-            <Button type="submit" variant="brand" className="w-full" disabled={!form.name.trim() || !seatsValid || saving}>
-              {saving ? "Saving…" : editing === "new" ? "Create Table" : "Save Changes"}
+            <Button
+              type="submit"
+              variant="brand"
+              className="w-full"
+              disabled={!form.name.trim() || !seatsValid || saving}
+            >
+              {saving
+                ? "Saving…"
+                : editing === "new"
+                  ? "Create Table"
+                  : "Save Changes"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!removing} onOpenChange={(open) => !open && setRemoving(null)}>
+      {/* A large, high-contrast QR so it can be test-scanned straight off the screen. */}
+      <Dialog
+        open={!!previewing}
+        onOpenChange={(open) => !open && setPreviewing(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {previewing ? tableTitle(previewing) : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Scan with your phone camera to open the menu for this table.
+            </DialogDescription>
+          </DialogHeader>
+          {previewing && (
+            <>
+              <div className="mx-auto w-full max-w-[340px] rounded-2xl bg-white p-4 shadow-sm">
+                <QRCodeSVG
+                  value={qrUrlFor(previewing.number)}
+                  size={512}
+                  level="M"
+                  fgColor="#6932E2"
+                  title={`QR code for ${tableTitle(previewing)}`}
+                  className="h-auto w-full"
+                />
+              </div>
+
+              <Button
+                variant="brand"
+                className="w-full"
+                onClick={() => download(previewing)}
+              >
+                <Download /> Download QR
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!removing}
+        onOpenChange={(open) => !open && setRemoving(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete {removing ? tableTitle(removing) : ""}?</DialogTitle>
+            <DialogTitle>
+              Delete {removing ? tableTitle(removing) : ""}?
+            </DialogTitle>
             <DialogDescription>
-              Its QR code will stop working — remove printed copies from the table. Past orders keep their link to it.
+              Its QR code will stop working — remove printed copies from the
+              table. Past orders keep their link to it.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemoving(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmRemove} disabled={deleteTable.isPending}>
+            <Button
+              variant="destructive"
+              onClick={confirmRemove}
+              disabled={deleteTable.isPending}
+            >
               {deleteTable.isPending ? "Deleting…" : "Delete Table"}
             </Button>
           </DialogFooter>
