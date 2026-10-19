@@ -18,14 +18,22 @@ export function complianceSteps(kyc: KYCData | undefined): ComplianceStep[] {
     {
       key: "documents",
       label: "Company documents",
-      done: !!(kyc?.articlesOfAssociationUrl && kyc?.proofOfAddressUrl && kyc?.bankStatementUrl),
+      done: !!(
+        kyc?.articlesOfAssociationUrl &&
+        kyc?.proofOfAddressUrl &&
+        kyc?.bankStatementUrl
+      ),
     },
     {
       key: "owners",
       label: "Owner ID verification",
       done: !!(owner?.identityMetadata?.bvn && owner?.identityMetadata?.nin),
     },
-    { key: "review", label: "Approved by SpinStrip", done: kyc?.status === "ACTIVE" },
+    {
+      key: "review",
+      label: "Approved by SpinStrip",
+      done: kyc?.status === "VERIFIED",
+    },
   ];
 }
 
@@ -36,7 +44,9 @@ export function complianceSteps(kyc: KYCData | undefined): ComplianceStep[] {
 export function useComplianceStatus() {
   const { kyc, status, isLoading, error, refetch } = useKyc();
   const steps = complianceSteps(kyc);
-  const percent = Math.round((steps.filter((s) => s.done).length / steps.length) * 100);
+  const percent = Math.round(
+    (steps.filter((s) => s.done).length / steps.length) * 100,
+  );
 
   return {
     data: status,

@@ -1,1 +1,5 @@
-export type ComplianceStatus = "REJECTED" | "PENDING" | "ACTIVE" | "UNVERIFIED";
+export type ComplianceStatus =
+  | "REJECTED"
+  | "PENDING"
+  | "VERIFIED"
+  | "UNVERIFIED";

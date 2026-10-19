@@ -7,7 +7,7 @@ import type { ComplianceStep } from "@/hooks/use-compliance";
 import type { ComplianceStatus } from "@/types";
 
 const STATUS_LABELS: Record<ComplianceStatus, string> = {
-  ACTIVE: "Verified",
+  VERIFIED: "Verified",
   PENDING: "In review",
   REJECTED: "Rejected",
   UNVERIFIED: "Not verified",
@@ -39,7 +39,9 @@ export default function ComplianceSummary({
         className="rounded-2xl border bg-card p-6"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-display text-lg font-bold text-foreground">Compliance Status</h3>
+          <h3 className="font-display text-lg font-bold text-foreground">
+            Compliance Status
+          </h3>
           <StatusPill status={status} label={STATUS_LABELS[status] ?? status} />
         </div>
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-muted">
@@ -50,7 +52,9 @@ export default function ComplianceSummary({
             transition={{ duration: 1, delay: 0.2 }}
           />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{percent}% complete</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {percent}% complete
+        </p>
 
         <ul className="mt-5 space-y-3">
           {steps.map((step, i) => (
@@ -63,22 +67,39 @@ export default function ComplianceSummary({
             >
               <span
                 className={`grid h-7 w-7 place-items-center rounded-full ${
-                  step.done ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"
+                  step.done
+                    ? "bg-emerald-500/10 text-emerald-500"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
-                {step.done ? <CheckCircle2 className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                {step.done ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <span className="h-2 w-2 rounded-full bg-current" />
+                )}
               </span>
-              <span className={step.done ? "font-medium text-foreground" : "text-muted-foreground"}>{step.label}</span>
+              <span
+                className={
+                  step.done
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground"
+                }
+              >
+                {step.label}
+              </span>
             </motion.li>
           ))}
         </ul>
 
-        {status === "ACTIVE" && (
+        {status === "VERIFIED" && (
           <div className="mt-6 flex gap-3 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p className="font-semibold">You&apos;re fully verified</p>
-              <p className="mt-1 text-xs">All checks passed. Your business has full access to payouts and public pages.</p>
+              <p className="mt-1 text-xs">
+                All checks passed. Your business has full access to payouts and
+                public pages.
+              </p>
             </div>
           </div>
         )}
@@ -87,7 +108,10 @@ export default function ComplianceSummary({
             <Clock className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p className="font-semibold">Under review</p>
-              <p className="mt-1 text-xs">Our team reviews submissions within 24–48 hours. You&apos;ll be notified once confirmed.</p>
+              <p className="mt-1 text-xs">
+                Our team reviews submissions within 24–48 hours. You&apos;ll be
+                notified once confirmed.
+              </p>
             </div>
           </div>
         )}
@@ -97,7 +121,8 @@ export default function ComplianceSummary({
             <div>
               <p className="font-semibold">Your submission needs changes</p>
               <p className="mt-1 text-xs">
-                {adminNotes || "Please review your details and documents below, then submit again."}
+                {adminNotes ||
+                  "Please review your details and documents below, then submit again."}
               </p>
             </div>
           </div>
@@ -110,11 +135,14 @@ export default function ComplianceSummary({
         transition={{ delay: 0.1 }}
         className="rounded-2xl border bg-card p-6"
       >
-        <h3 className="font-display text-lg font-bold text-foreground">Why compliance matters</h3>
+        <h3 className="font-display text-lg font-bold text-foreground">
+          Why compliance matters
+        </h3>
         <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
           {BENEFITS.map((benefit) => (
             <li key={benefit} className="flex gap-2.5">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {benefit}
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{" "}
+              {benefit}
             </li>
           ))}
         </ul>

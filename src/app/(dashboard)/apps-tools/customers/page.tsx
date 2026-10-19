@@ -21,7 +21,6 @@ import { FileSpreadsheet, Users } from "lucide-react";
 import React, { useState } from "react";
 import Breadcrumb from "@/components/breadcrumb";
 import PageHeader from "@/components/page-header";
-import SampleDataBadge from "@/components/sample-data-badge";
 import { getInitials } from "@/components/sidebar-content";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,13 +47,11 @@ const SORT_OPTIONS: { value: CustomerSort; label: string }[] = [
   { value: "placesCount", label: "Places Visits" },
 ];
 
-type View = "visits" | "spend";
-
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [service, setService] = useState<CustomerService | "All">("All");
   const [sort, setSort] = useState<CustomerSort>("totalCount");
-  const [view, setView] = useState<View>("visits");
+  // const [view, setView] = useState<View>("visits");
 
   const {
     customers,
@@ -103,13 +100,7 @@ export default function Customers() {
     );
 
   const cell = (count: number, amount: number | undefined) =>
-    view === "spend"
-      ? amount
-        ? formatNaira(amount)
-        : "—"
-      : count
-        ? count.toLocaleString()
-        : "—";
+    amount ? formatNaira(amount) : "—";
 
   return (
     <section>
@@ -182,26 +173,6 @@ export default function Customers() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto flex items-center gap-2">
-          {view === "spend" && <SampleDataBadge label="Sample spend" />}
-          {/* <div className="flex rounded-full border bg-card p-1" role="tablist" aria-label="Show visits or spend">
-            {(["visits", "spend"] as View[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                role="tab"
-                aria-selected={view === v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "min-h-[34px] rounded-full px-4 text-xs font-semibold capitalize transition-colors",
-                  view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {v}
-              </button>
-            ))}
-          </div> */}
-        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-card">

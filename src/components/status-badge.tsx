@@ -19,7 +19,7 @@ const STATUS_STYLES = {
     icon: Clock05Icon,
     title: "Review Pending",
   },
-  ACTIVE: {
+  VERIFIED: {
     className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     icon: CheckmarkCircle02Icon,
     title: "Approved",
@@ -50,7 +50,7 @@ export default function StatusBadge({
     <span
       className={cn(
         "inline-flex h-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-        style.className
+        style.className,
       )}
     >
       <HugeiconsIcon icon={style.icon} size={14} />

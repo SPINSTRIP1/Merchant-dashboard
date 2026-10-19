@@ -21,7 +21,12 @@ export default function ComplianceBanner() {
   const { can } = usePermissions();
   const pathname = usePathname();
 
-  if (isLoading || status === "ACTIVE" || pathname.startsWith("/settings/compliance")) return null;
+  if (
+    isLoading ||
+    status === "VERIFIED" ||
+    pathname.startsWith("/settings/compliance")
+  )
+    return null;
 
   return (
     <motion.div
@@ -29,7 +34,9 @@ export default function ComplianceBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border bg-card p-4"
     >
-      <span className="text-sm font-medium text-foreground">Compliance Status</span>
+      <span className="text-sm font-medium text-foreground">
+        Compliance Status
+      </span>
       <StatusBadge status={status} />
       <div className="flex min-w-[140px] flex-1 items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
@@ -40,7 +47,9 @@ export default function ComplianceBanner() {
             transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
           />
         </div>
-        <span className="text-xs font-semibold text-muted-foreground">{percent}%</span>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {percent}%
+        </span>
       </div>
       {can("settings") && (
         <Link

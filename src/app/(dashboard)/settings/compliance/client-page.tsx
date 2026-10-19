@@ -78,7 +78,7 @@ export default function ClientPage() {
         <ChevronLeft /> <p className="font-bold">Back</p>
       </button> */}
 
-        {data !== "ACTIVE" && data !== "PENDING" && (
+        {data !== "VERIFIED" && data !== "PENDING" && (
           <div className="mt-6 rounded-2xl border bg-card px-4 pb-6 pt-1 sm:px-6">
             <h3 className="mt-4 font-display text-lg font-bold text-foreground">
               {data === "REJECTED"
