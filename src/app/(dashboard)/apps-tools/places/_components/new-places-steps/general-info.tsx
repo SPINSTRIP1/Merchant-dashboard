@@ -118,7 +118,6 @@ export default function GeneralInfo() {
         control={control}
         name="coverImage"
         label="Upload Cover Image"
-        description="Click to upload image or drop image here"
       />
 
       <FormArrayInput

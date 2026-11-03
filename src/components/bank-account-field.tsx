@@ -32,6 +32,8 @@ export default function BankAccountField({
   const { banks, isLoading: banksLoading } = useNgnBanks();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // The list portals into this wrapper, not <body>, so it stays clickable inside a Dialog.
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   const lookup = { bankCode: value.bankCode, accountNumber: value.accountNumber };
   const kyc = useResolveKycBankAccount(resolveWith === "kyc" ? lookup : {});
@@ -52,7 +54,7 @@ export default function BankAccountField({
   }, [banks, query]);
 
   return (
-    <div className="space-y-3">
+    <div ref={setContainer} className="space-y-3">
       <Field label={label} htmlFor={`${idPrefix}-bank`}>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -70,7 +72,7 @@ export default function BankAccountField({
               <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] rounded-xl p-0">
+          <PopoverContent container={container} align="start" className="w-[var(--radix-popover-trigger-width)] rounded-xl p-0">
             <div className="flex items-center gap-2 border-b px-3">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input

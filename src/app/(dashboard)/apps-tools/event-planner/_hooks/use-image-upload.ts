@@ -1,49 +1,18 @@
 import { SERVER_URL } from "@/constants";
 import api from "@/lib/api/axios-client";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 
+/** Removes an already-uploaded event image, locally and on the server. */
 export const useImageUpload = (
-  files: File[],
   media: string[],
   handleFieldChange: (name: string, value: unknown) => void,
 ) => {
-  const [imageUploadFields, setImageUploadFields] = useState([0]);
-
-  // Use refs to always have the latest values without causing re-renders
-  const filesRef = useRef(files);
+  // Ref keeps the latest list without re-creating the callback.
   const mediaRef = useRef(media);
-
-  useEffect(() => {
-    filesRef.current = files;
-  }, [files]);
 
   useEffect(() => {
     mediaRef.current = media;
   }, [media]);
-
-  const handleFileSelect = useCallback(
-    (file: File | null, index: number) => {
-      if (!file) return;
-      const currentFiles = [...filesRef.current];
-      currentFiles[index] = file;
-      handleFieldChange("files", currentFiles);
-    },
-    [handleFieldChange],
-  );
-
-  const addImageUploadField = useCallback(() => {
-    setImageUploadFields((prev) => [...prev, prev.length]);
-  }, []);
-
-  const removeImageUploadField = useCallback(
-    (index: number) => {
-      setImageUploadFields((prev) => prev.filter((_, i) => i !== index));
-      const currentFiles = [...filesRef.current];
-      currentFiles.splice(index, 1);
-      handleFieldChange("files", currentFiles);
-    },
-    [handleFieldChange],
-  );
 
   const removeMediaImage = useCallback(
     async (index: number, id: string) => {
@@ -58,16 +27,5 @@ export const useImageUpload = (
     [handleFieldChange],
   );
 
-  const resetFields = useCallback(() => {
-    setImageUploadFields([0]);
-  }, []);
-
-  return {
-    imageUploadFields,
-    handleFileSelect,
-    addImageUploadField,
-    removeImageUploadField,
-    removeMediaImage,
-    resetFields,
-  };
+  return { removeMediaImage };
 };

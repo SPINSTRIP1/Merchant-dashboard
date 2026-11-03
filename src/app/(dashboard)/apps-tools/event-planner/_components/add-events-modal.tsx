@@ -5,7 +5,6 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useEventsForm } from "../_context";
 import { FormInput } from "@/components/ui/forms/form-input";
 import { useCallback, useMemo } from "react";
-import { Plus } from "lucide-react";
 import { FormSelect } from "@/components/ui/forms/form-select";
 import { TicketTier } from "../_schemas";
 import { Deal } from "../../deals/_schemas";
@@ -23,8 +22,7 @@ import {
   TIMEZONE_OPTIONS,
   FEATURED_OPTIONS,
 } from "../_constants/event-modal";
-import { MediaImage } from "./media-image";
-import { ImageUploadField } from "./image-upload-field";
+import ImagePicker from "@/components/image-picker";
 import { TicketRow } from "./ticket-row";
 import { TicketInputRow } from "./ticket-input-row";
 import { useImageUpload } from "../_hooks/use-image-upload";
@@ -63,14 +61,7 @@ export default function AddEventsModal({
   const recurringPattern = watch("recurringPattern");
 
   // Custom hooks
-  const {
-    imageUploadFields,
-    handleFileSelect,
-    addImageUploadField,
-    removeImageUploadField,
-    removeMediaImage,
-    resetFields,
-  } = useImageUpload(files, media, handleFieldChange);
+  const { removeMediaImage } = useImageUpload(media, handleFieldChange);
 
   const handleAddTicket = useCallback(
     (newTickets: TicketTier[]) => setValue("ticketTiers", newTickets),
@@ -102,10 +93,9 @@ export default function AddEventsModal({
 
   // Handlers
   const handleClose = useCallback(() => {
-    resetFields();
     resetInput();
     onClose();
-  }, [onClose, resetFields, resetInput]);
+  }, [onClose, resetInput]);
 
   const handlePlaceSelect = useCallback(
     (place: SinglePlace) => {
@@ -121,7 +111,6 @@ export default function AddEventsModal({
   );
 
   // Derived state
-  const canAddMoreImages = imageUploadFields.length < MAX_IMAGES;
   const showRecurrencePattern = frequency === "RECURRING";
   const showCustomRecurrence =
     showRecurrencePattern && recurringPattern === "CUSTOM";
@@ -219,39 +208,15 @@ export default function AddEventsModal({
 
           <div className="space-y-3">
             <Label>Upload Event Media</Label>
-            <p className="text-xs text-muted-foreground">
-              The first image is used as the thumbnail. JPG, JPEG, PNG or WEBP, up to 10MB each.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              {media.map((imageUrl, index) => (
-                <MediaImage
-                  key={`media-${index}`}
-                  imageUrl={imageUrl}
-                  index={index}
-                  id={watch("id") || ""}
-                  onRemove={removeMediaImage}
-                />
-              ))}
-              {imageUploadFields.map((fieldId, index) => (
-                <ImageUploadField
-                  key={fieldId}
-                  fieldId={fieldId}
-                  index={index}
-                  file={files[index]}
-                  canRemove={imageUploadFields.length > 1}
-                  onFileSelect={handleFileSelect}
-                  onRemove={removeImageUploadField}
-                />
-              ))}
-            </div>
-            {errors.files && (
-              <p className="text-xs font-medium text-destructive">{errors.files.message as string}</p>
-            )}
-            {canAddMoreImages && (
-              <Button type="button" onClick={addImageUploadField} variant="soft" size="sm">
-                <Plus /> Add Another Image
-              </Button>
-            )}
+            <p className="text-xs text-muted-foreground">The first image is used as the thumbnail.</p>
+            <ImagePicker
+              value={files}
+              onChange={(next) => handleFieldChange("files", next)}
+              existing={media}
+              onRemoveExisting={(index) => removeMediaImage(index, watch("id") || "")}
+              max={MAX_IMAGES}
+              error={errors.files?.message as string | undefined}
+            />
           </div>
 
           <FormMultiSelect

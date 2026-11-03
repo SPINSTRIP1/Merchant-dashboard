@@ -8,7 +8,7 @@ import { Facility, facilitySchema } from "../../../_schemas";
 import { useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
-import UploadFile from "@/app/(dashboard)/_components/upload-file";
+import ImagePicker from "@/components/image-picker";
 import React from "react";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api/axios-client";
@@ -48,7 +48,6 @@ export default function FacilityModal({
     },
   });
   const queryClient = useQueryClient();
-  const [imageUploadFields, setImageUploadFields] = useState([0]); // Start with one field
   const files = watch("files") || [];
   const accessType = watch("accessType") || "";
   const isGated = watch("isGated") || false;
@@ -56,29 +55,6 @@ export default function FacilityModal({
   const facilityCategory = watch("facilityCategory") || "";
   const [otherSelected, setOtherSelected] = useState(false);
   // const media = watch("images") || [];
-
-  const handleFileSelect = (file: File | null, index: number) => {
-    if (!file) return;
-
-    const currentFiles = [...files];
-    currentFiles[index] = file;
-    setValue("files", currentFiles);
-  };
-
-  const addImageUploadField = () => {
-    setImageUploadFields([...imageUploadFields, imageUploadFields.length]);
-  };
-
-  const removeImageUploadField = (index: number) => {
-    // Remove the field
-    const newFields = imageUploadFields.filter((_, i) => i !== index);
-    setImageUploadFields(newFields);
-
-    // Remove the file at that index
-    const currentFiles = [...files];
-    currentFiles.splice(index, 1);
-    setValue("files", currentFiles);
-  };
 
   // const removeMediaImage = (index: number) => {
   //   const currentMedia = [...media];
@@ -114,7 +90,6 @@ export default function FacilityModal({
   };
 
   const handleClose = () => {
-    setImageUploadFields([0]);
     reset();
     onClose();
   };
@@ -218,35 +193,8 @@ export default function FacilityModal({
 
           <div className="space-y-3">
             <Label>Upload Facility Images</Label>
-            <p className="text-xs text-muted-foreground">
-              The first image is used as the thumbnail. JPG, JPEG, PNG or WEBP, up to 10MB each.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              {imageUploadFields.map((fieldId, index) => (
-                <div key={fieldId} className="relative w-full max-w-[158px]">
-                  <UploadFile
-                    label={index === 0 ? "Thumbnail" : `Image ${index + 1}`}
-                    onFileSelect={(file) => handleFileSelect(file, index)}
-                    value={files[index]}
-                  />
-                  {imageUploadFields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeImageUploadField(index)}
-                      aria-label="Remove image slot"
-                      className="absolute right-1.5 top-1.5 z-10 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {imageUploadFields.length < 6 && (
-              <Button type="button" onClick={addImageUploadField} variant="soft" size="sm">
-                <Plus /> Add Another Image
-              </Button>
-            )}
+            <p className="text-xs text-muted-foreground">The first image is used as the thumbnail.</p>
+            <ImagePicker value={files} onChange={(next) => setValue("files", next)} />
           </div>
 
           <PillGroup
