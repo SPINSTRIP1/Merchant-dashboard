@@ -11,7 +11,8 @@ import StatusBadge from "@/components/status-badge";
 
 const CTA_LABEL = {
   REJECTED: "Retry Compliance",
-  PENDING: "Review Compliance Results",
+  PENDING: "Continue Verification",
+  UNDER_REVIEW: "View Compliance Status",
   UNVERIFIED: "Complete Compliance",
 } as const;
 

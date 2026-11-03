@@ -17,7 +17,12 @@ const STATUS_STYLES = {
   PENDING: {
     className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     icon: Clock05Icon,
-    title: "Review Pending",
+    title: "Verification Pending",
+  },
+  UNDER_REVIEW: {
+    className: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+    icon: Clock05Icon,
+    title: "Under Review",
   },
   VERIFIED: {
     className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",

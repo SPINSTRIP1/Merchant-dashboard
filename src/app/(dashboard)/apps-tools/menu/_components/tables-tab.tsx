@@ -13,7 +13,9 @@ import {
   QrCode,
   Trash2,
 } from "lucide-react";
+import BankAccountField, { EMPTY_BANK } from "@/components/bank-account-field";
 import Field from "@/components/field";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -111,6 +113,9 @@ export default function TablesTab({
   const [editing, setEditing] = useState<DiningTable | "new" | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [removing, setRemoving] = useState<DiningTable | null>(null);
+  // One payout account per table; accountName is only set once it resolves.
+  const [withAccount, setWithAccount] = useState(false);
+  const [account, setAccount] = useState(EMPTY_BANK);
   const [previewing, setPreviewing] = useState<DiningTable | null>(null);
 
   const paidOrdersFor = (id: string) =>
@@ -118,6 +123,8 @@ export default function TablesTab({
   const seatsValid =
     Number.isInteger(form.seats) && form.seats >= 1 && form.seats <= 100;
   const saving = createTable.isPending || updateTable.isPending;
+  const hadAccount = editing !== "new" && !!editing?.accounts?.length;
+  const accountReady = !withAccount || !!account.accountName;
 
   const openForm = (table: DiningTable | "new") => {
     setForm(
@@ -129,18 +136,35 @@ export default function TablesTab({
             seats: table.seats,
           },
     );
+    const saved = table === "new" ? undefined : table.accounts?.[0];
+    setWithAccount(!!saved);
+    setAccount(
+      saved
+        ? {
+            bankCode: saved.bankCode,
+            accountNumber: saved.accountNumber,
+            accountName: "",
+          }
+        : EMPTY_BANK,
+    );
     setEditing(table);
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !seatsValid || !editing) return;
+    if (!form.name.trim() || !seatsValid || !editing || !accountReady) return;
+    // Send accounts only when there's something to set or clear.
+    const accounts = withAccount
+      ? [{ bankCode: account.bankCode, accountNumber: account.accountNumber }]
+      : hadAccount
+        ? []
+        : undefined;
     try {
       if (editing === "new") {
-        const created = await createTable.mutateAsync(form);
+        const created = await createTable.mutateAsync({ ...form, accounts });
         toast.success(`Table ${created.number} created with its QR code`);
       } else {
-        await updateTable.mutateAsync({ id: editing.id, ...form });
+        await updateTable.mutateAsync({ id: editing.id, ...form, accounts });
         toast.success(`Table ${editing.number} updated`);
       }
       setEditing(null);
@@ -243,6 +267,16 @@ export default function TablesTab({
                 <p className="text-xs text-muted-foreground">
                   {table.seats} seats · {paidOrdersFor(table.id)} paid orders
                 </p>
+                {!!table.accounts?.length && (
+                  <p className="mt-1 truncate text-[11px] font-medium text-primary">
+                    Payout:{" "}
+                    {table.accounts[0].accountName ||
+                      table.accounts[0].bankName ||
+                      "Bank"}{" "}
+                    ··
+                    {table.accounts[0].accountNumber.slice(-4)}
+                  </p>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -324,11 +358,42 @@ export default function TablesTab({
                 placeholder="e.g. By the window, lagoon view"
               />
             </Field>
+            <div className="rounded-2xl border p-4">
+              <label className="flex items-start justify-between gap-4">
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">
+                    Payout account
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Optional. Paid orders at this table pay the table&apos;s
+                    share into this account.
+                  </span>
+                </span>
+                <Switch
+                  checked={withAccount}
+                  onCheckedChange={setWithAccount}
+                  aria-label="Add a payout account"
+                />
+              </label>
+              {withAccount && (
+                <div className="mt-4">
+                  <BankAccountField
+                    resolveWith="table"
+                    idPrefix="table-account"
+                    label="Bank"
+                    value={account}
+                    onChange={setAccount}
+                  />
+                </div>
+              )}
+            </div>
             <Button
               type="submit"
               variant="brand"
               className="w-full"
-              disabled={!form.name.trim() || !seatsValid || saving}
+              disabled={
+                !form.name.trim() || !seatsValid || !accountReady || saving
+              }
             >
               {saving
                 ? "Saving…"

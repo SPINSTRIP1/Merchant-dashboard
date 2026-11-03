@@ -51,6 +51,11 @@ flow are wired but weren't exercised: the test wallet isn't set up for PINs (que
 | Reviews: Menu → Reviews tab, place → Reviews tab, event → Sales & Registrations (paged, newest first) | `GET /menu/reviews`, `GET /places/reviews?placeId=`, `GET /events/reviews?eventId=` | `useReviews` |
 | Top Menus (paid units per month; PROCESSING counts as paid) | `GET /menu/orders` | `useTopMenus` |
 | Public site: table orders carry the real table (`tableId` + number), matched via the public table list | `GET /menu/public/tables`, `POST /menu/public/orders` | `usePublicTables` (places repo) |
+| Compliance: merchant KYC by business type (individual / unregistered, registered business name, limited company, per the ITEX onboarding requirements); documents uploaded per field; payout bank picked from LedgerBlock's list and name-checked; LedgerBlock hosted identity check via `verificationUrl`; new statuses incl. `UNDER_REVIEW` (2026-11-02) | `POST /kyc/merchant/unregistered`, `POST /kyc/merchant/registered/limited`, `POST /kyc/merchant/registered/sole-proprietor`, `POST /kyc/upload/merchant`, `GET /kyc/banks/ngn`, `POST /kyc/bank-account/resolve`, `GET /kyc/merchant/status` | `useSubmitMerchantKyc`, `useNgnBanks`, `useResolveKycBankAccount`, `useKyc` |
+| Wallet: create the NGN wallet (now `{ currency }` only; identity comes from verified KYC) | `POST /wallet` | `useWallet` |
+| Settlement page: period totals (last 7 / 30 days, this / last month), daily settlement cards, settled orders with date range, search and server paging (2026-11-02) | `GET /menu/settlements`, `GET /menu/settlements/analytics` | `useSettlements`, `useSettlementAnalytics` |
+| Menu → Tables: optional payout account per table, name-checked before saving (2026-11-02) | `POST /menu/tables/accounts/resolve`, `accounts` on `POST` / `PATCH /menu/tables` | `useResolveTableAccount`, `useMenuTables` |
+| Public site: LedgerBlock (shown as "Fuspay") at event checkout, replacing `PAYONUS`; menu, places and tips already send `LEDGER_BLOCK` | `POST /events/public/{id}/register { paymentProvider: "LEDGER_BLOCK" }` | events checkout (places repo) |
 | Public site: guests review a place, an event or a restaurant (place / event / restaurant pages, the event success page and a paid order's page). Posted straight to each service with the checkout email; ineligible guests see the service's 403 reason | `POST /places/{id}/reviews`, `POST /events/{id}/reviews`, `POST /menu/reviews` | `useSubmitReview` (places repo) |
 
 **Available, not wired yet:**
@@ -123,7 +128,7 @@ Tables, table analytics and reviews shipped on 2026-10-19 and are wired (Part A)
 
 | Need | Notes |
 |---|---|
-| What table bank `accounts` are for (`POST /menu/tables` accepts them, resolved with Paystack) | Not shown in the dashboard until we know whether they receive that table's payments or waiter tips |
+| What table bank `accounts` are for | Answered: the table's share of each paid order is settled to it (see the Settlement page and Part C question 4) |
 | Table numbering after deletes | A deleted test table had number 1; does the next table reuse it? |
 | Reviews: reviewer name and an average | Rows are `{ id, email, userId, stars, comment, createdAt }` plus `place` / `event` (verified with test reviews on all three services). The dashboard shows the email; a `customerName` and an average rating / star breakdown from the API would let us show more without computing it |
 | Reviews through the gateway without sign-in | Guest `POST …/reviews` returns 401 at the gateway, so the public site posts straight to the service hosts (which accept guests). A public gateway route would let it use one host |
@@ -203,7 +208,28 @@ into `firstName` / `lastName` and copies the email into `confirmEmail`.
    finishes wallet setup so PINs and withdrawals work?
 3. **Payout response.** Swagger doesn't document what `POST /payouts` returns. The dashboard reads
    `id` / `payoutId` and `authToken` from `data`, then calls `POST /payouts/{id}/authorize`. Please confirm.
-4. **Events activation.** What does turning the Events service off do: hide the merchant's events
+4. **Settlements cover Menu only.** `GET /menu/settlements` is wired. Rows carry `productLine: "Menu"`;
+   will places bookings and event tickets get settlement routes too, so the page can show every product
+   line? Also: the route needs the `MERCHANT` role. The staging account aycom595@… now has
+   `USER` + `ADMIN` only and gets "Access denied" on its own settlements.
+5. **Bank resolve response.** Confirmed on staging: both resolve routes return
+   `{ accountName, accountNumber, bankCode, bankName }`, and table accounts accept LedgerBlock bank codes.
+6. **KYC is blocked on staging (2026-11-02).** Every `POST /kyc/merchant/...` returns 400
+   "Insufficient available balance in KYC billing wallet". The LedgerBlock KYC billing wallet needs
+   funding (see `POST /kyc/admin/ledgerblock/kyc-billing-wallet`) before any merchant can submit.
+   **Bug:** the failed submission is still saved. sofohip129@… got the 400 on a sole-proprietor submit,
+   yet `GET /kyc/merchant/status` now returns that record as `PENDING` with no `verificationUrl`, so the
+   merchant is stuck (can't resubmit, nothing to verify). Please don't persist on failure, and reset that
+   test record.
+7. **Upload keys collide.** `POST /kyc/upload/merchant` stores `governmentId`, `statusReport` and
+   `proprietorId` under the uploaded file's own name (e.g. `…__scan.jpg`), while other fields use the
+   field name. Two documents with the same file name overwrite each other. The dashboard now renames
+   each file to its field name before uploading; storing every field as `<userId>__<field>` would fix it
+   for all clients.
+8. **`redirectUrl` rejects localhost.** Fine for production; the dashboard omits it on local dev servers.
+9. **Directors.** `POST /kyc/upload/merchant` takes `directorId1`–`directorId3`, so the form allows up to
+   three directors. Companies with more need more upload fields.
+10. **Events activation.** What does turning the Events service off do: hide the merchant's events
    publicly, block creating events, or only change billing? We'll link it to the Event Planner app
    switch once that's clear.
 

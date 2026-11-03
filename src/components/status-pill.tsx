@@ -28,6 +28,7 @@ const STATUS_TONES: Record<string, Tone> = {
 
   pending: "warning",
   review_pending: "warning",
+  under_review: "info",
   due: "warning",
   low_stock: "warning",
   paused: "warning",

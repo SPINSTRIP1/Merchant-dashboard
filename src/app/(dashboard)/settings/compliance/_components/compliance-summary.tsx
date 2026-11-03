@@ -1,14 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, ExternalLink, RefreshCw, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import StatusPill from "@/components/status-pill";
 import type { ComplianceStep } from "@/hooks/use-compliance";
 import type { ComplianceStatus } from "@/types";
 
 const STATUS_LABELS: Record<ComplianceStatus, string> = {
   VERIFIED: "Verified",
-  PENDING: "In review",
+  PENDING: "Verifying identity",
+  UNDER_REVIEW: "In review",
   REJECTED: "Rejected",
   UNVERIFIED: "Not verified",
 };
@@ -25,11 +27,16 @@ export default function ComplianceSummary({
   steps,
   percent,
   adminNotes,
+  verificationUrl,
+  onRefresh,
 }: {
   status: ComplianceStatus;
   steps: ComplianceStep[];
   percent: number;
   adminNotes: string | null;
+  /** LedgerBlock identity check still to finish (status PENDING). */
+  verificationUrl: string | null;
+  onRefresh: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -106,11 +113,38 @@ export default function ComplianceSummary({
         {status === "PENDING" && (
           <div className="mt-6 flex gap-3 rounded-2xl bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
             <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">
+                {verificationUrl ? "Finish your identity check" : "Confirming your identity"}
+              </p>
+              <p className="mt-1 text-xs">
+                {verificationUrl
+                  ? "Your details are in. Complete the quick identity check with our verification partner to finish."
+                  : "We're waiting for the identity check result. This page updates when it's done."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {verificationUrl && (
+                  <Button variant="brand" size="sm" asChild>
+                    <a href={verificationUrl}>
+                      Verify my identity <ExternalLink />
+                    </a>
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={onRefresh}>
+                  <RefreshCw /> Check status
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {status === "UNDER_REVIEW" && (
+          <div className="mt-6 flex gap-3 rounded-2xl bg-sky-500/10 p-4 text-sm text-sky-700 dark:text-sky-300">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p className="font-semibold">Under review</p>
               <p className="mt-1 text-xs">
-                Our team reviews submissions within 24–48 hours. You&apos;ll be
-                notified once confirmed.
+                Your identity check passed. Our team reviews business documents within 24–48 hours. You&apos;ll
+                be notified once confirmed.
               </p>
             </div>
           </div>

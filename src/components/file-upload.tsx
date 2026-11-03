@@ -125,7 +125,10 @@ export default function FileUpload({
     async (file: File): Promise<{ name: string; key: string }[] | null> => {
       try {
         const formData = new FormData();
-        formData.append(fileName, file);
+        // The API stores some fields under the uploaded file's own name, so two documents called
+        // e.g. "scan.pdf" would overwrite each other. Naming each file after its field keeps keys unique.
+        const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
+        formData.append(fileName, file, extension ? `${fileName}.${extension}` : fileName);
 
         const response = await api.post(
           `${SERVER_URL}/kyc/upload/merchant`,

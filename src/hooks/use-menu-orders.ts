@@ -25,6 +25,19 @@ export interface MenuOrder {
   waiterAssignment: string | null;
   items: MenuOrderItem[];
   createdAt: string;
+  paymentMethod: string | null;
+  /**
+   * Settlement of the table's share to the table's payout account. `status` is NOT_APPLICABLE when
+   * the table had no payout account (or the order was takeaway).
+   */
+  tablePayout: {
+    status: string;
+    amount: number | null;
+    settledAt: string | null;
+    paymentRef: string | null;
+    txnRef: string | null;
+    audit: unknown;
+  };
 }
 
 /** Paid orders count towards revenue and best-sellers. */
@@ -54,5 +67,14 @@ export function toOrder(raw: Record<string, unknown>): MenuOrder {
       lineTotal: num(item.lineTotal),
     })),
     createdAt: String(raw.createdAt),
+    paymentMethod: str(raw.paymentMethod),
+    tablePayout: {
+      status: (str(raw.tablePayoutStatus) ?? "NOT_APPLICABLE").toUpperCase(),
+      amount: raw.tablePayoutAmount == null ? null : num(raw.tablePayoutAmount),
+      settledAt: str(raw.tablePayoutSettledAt),
+      paymentRef: str(raw.tablePayoutPaymentRef),
+      txnRef: str(raw.tablePayoutTxnRef),
+      audit: raw.tablePayoutAudit ?? null,
+    },
   };
 }

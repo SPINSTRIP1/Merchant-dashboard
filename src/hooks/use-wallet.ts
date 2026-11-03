@@ -3,16 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios-client";
 import { USER_ACCOUNT_URL } from "@/constants";
-import { countries } from "@/data/countries";
-import { useReduxAuth } from "@/hooks/use-redux-auth";
-import { KYCData } from "@/hooks/use-kyc";
+import type { AxiosError } from "axios";
+import { handleAxiosError } from "@/lib/api/handle-axios-error";
+import type { KYCData } from "@/hooks/use-kyc";
 
 /**
- * Reusable wallet hook — owns fetching the user's wallets and the
- * create-wallet flow (KYC validation, currency resolution, toasts).
+ * Reusable wallet hook — owns fetching the user's wallets and the create-wallet flow.
  */
 export function useWallet() {
-  const { user } = useReduxAuth();
   const [isCreating, setIsCreating] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -30,48 +28,23 @@ export function useWallet() {
   });
 
   /**
-   * Creates a wallet using the merchant's KYC record.
-   * Validates required KYC fields and resolves currency from the
-   * country of incorporation before calling the API.
+   * Creates the merchant's NGN wallet (`POST /wallet { currency }`). The service takes identity
+   * details from the merchant's verified KYC itself, so only approved merchants can create one.
    */
-  async function createWallet(kyc?: KYCData) {
-    const nin = kyc?.ubos?.[0]?.identityMetadata?.nin;
-    const bvn = kyc?.ubos?.[0]?.identityMetadata?.bvn;
-    const address = kyc?.ubos?.[0]?.address;
-    const currency = countries.find(
-      (c) => c.name === kyc?.countryOfIncorporation,
-    )?.currency;
-
-    if (!nin || !bvn || !address) {
-      toast.error(
-        "Missing KYC information. Please complete your KYC to create a wallet.",
-      );
-      return;
-    }
-
-    if (!currency) {
-      toast.error("Could not determine currency from country of incorporation.");
+  async function createWallet(kyc?: Partial<KYCData>) {
+    if (kyc?.status !== "VERIFIED") {
+      toast.error("Complete your compliance verification to create a wallet.");
       return;
     }
 
     setIsCreating(true);
     try {
-      await api.post(USER_ACCOUNT_URL + "/wallet", {
-        currency,
-        customer_email: user?.email,
-        customer_mobile: user?.phoneNumber,
-        customer_name: user?.fullName,
-        bvn,
-        nin,
-        address,
-        dob: user?.dob || "1990-05-14",
-      });
-
+      await api.post(USER_ACCOUNT_URL + "/wallet", { currency: "NGN" });
       toast.success("Wallet created successfully!");
       refetch();
     } catch (error) {
       console.log("Error initiating wallet creation:", error);
-      toast.error("Failed to create wallet. Please try again.");
+      toast.error(handleAxiosError(error as AxiosError) || "Failed to create wallet. Please try again.");
     } finally {
       setIsCreating(false);
     }
