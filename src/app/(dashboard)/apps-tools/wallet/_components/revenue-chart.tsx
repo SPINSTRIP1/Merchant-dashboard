@@ -53,7 +53,7 @@ export default function RevenueChart({
             datasets: [areaDataset("Money in", series.map((p) => p.revenue), "chart-1")],
           }}
           options={lineChartOptions({
-            formatY: (v) => formatNaira(v, true),
+            formatY: (v) => formatNaira(v),
             tooltipLabel: (v) => `Money in: ${formatNaira(v)}`,
           })}
         />

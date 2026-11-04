@@ -78,14 +78,14 @@ export default function InsightsModal({
           <ChartCard
             title="Revenue"
             subtitle="Revenue from redemptions"
-            action={<span className="text-foreground">{formatNaira(perf?.revenue ?? 0, true)}</span>}
+            action={<span className="text-foreground">{formatNaira(perf?.revenue ?? 0)}</span>}
             delay={0.05}
           >
             <div className="h-48">
               <Line key={chartKey}
                 data={{ labels, datasets: [areaDataset("Revenue", perf?.monthly.map((m) => m.revenue) ?? [], "chart-2")] }}
                 options={lineChartOptions({
-                  formatY: (v) => formatNaira(v, true),
+                  formatY: (v) => formatNaira(v),
                   tooltipLabel: (v) => `Revenue: ${formatNaira(v)}`,
                 })}
               />

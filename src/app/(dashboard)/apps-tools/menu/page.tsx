@@ -21,8 +21,9 @@ import MenuTable from "./_components/menu-table";
 import TablesTab from "./_components/tables-tab";
 import TableAnalyticsTab from "./_components/table-analytics-tab";
 import ReviewsTab from "./_components/reviews-tab";
+import OrdersTab from "./_components/orders-tab";
 
-const TABS = ["items", "tables", "analytics", "reviews"] as const;
+const TABS = ["items", "orders", "tables", "analytics", "reviews"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MenuPage() {
@@ -113,14 +114,18 @@ export default function MenuPage() {
       </motion.div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="no-scrollbar max-w-full flex-nowrap overflow-x-auto [&>*]:shrink-0">
           <TabsTrigger value="items">Menu Items</TabsTrigger>
+          <TabsTrigger value="orders">Order History</TabsTrigger>
           <TabsTrigger value="tables">Tables &amp; QR</TabsTrigger>
           <TabsTrigger value="analytics">Table Analytics</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
         <TabsContent value="items">
           <MenuTable />
+        </TabsContent>
+        <TabsContent value="orders">
+          <OrdersTab />
         </TabsContent>
         <TabsContent value="tables">
           <TablesTab qrUrlFor={(tableNumber) => publicRestaurantUrl(user?.id, String(tableNumber))} />

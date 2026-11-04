@@ -100,7 +100,7 @@ export default function OverviewPage() {
             index={3}
             sample
             label="Total Revenue"
-            value={formatNaira(analytics.revenue, true)}
+            value={formatNaira(analytics.revenue)}
             sub={
               revenueDelta === null
                 ? "in range"
@@ -112,7 +112,7 @@ export default function OverviewPage() {
             index={4}
             sample
             label="Total Settlement"
-            value={formatNaira(analytics.totalSettlement, true)}
+            value={formatNaira(analytics.totalSettlement)}
             sub={`${analytics.settledCount} settled transactions`}
             icon={<Landmark />}
           />
@@ -182,7 +182,7 @@ export default function OverviewPage() {
                   datasets: [areaDataset("Revenue", analytics.series.map((p) => p.revenue), "chart-1")],
                 }}
                 options={lineChartOptions({
-                  formatY: (v) => formatNaira(v, true),
+                  formatY: (v) => formatNaira(v),
                   tooltipLabel: (v) => `Revenue: ${formatNaira(v)}`,
                 })}
               />

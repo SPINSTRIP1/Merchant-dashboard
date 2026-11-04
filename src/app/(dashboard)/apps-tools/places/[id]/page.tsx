@@ -149,7 +149,7 @@ export default function Page() {
           index={2}
           accent
           label="Revenue"
-          value={formatNaira(place.stats?.revenue ?? 0, true)}
+          value={formatNaira(place.stats?.revenue ?? 0)}
           icon={<Wallet />}
         />
         <StatCard index={3} label="Sales" value={(place.stats?.sales ?? 0).toLocaleString()} icon={<ShoppingBag />} />

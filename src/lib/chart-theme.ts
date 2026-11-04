@@ -102,7 +102,7 @@ const tooltipBase = () => ({
 
 /**
  * Options for line/area charts: dashed horizontal grid only, small muted ticks, card-styled tooltip.
- * `formatY` formats axis ticks and tooltip values (e.g. `(v) => formatNaira(v, true)`).
+ * `formatY` formats axis ticks and tooltip values (e.g. `(v) => formatNaira(v)`).
  */
 export function lineChartOptions({
   formatY = (v: number) => v.toLocaleString("en-NG"),

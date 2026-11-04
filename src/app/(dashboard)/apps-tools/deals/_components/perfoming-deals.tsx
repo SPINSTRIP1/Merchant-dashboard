@@ -44,7 +44,7 @@ function Panel({
                 </p>
               </div>
               <span className="shrink-0 font-display text-sm font-bold text-primary">
-                {formatNaira(perf.revenue, true)}
+                {formatNaira(perf.revenue)}
               </span>
             </li>
           ))}

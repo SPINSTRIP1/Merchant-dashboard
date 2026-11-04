@@ -73,7 +73,7 @@ export default function TopMenusCard() {
                 <p className="truncate text-xs font-semibold text-foreground">{item.name}</p>
                 <p className="text-[10px] text-muted-foreground">{item.orderCount} sold</p>
               </div>
-              <span className="text-xs font-bold text-foreground">{formatNaira(item.price, true)}</span>
+              <span className="text-xs font-bold text-foreground">{formatNaira(item.price)}</span>
             </li>
           ))}
         </ul>

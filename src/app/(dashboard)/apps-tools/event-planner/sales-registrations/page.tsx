@@ -106,7 +106,7 @@ function SalesAndRegistrationContent() {
           subtitle="Revenue and tickets by tier"
           action={
             <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
-              {formatNaira(Number(stats?.totalRevenue) || 0, true)} revenue
+              {formatNaira(Number(stats?.totalRevenue) || 0)} revenue
             </span>
           }
           delay={0.05}

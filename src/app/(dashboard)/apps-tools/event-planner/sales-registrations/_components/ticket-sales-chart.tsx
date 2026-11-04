@@ -7,6 +7,7 @@ import EmptyState from "@/components/empty-state";
 import { Ticket } from "lucide-react";
 import { chartPalette, themeColor, useChartThemeKey } from "@/lib/chart-theme";
 import { RegistrationStats } from "@/hooks/use-event-registrations";
+import { formatNaira } from "@/utils";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -71,7 +72,7 @@ export default function TicketSalesChart({
               ? ((value / total) * 100).toFixed(1)
               : "0.0";
             const display = isCurrency
-              ? `₦${value.toLocaleString()}`
+              ? formatNaira(value)
               : value.toLocaleString();
             return `${label}: ${display} (${percentage}%)`;
           },
@@ -96,7 +97,7 @@ export default function TicketSalesChart({
               {/* Center text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <p className="font-display text-lg font-bold text-foreground">
-                  ₦{totalAmount.toLocaleString()}
+                  {formatNaira(totalAmount)}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
                   Total Ticket sales
@@ -113,7 +114,7 @@ export default function TicketSalesChart({
                     style={{ backgroundColor: colors[i] }}
                   />
                   <p className="text-sm">{tier.name}</p>
-                  <p className="font-bold text-foreground">₦{tier.amount.toLocaleString()}</p>
+                  <p className="font-bold text-foreground">{formatNaira(tier.amount)}</p>
                 </div>
               ))}
             </div>

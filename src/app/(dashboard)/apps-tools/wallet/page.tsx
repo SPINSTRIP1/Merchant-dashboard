@@ -139,7 +139,7 @@ export default function Wallet() {
               <div className="rounded-2xl border bg-card p-5">
                 <p className="text-sm text-muted-foreground">Wallet funding</p>
                 <p className="mt-1 font-display text-2xl font-bold text-foreground">
-                  {activity.isLoading ? "…" : formatNaira(activity.funding, true)}
+                  {activity.isLoading ? "…" : formatNaira(activity.funding)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">deposits into your wallet</p>
               </div>
@@ -157,14 +157,14 @@ export default function Wallet() {
             <StatCard
               index={0}
               label="Money In"
-              value={activity.isLoading ? "…" : formatNaira(activity.moneyIn, true)}
+              value={activity.isLoading ? "…" : formatNaira(activity.moneyIn)}
               sub="completed credits"
               icon={<TrendingUp />}
             />
             <StatCard
               index={1}
               label="Withdrawals"
-              value={activity.isLoading ? "…" : formatNaira(activity.withdrawn, true)}
+              value={activity.isLoading ? "…" : formatNaira(activity.withdrawn)}
               sub="settled to your bank"
               icon={<ArrowUpFromLine />}
             />

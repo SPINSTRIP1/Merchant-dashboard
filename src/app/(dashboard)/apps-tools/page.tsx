@@ -1,6 +1,7 @@
 "use client";
 
 import SearchBar from "@/components/search-bar";
+import { formatNaira } from "@/utils";
 import PageHeader from "@/components/page-header";
 import EmptyState from "@/components/empty-state";
 import { Switch } from "@/components/ui/switch";
@@ -39,7 +40,7 @@ const filters = [
   { label: "Community Apps", value: "community" },
 ];
 
-const priceLabel = (app: AppWithStatus) => (app.amount ? `₦${app.amount.toLocaleString()}/month` : "Free");
+const priceLabel = (app: AppWithStatus) => (app.amount ? `${formatNaira(app.amount)}/month` : "Free");
 
 function StatusBadge({ app }: { app: AppWithStatus }) {
   const active = app.default || app.isActive;

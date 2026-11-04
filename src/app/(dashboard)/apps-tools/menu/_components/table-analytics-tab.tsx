@@ -16,17 +16,9 @@ import {
   useTableOrders,
   type TableAnalytics,
 } from "@/hooks/use-menu-analytics";
-import { isInProgress } from "@/hooks/use-menu-orders";
+import { isInProgress, ORDER_STATUS_LABELS } from "@/hooks/use-menu-orders";
 import { exportCsv, fmtDateTime, formatNaira, rangeFor, timeAgo, type DateRange } from "@/utils";
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Awaiting payment",
-  CONFIRMED: "Paid",
-  PROCESSING: "With a waiter",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  FAILED: "Failed",
-};
 
 const tableName = (t: Pick<TableAnalytics, "number" | "name">) => (t.name ? `Table ${t.number} · ${t.name}` : `Table ${t.number}`);
 
@@ -151,7 +143,7 @@ export default function TableAnalyticsTab() {
               index={0}
               accent
               label="Revenue"
-              value={formatNaira(analytics?.revenue ?? 0, true)}
+              value={formatNaira(analytics?.revenue ?? 0)}
               sub="paid orders"
               icon={<TrendingUp />}
             />
@@ -165,7 +157,7 @@ export default function TableAnalyticsTab() {
             <StatCard
               index={2}
               label="Average Order"
-              value={formatNaira(analytics?.averageOrderValue ?? 0, true)}
+              value={formatNaira(analytics?.averageOrderValue ?? 0)}
               sub="per paid order"
               icon={<ShoppingBag />}
             />
@@ -173,7 +165,7 @@ export default function TableAnalyticsTab() {
               index={3}
               label="Items Sold"
               value={(analytics?.itemsSold ?? 0).toLocaleString()}
-              sub={`${formatNaira(analytics?.itemRevenue ?? 0, true)} in item sales`}
+              sub={`${formatNaira(analytics?.itemRevenue ?? 0)} in item sales`}
               icon={<UtensilsCrossed />}
             />
           </div>
@@ -221,7 +213,7 @@ export default function TableAnalyticsTab() {
                     <span className="text-muted-foreground">
                       {table.lastSeatedAt ? `Last order ${timeAgo(table.lastSeatedAt)}` : "No orders in this period"}
                     </span>
-                    <span className="font-display font-bold text-primary">{formatNaira(table.revenue, true)}</span>
+                    <span className="font-display font-bold text-primary">{formatNaira(table.revenue)}</span>
                   </div>
                 </motion.button>
               ))}
